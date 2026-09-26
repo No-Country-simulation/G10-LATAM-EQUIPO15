@@ -185,13 +185,17 @@ Los tres perfiles acordados son:
 | Senior | Líder Técnico |
 | Ejecutivo | Perfil ejecutivo |
 
-### Pregunta Q2 — 🟠
+### Definición Q2 — 🟢 CERRADA
 
-¿Senior representa oficialmente a Líder Técnico?
+**Senior = Líder Técnico.**
 
-La documentación usa ambos términos. El enum actual usa Senior.
+Para evitar ambigüedad entre el nombre técnico del enum y el nombre funcional utilizado por el equipo, el contrato mantiene `Senior` como valor técnico y establece `Líder Técnico` como su significado funcional.
 
-**Recomendación contractual:** mantener Senior como valor técnico y documentar explícitamente su significado funcional si el equipo lo confirma.
+| Valor técnico | Nombre funcional |
+|---|---|
+| `Junior` | Principiante / desarrollador junior |
+| `Senior` | Líder Técnico |
+| `Ejecutivo` | Perfil ejecutivo |
 
 ---
 
@@ -631,7 +635,7 @@ Antes de marcar el contrato como cerrado:
 | ID | Pregunta | Prioridad | Impacta desarrollo BE |
 |---|---|---|---|
 | Q1 | ¿IA recibe archivo, texto o referencia OCI? | 🔴 Alta | Sí, directamente |
-| Q2 | ¿Senior = Líder Técnico? | 🟠 Media | Sí, enum/UX |
+| Q2 | ¿Senior = Líder Técnico? | 🟢 Cerrada | No bloquea; definición funcional confirmada |
 | Q3 | ¿nivel_detalle obligatorio o default? | 🟠 Media | Sí, validación |
 | Q4 | ¿Qué evidencia devuelve grounding? | 🔴 Alta | Sí, response |
 | Q5 | ¿Qué es contexto insuficiente? | 🔴 Alta | Sí, estados |
