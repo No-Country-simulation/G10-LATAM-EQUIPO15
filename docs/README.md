@@ -6,64 +6,75 @@
 
 **Hackathon:** ONE (Oracle Next Education) & Alura Latam — Cohorte G-10
 
-> **Nota de estado:** Este dossier parte de la documentación técnica propuesta inicialmente por Marco. Los documentos se incorporarán y revisarán progresivamente para alinearlos con las decisiones reales del equipo, el alcance del MVP y la estructura actual del repositorio.
+---
+
+## 1. Fuente de verdad técnica
+
+La documentación se organiza en tres niveles:
+
+1. **Arquitectura y alcance:** decisiones que definen qué construimos.
+2. **IA / Data y contratos:** cómo funciona el pipeline y cómo se integra con Backend.
+3. **GAPs y decisiones:** trazabilidad de problemas, acuerdos y pendientes.
+
+La documentación debe reflejar las decisiones reales del equipo. Los documentos de referencia externos o históricos no sustituyen la evidencia de implementación del repositorio.
 
 ---
 
-## 1. Documentación prevista
-
-La documentación técnica se organizará en los siguientes documentos:
+## 2. Documentos principales
 
 | Documento | Propósito |
 |---|---|
-| `01_PRD_PRODUCT_REQUIREMENTS_DOCUMENT.md` | Requisitos de producto, visión, perfiles y requisitos funcionales. |
-| `02_SISTEMA_DE_DISENO_Y_UI_UX.md` | Lineamientos de diseño, componentes y experiencia de usuario. |
-| `03_WBS_Y_DEFINICION_DE_TAREAS.md` | Desglose de trabajo, responsabilidades y dependencias. |
-| `04_TIMELINE_EXTENDIDO_Y_HITOS.md` | Cronograma, hitos y puntos de control. |
-| `05_CONTRATOS_DE_DATOS_Y_SCHEMAS.md` | Contratos de datos y esquemas de entrada/salida. |
-| `06_ARQUITECTURA_DE_IA_Y_SISTEMA_MULTIAGENTE.md` | Arquitectura de IA, RAG, embeddings, LLM y orquestación. |
-| `07_DIAGRAMAS_DE_ARQUITECTURA_Y_FLUJOS.md` | Diagramas de arquitectura, flujos e integración. |
-| `08_BUENAS_PRACTICAS_SKILLS_Y_RESILIENCIA.md` | Buenas prácticas, manejo de errores y resiliencia. |
-| `adr/` | Registros de decisiones arquitectónicas relevantes. |
+| [ARQ-02 — Matriz de Alcance MVP](./ARQ-02_MATRIZ_ALCANCE_MVP.md) | Fuente de verdad del alcance de IA/Data. |
+| [Pipeline de IA MVP](./IA/PIPELINE_IA_MVP.md) | Flujo técnico completo de IA. |
+| [Estrategia RAG MVP](./IA/ESTRATEGIA_RAG_MVP.md) | Recuperación, Query Builder y contexto. |
+| [Grounding y Validación](./IA/GROUNDING_Y_VALIDACION.md) | Fidelidad, score y corrección. |
+| [Contrato Backend ↔ IA](./CONTRATOS/CONTRATO_BACKEND_IA.md) | Contrato de integración entre equipos. |
+| [Schema Response](./CONTRATOS/SCHEMA_RESPONSE.md) | Estructura y validación de respuesta. |
+| [Matriz de GAPs](./GAPS/README_GAPS.md) | Estado y trazabilidad de GAP-01 a GAP-08. |
 
 ---
 
-## 2. Criterio de mantenimiento
+## 3. Criterio de mantenimiento
 
-La documentación no debe convertirse en una carga adicional para los equipos.
+Cada documento debe indicar:
 
-Cada equipo es responsable principalmente de:
+- objetivo;
+- alcance;
+- estado;
+- decisiones;
+- criterios de aceptación;
+- dependencias;
+- trazabilidad cuando corresponda.
 
-- subir y mantener su código;
-- mantener la documentación mínima necesaria para instalar, ejecutar y entender su componente;
-- registrar decisiones técnicas relevantes cuando afecten la integración con otros equipos.
-
-La documentación transversal del proyecto se mantendrá en esta carpeta.
-
----
-
-## 3. Estado de la documentación
-
-Los documentos propuestos por Marco se consideran **material de referencia inicial** hasta que sean revisados y alineados con las decisiones del equipo.
-
-En particular, antes de considerar una especificación como definitiva se deberán validar:
-
-- alcance real del MVP;
-- responsabilidades entre Frontend, Backend e IA/Data;
-- contrato entre Backend e IA;
-- estrategia de RAG y embeddings;
-- proveedor/modelo LLM;
-- estrategia de orquestación;
-- validación de fidelidad;
-- integración con OCI;
-- funcionalidades adicionales como telemetría, mapas, flashcards 3D, quiz interactivo y exportaciones.
+No se deben declarar componentes como implementados únicamente porque estén descritos en documentación.
 
 ---
 
-## 4. Referencia del proyecto
+## 4. Regla de cierre
 
-El README principal del repositorio se encuentra en la raíz:
+**CERRADO = decisión documentada + implementación verificable + prueba/evidencia.**
 
-`README.md`
+Cuando falta implementación o evidencia, el estado debe ser **DECIDIDO / PENDIENTE DE VALIDACIÓN**.
 
-Este archivo funciona únicamente como índice de la documentación técnica ubicada en `docs/`.
+---
+
+## 5. Estructura existente
+
+Además de esta documentación de IA/Data, el repositorio puede incorporar progresivamente:
+
+- PRD;
+- arquitectura general;
+- WBS;
+- timeline;
+- ADR;
+- documentación Backend;
+- documentación Frontend;
+- documentación OCI.
+
+Estos documentos deben mantenerse alineados con ARQ-02 y con los contratos de integración.
+
+---
+
+## 6. Hackathon
+
+Proyecto desarrollado para el Hackathon ONE G10 / Alura Latam.
