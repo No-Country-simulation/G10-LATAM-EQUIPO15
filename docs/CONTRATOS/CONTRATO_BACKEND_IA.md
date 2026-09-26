@@ -208,10 +208,10 @@ Para evitar ambigüedad entre el nombre técnico del enum y el nombre funcional 
 | Flashcards | 🟢 MVP |
 | Quiz Interactivo | 🟢 MVP |
 | Resumen Ejecutivo | 🟢 MVP |
-| Mapa Mental | 📌 Plus |
+| Mapa Mental | 🟢 MVP |
 | Guia Paso a Paso | 📌 Plus |
 
-Backend no debe implementar los formatos Plus como requisito del MVP.
+Backend debe soportar todos los formatos marcados como MVP. IA genera el contenido y Backend valida/transporta la respuesta; Frontend se encarga de su representación.
 
 ---
 
@@ -337,6 +337,26 @@ Ejemplo documentado: 3 minutos por flashcard, sujeto a la regla final de impleme
       "dorso": "Red virtual privada...",
       "pista_didactica": "Piensa en ella como...",
       "categoria_dificultad": "Básico"
+    }
+
+### Mapa Mental
+
+Formato incluido en el MVP.
+
+    {
+      "nodo_central": "Microservicios",
+      "descripcion_general": "Arquitectura basada en servicios independientes.",
+      "ramas_principales": [
+        {
+          "titulo": "Características",
+          "subnodos": [
+            {
+              "concepto": "Despliegue independiente",
+              "descripcion": "Cada servicio puede desplegarse de forma separada."
+            }
+          ]
+        }
+      ]
     }
 
 ### Quiz
