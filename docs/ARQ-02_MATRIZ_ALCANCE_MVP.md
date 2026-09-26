@@ -55,8 +55,9 @@ flowchart LR
 1. Flashcards
 2. Quiz Interactivo
 3. Resumen Ejecutivo
+4. **Mapa Mental**
 
-> Mapa Mental y Guía Paso a Paso quedan como extensiones posteriores mientras no formen parte del alcance acordado del MVP.
+> **Guía Paso a Paso** queda como extensión posterior y no forma parte del alcance funcional del MVP actual.
 
 ## 6. Temas técnicos alineados
 
@@ -88,6 +89,7 @@ No forman parte del cierre mínimo:
 
 - GraphRAG;
 - Semantic Splitter avanzado;
+- **Guía Paso a Paso**;
 - formatos adicionales no aprobados;
 - optimizaciones prematuras de arquitectura;
 - telemetría avanzada no requerida para la integración;
