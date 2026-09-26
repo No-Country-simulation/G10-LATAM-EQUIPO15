@@ -670,22 +670,37 @@ Antes de marcar el contrato como cerrado:
 
 ---
 
-# 23. Trazabilidad
+# 23. Trazabilidad y estado de cierre
 
-| Documento / GAP | Relación |
+La trazabilidad permite identificar **qué decisión se está siguiendo, a qué área pertenece y cuál es su estado actual**. Esto evita confundir una decisión documentada con una implementación ya validada.
+
+### Estados utilizados
+
+| Estado | Significado |
 |---|---|
-| ARQ-02 | Alcance MVP |
-| GAP-01 | Archivo ↔ IA |
-| GAP-02 | JSON |
-| GAP-03 | Contexto / recuperación |
-| GAP-04 | RAG / Query Builder |
-| GAP-05 | Contexto insuficiente |
-| GAP-06 | Nicho / sector |
-| GAP-07 | Grounding |
-| GAP-08 | Schema |
-| IA-05 | Retriever / Query Builder |
-| IA-07 | Validación / grounding |
-| IA-08 | Integración + JSON |
+| 🟢 CERRADO | Decisión definida y sin pendientes funcionales. Si además existe implementación y prueba, puede considerarse cerrado técnicamente. |
+| 🟡 DEFINIDO / VALIDAR | La decisión está documentada, pero falta validar implementación, pruebas o algún detalle técnico. |
+| 🔴 PENDIENTE | Existe una decisión abierta que puede cambiar el diseño o la implementación. |
+| 🔵 BACKLOG / PLUS | No forma parte del MVP actual; queda para una versión posterior. |
+
+### Matriz de trazabilidad
+
+| ID | Área | Documento / GAP | Tema | Estado | Impacta BE | Impacta IA | Impacta ARQ |
+|---|---|---|---|---|---|---|---|
+| ARQ-02 | Arquitectura | ARQ-02 | Alcance MVP | 🟢 CERRADO | Sí | Sí | Sí |
+| GAP-01 | Contrato | GAP-01 | Archivo ↔ IA | 🔴 PENDIENTE | Sí | Sí | Sí |
+| GAP-02 | Contrato | GAP-02 | JSON | 🟢 CERRADO | Sí | Sí | Sí |
+| GAP-03 | IA | GAP-03 | Contexto / recuperación | 🟡 DEFINIDO / VALIDAR | Sí | Sí | Sí |
+| GAP-04 | IA | GAP-04 | RAG / Query Builder | 🟢 CERRADO | No | Sí | Sí |
+| GAP-05 | IA | GAP-05 | Contexto insuficiente | 🔴 PENDIENTE | Sí | Sí | Sí |
+| GAP-06 | IA | GAP-06 | Nicho / sector | 🟢 CERRADO | Sí | Sí | Sí |
+| GAP-07 | IA | GAP-07 | Grounding | 🟡 DEFINIDO / VALIDAR | Sí | Sí | Sí |
+| GAP-08 | Contrato | GAP-08 | Schema | 🟢 CERRADO | Sí | Sí | Sí |
+| IA-05 | IA | IA-05 | Retriever / Query Builder | 🟡 DEFINIDO / VALIDAR | No | Sí | Sí |
+| IA-07 | IA | IA-07 | Validación / grounding | 🟡 DEFINIDO / VALIDAR | Sí | Sí | Sí |
+| IA-08 | Integración | IA-08 | Integración + JSON | 🟡 DEFINIDO / VALIDAR | Sí | Sí | Sí |
+
+> **Regla práctica:** 🟢 CERRADO en esta matriz indica que la decisión está cerrada documentalmente. No implica por sí solo que el código y las pruebas de integración estén terminados.
 
 ---
 
