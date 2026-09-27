@@ -63,7 +63,7 @@ flowchart LR
 
 | Tema | Decisión MVP |
 |---|---|
-| Contrato archivo ↔ IA | Definido |
+| Contrato archivo ↔ IA | Backend entrega documento original + parámetros; IA valida, detecta formato, extrae y normaliza |
 | Contrato JSON | Definido |
 | Embeddings | Parte del pipeline |
 | RAG | Retriever + Query Builder |
@@ -96,5 +96,24 @@ No forman parte del cierre mínimo:
 - capacidades experimentales sin criterio de aceptación.
 
 ## 9. Trazabilidad
+
+### Frontera de entrada Backend ↔ IA
+
+```
+Backend
+  │
+  ├── documento original
+  └── parámetros
+        │
+        ▼
+      Data / IA
+        │
+        ├── validación inicial
+        ├── detección de formato
+        ├── extracción
+        └── normalización
+```
+
+Formatos inicialmente soportados por IA: **PDF, DOCX, Markdown y TXT**.
 
 Este documento consolida las decisiones derivadas de los análisis GAP-01 a GAP-08 y debe mantenerse sincronizado con los issues IA correspondientes.
