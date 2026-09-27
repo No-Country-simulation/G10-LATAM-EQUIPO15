@@ -6,7 +6,7 @@ Registrar los principales GAP identificados durante la alineación de arquitectu
 
 | GAP | Tema | Estado documental | Evidencia de implementación |
 |---|---|---|---|
-| GAP-01 | Contrato archivo ↔ IA | Cerrado | Pendiente de validación |
+| GAP-01 | Contrato archivo ↔ IA | Definido | Validar transporte e integración |
 | GAP-02 | Contrato JSON | Cerrado | Pendiente de validación |
 | GAP-03 | Contexto / recuperación | Parcial | Pendiente |
 | GAP-04 | Estrategia RAG / Query Builder | Cerrado | Pendiente de validación |
@@ -30,6 +30,17 @@ Prueba / evidencia
         =
 CERRADO
 ```
+
+## Actualización GAP-01
+
+La frontera funcional de entrada quedó definida:
+
+- Backend entrega el documento original, sin extracción ni tratamiento.
+- Backend entrega los parámetros funcionales.
+- Data/IA realiza validación inicial, detección de formato, extracción y normalización.
+- Formatos inicialmente soportados: PDF, DOCX, Markdown y TXT.
+
+La decisión funcional está cerrada; la implementación y la prueba de integración quedan pendientes de validación.
 
 ## Próximo foco
 
