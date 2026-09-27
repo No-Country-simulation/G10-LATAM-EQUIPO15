@@ -2,9 +2,9 @@
 
 **Proyecto:** NuevaMente  
 **Squads:** Backend + IA/Data  
-**Versión:** 2.0  
+**Versión:** 2.1  
 **Fecha:** 26-09-2026  
-**Estado:** 🟡 Base definida — existen decisiones pendientes que deben cerrarse antes de congelar el contrato.
+**Estado:** 🟡 Base definida — la frontera de entrada está cerrada; permanecen decisiones pendientes de otras áreas del contrato.
 
 > Este documento es el input operativo de Backend para implementar la integración con IA.
 > Cada punto se clasifica como 🟢 CERRADO, 🟡 VALIDAR o 🔴 PENDIENTE.
@@ -42,7 +42,7 @@ Una decisión documentada no demuestra por sí sola que el código esté impleme
 | tiempo_estimado_estudio_minutos | 🟢 Definido | BE debe esperar el campo |
 | Grounding | 🟢 Decisión / 🟡 Validar implementación | BE consume score y observaciones |
 | Schema response | 🟢 Definido conceptualmente | Falta validar contra código |
-| Archivo → IA | 🟡 Pendiente | Definir archivo, texto o referencia |
+| Archivo → IA | 🟢 Decisión cerrada / validar implementación | Backend entrega documento original + parámetros; IA valida y procesa |
 | Persistencia OCI | 🟡 Pendiente | Definir responsabilidad |
 | Contexto insuficiente | 🔴 Pendiente | Definir respuesta y código |
 | Códigos de error | 🟡 Pendiente | BE necesita catálogo estable |
@@ -58,8 +58,8 @@ Una decisión documentada no demuestra por sí sola que el código esté impleme
 Backend debe:
 
 1. recibir la solicitud;
-2. validar parámetros;
-3. validar el archivo;
+2. validar los parámetros funcionales;
+3. entregar a IA el documento original, sin extracción ni tratamiento;
 4. gestionar persistencia cuando corresponda;
 5. invocar IA;
 6. validar la respuesta de IA;
@@ -67,21 +67,25 @@ Backend debe:
 8. manejar errores;
 9. respetar la versión contractual.
 
+> **Importante:** Backend no realiza extracción, normalización ni tratamiento del documento antes de entregarlo a IA.
+
 ### 3.2 IA/Data — 🟢 Definido
 
 IA debe:
 
-1. procesar documento;
-2. extraer y normalizar;
-3. realizar chunking;
-4. generar embeddings;
-5. recuperar contexto;
-6. construir queries pedagógicas;
-7. generar contenido;
-8. aplicar perfil, formato y nicho;
-9. ejecutar grounding;
-10. validar la salida;
-11. devolver el schema acordado.
+1. realizar la validación inicial del documento;
+2. detectar el formato del documento;
+3. extraer el contenido;
+4. normalizar el contenido;
+5. realizar chunking;
+6. generar embeddings;
+7. recuperar contexto;
+8. construir queries pedagógicas;
+9. generar contenido;
+10. aplicar perfil, formato y nicho;
+11. ejecutar grounding;
+12. validar la salida;
+13. devolver el schema acordado.
 
 ### 3.3 Frontera de responsabilidades
 
@@ -104,72 +108,78 @@ IA NO debe depender de:
 
 # 4. Request
 
-## 4.1 Parámetros funcionales
+## 4.1 Frontera de entrada — 🟢 DECISIÓN CERRADA
+
+La frontera de entrada quedó definida conjuntamente por Backend y Data/IA:
+
+> **Backend entrega a IA el documento original, sin extracción ni tratamiento previo, acompañado de los parámetros funcionales.**
+
+Los parámetros funcionales son:
 
 | Campo | Tipo | MVP | Estado | Descripción |
 |---|---|---:|---|---|
-| documento_titulo | string | Sí | 🟢 | Título del documento |
-| documento_contenido | string | ⚠️ | 🟡 | Texto, solo si se acuerda esta modalidad |
+| documento_original | archivo | Sí | 🟢 | Documento original recibido por Backend |
 | perfil_destinatario | enum | Sí | 🟢 | Perfil objetivo |
 | formato_salida | enum | Sí | 🟢 | Formato solicitado |
 | nicho_sector | enum | Sí | 🟢 | Contexto sectorial |
 | nivel_detalle | enum | Sí | 🟢 | Profundidad |
 
-Ejemplo conceptual:
+### Flujo acordado
 
-    {
-      "documento_titulo": "Fundamentos de Microservicios",
-      "documento_contenido": "...",
-      "perfil_destinatario": "Junior",
-      "formato_salida": "Flashcards",
-      "nicho_sector": "Salud",
-      "nivel_detalle": "Didactico"
-    }
+```
+Backend
+   │
+   │ documento original
+   │ + parámetros
+   ▼
+Data / IA
+   │
+   ├── validación inicial
+   ├── detección de formato
+   ├── extracción
+   └── normalización
+   │
+   ▼
+Pipeline IA
+```
+
+### Responsabilidades en esta frontera
+
+**Backend:**
+- recibe la solicitud;
+- valida los parámetros funcionales;
+- entrega el documento original;
+- no realiza extracción ni tratamiento del contenido.
+
+**Data / IA:**
+- realiza la validación inicial del documento;
+- detecta el formato;
+- realiza la extracción;
+- normaliza el contenido;
+- continúa con el pipeline IA.
+
+### Alcance de la decisión
+
+Esta decisión **cierra la ambigüedad funcional sobre qué recibe IA**.
+
+Queda pendiente únicamente validar técnicamente el mecanismo de transporte/integración del archivo y su implementación.
 
 ---
 
-# 5. 🔴 PUNTO CRÍTICO — ¿Qué recibe exactamente IA?
+# 5.1 Formatos de documento soportados por IA — 🟢 Definido
 
-Aquí existe una diferencia entre los documentos revisados.
+En la reunión del equipo Data/IA se definieron inicialmente los formatos:
 
-### Definición documentada por Marco
+- PDF
+- DOCX
+- Markdown
+- TXT
 
-Backend recibe el archivo, lo valida y lo guarda en OCI. DataIA recibe el archivo crudo + parámetros.
+IA será responsable de detectar el formato y aplicar el lector/extractor correspondiente.
 
-### Schema Pydantic documentado
+> La lista de formatos soportados debe mantenerse alineada con la validación del componente de ingesta y sus pruebas.
 
-Utiliza documento_titulo + documento_contenido, es decir, contenido textual.
 
-Esto afecta directamente el endpoint de Backend.
-
-## Pregunta Q1 — 🔴 Alta
-
-**¿El contrato real será archivo crudo, texto extraído o referencia a OCI?**
-
-### Opción A — Archivo crudo
-
-Backend → multipart/form-data → IA
-
-**Pros:** IA controla extracción y preserva estructura.  
-**Contras:** IA debe manejar formatos y multipart.
-
-### Opción B — Texto extraído
-
-Archivo → Backend → extracción → texto + parámetros → IA
-
-**Pros:** contrato IA simple.  
-**Contras:** Backend asume extracción y puede perder estructura.
-
-### Opción C — Referencia OCI
-
-Backend → OCI → document_id/object_id → IA
-
-**Pros:** evita transportar archivos grandes.  
-**Contras:** IA necesita permisos/acceso a OCI.
-
-### Decisión
-
-🔴 **BE + IA deben escoger una modalidad antes de congelar el request.**
 
 ---
 
@@ -635,7 +645,7 @@ o se define explícitamente una estrategia de compatibilidad.
 
 Antes de marcar el contrato como cerrado:
 
-- [ ] modalidad de envío del documento;
+- [x] modalidad de envío del documento;
 - [x] perfiles MVP;
 - [x] formatos MVP;
 - [x] nicho;
@@ -654,7 +664,7 @@ Antes de marcar el contrato como cerrado:
 
 | ID | Pregunta | Prioridad | Impacta desarrollo BE |
 |---|---|---|---|
-| Q1 | ¿IA recibe archivo, texto o referencia OCI? | 🔴 Alta | Sí, directamente |
+| Q1 | ¿IA recibe archivo, texto o referencia OCI? | 🟢 Cerrada | Documento original + parámetros |
 | Q2 | ¿Senior = Líder Técnico? | 🟢 Cerrada | No bloquea; definición funcional confirmada |
 | Q3 | ¿nivel_detalle obligatorio o default? | 🟠 Media | Sí, validación |
 | Q4 | ¿Qué evidencia devuelve grounding? | 🔴 Alta | Sí, response |
@@ -683,7 +693,7 @@ Antes de marcar el contrato como cerrado:
 
 🔴 No debería congelar todavía:
 
-- formato definitivo del documento enviado a IA;
+- mecanismo técnico definitivo de transporte del documento;
 - persistencia OCI;
 - comportamiento ante contexto insuficiente;
 - estructura final de evidencia de grounding.
@@ -708,7 +718,7 @@ La trazabilidad permite identificar **qué decisión se está siguiendo, a qué 
 | ID | Área | Documento / GAP | Tema | Estado | Impacta BE | Impacta IA | Impacta ARQ |
 |---|---|---|---|---|---|---|---|
 | ARQ-02 | Arquitectura | ARQ-02 | Alcance MVP | 🟢 CERRADO | Sí | Sí | Sí |
-| GAP-01 | Contrato | GAP-01 | Archivo ↔ IA | 🔴 PENDIENTE | Sí | Sí | Sí |
+| GAP-01 | Contrato | GAP-01 | Archivo ↔ IA | 🟡 DEFINIDO / VALIDAR | Sí | Sí | Sí |
 | GAP-02 | Contrato | GAP-02 | JSON | 🟢 CERRADO | Sí | Sí | Sí |
 | GAP-03 | IA | GAP-03 | Contexto / recuperación | 🟡 DEFINIDO / VALIDAR | Sí | Sí | Sí |
 | GAP-04 | IA | GAP-04 | RAG / Query Builder | 🟢 CERRADO | No | Sí | Sí |
