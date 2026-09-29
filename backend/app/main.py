@@ -13,6 +13,12 @@ app = FastAPI(
 def read_root():
     return {"message": "API de NuevaMente en ejecución", "status": "ok"}
 
+@app.get("/health", tags=["Health"])
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "backend"
+    }
 
 # ------------------------------------------------------------------
 # Actividad 3 (BE-03): Endpoint Mock para Adaptación de Contenido
