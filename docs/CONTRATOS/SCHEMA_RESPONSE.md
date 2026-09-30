@@ -2,9 +2,24 @@
 
 **Proyecto:** NuevaMente  
 **Squads:** Backend + IA/Data  
-**Versión:** 2.0  
-**Fecha:** 26-09-2026  
-**Estado:** 🟡 Propuesta técnica para validación BE + IA
+**Versión:** 2.1  
+**Fecha:** 29-09-2026  
+**Estado:** 🟡 Propuesta técnica actualizada para validación BE + IA
+
+## 📌 Cambios recientes
+
+### 2026-09-29 — Actualización contractual
+
+Este schema se alinea con la versión vigente de `CONTRATO_BACKEND_IA.md`:
+
+- El request de documento utiliza **`multipart/form-data`**.
+- Los formatos soportados son **PDF, Markdown y TXT**.
+- **DOCX queda fuera del MVP**.
+- **`request_id` no forma parte del contrato**.
+- **`nivel_detalle` no forma parte del request contractual**; la adaptación se realiza mediante **`perfil_destinatario`**.
+- El versionamiento y reprocesamiento interno de documentos corresponde a **Data & IA** y no se expone como campo contractual de este schema.
+
+**Estado:** Vigente para alineación de Backend + Data & IA.
 
 > Este documento define la **estructura técnica del Response** que IA entrega a Backend.
 >
@@ -155,10 +170,6 @@ Catálogo inicial alineado con el contrato Backend ↔ IA:
 - `Salud`
 - `E-commerce`
 - `General`
-
-**Nivel de detalle**
-
-El `nivel_detalle` pertenece al Request. IA lo utiliza para adaptar la generación, pero no necesariamente debe repetirse en el Response salvo que el contrato definitivo así lo establezca.
 
 ---
 
