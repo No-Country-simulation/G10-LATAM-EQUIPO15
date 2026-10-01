@@ -2,9 +2,27 @@
 
 **Proyecto:** NuevaMente  
 **Squads:** Backend + IA/Data  
-**Versión:** 2.1  
-**Fecha:** 26-09-2026  
-**Estado:** 🟡 Base definida — la frontera de entrada está cerrada; permanecen decisiones pendientes de otras áreas del contrato.
+**Versión:** 2.2  
+**Fecha:** 29-09-2026  
+**Estado:** 🟡 Base definida — contrato actualizado; permanecen decisiones pendientes de otras áreas del contrato.
+
+## 📌 Cambios recientes
+
+### 2026-09-29 — Actualización contractual
+
+Se actualiza el contrato Backend ↔ Data & IA con las siguientes decisiones:
+
+- Se elimina soporte para **DOCX** del MVP.
+- Los formatos de documento soportados quedan en **PDF, Markdown y TXT**.
+- Se elimina **`request_id`** del contrato.
+- Se elimina **`nivel_detalle`**; la adaptación se realiza mediante **`perfil_destinatario`**.
+- La recepción de documentos se realizará mediante **`multipart/form-data`**.
+- El versionamiento, reprocesamiento y control interno de documentos será gestionado por **Data & IA** y no forma parte del contrato Backend ↔ IA.
+
+**Impacto:** Backend / Data & IA / Frontend  
+**Estado:** Vigente
+
+> Esta actualización documental no implica que la implementación o las pruebas de integración estén terminadas. Cada equipo debe revisar las Issues afectadas y alinear su implementación.
 
 > Este documento es el input operativo de Backend para implementar la integración con IA.
 > Cada punto se clasifica como 🟢 CERRADO, 🟡 VALIDAR o 🔴 PENDIENTE.
@@ -36,7 +54,6 @@ Una decisión documentada no demuestra por sí sola que el código esté impleme
 | Perfiles MVP | 🟢 Cerrado | Puede implementarse |
 | Formatos MVP | 🟢 Cerrado | Puede implementarse |
 | Nicho/Sector | 🟢 Cerrado conceptualmente | Debe enviarse a IA |
-| Nivel de detalle | 🟢 Definido | Debe formar parte del request |
 | Query Builder | 🟢 Decidido | Es interno de IA |
 | conceptos_clave | 🟢 Definido | BE debe esperar el campo |
 | tiempo_estimado_estudio_minutos | 🟢 Definido | BE debe esperar el campo |
@@ -112,7 +129,7 @@ IA NO debe depender de:
 
 La frontera de entrada quedó definida conjuntamente por Backend y Data/IA:
 
-> **Backend entrega a IA el documento original, sin extracción ni tratamiento previo, acompañado de los parámetros funcionales.**
+> **Backend entrega a IA el documento original, sin extracción ni tratamiento previo, acompañado de los parámetros funcionales, mediante `multipart/form-data`.**
 
 Los parámetros funcionales son:
 
@@ -122,15 +139,32 @@ Los parámetros funcionales son:
 | perfil_destinatario | enum | Sí | 🟢 | Perfil objetivo |
 | formato_salida | enum | Sí | 🟢 | Formato solicitado |
 | nicho_sector | enum | Sí | 🟢 | Contexto sectorial |
-| nivel_detalle | enum | Sí | 🟢 | Profundidad |
+ 
+### Mecanismo de transporte — 🟢 CERRADO
+
+La solicitud de integración utiliza **`multipart/form-data`** para transportar el archivo original y los parámetros funcionales.
+
+Ejemplo conceptual:
+
+```
+POST /api/v1/adaptar-contenido
+Content-Type: multipart/form-data
+
+documento_original = archivo.pdf
+perfil_destinatario = Junior
+formato_salida = Flashcards
+nicho_sector = General
+```
+
+Backend no debe convertir el archivo a texto antes de enviarlo a IA.
 
 ### Flujo acordado
 
 ```
 Backend
    │
-   │ documento original
-   │ + parámetros
+   │ multipart/form-data
+   │ documento original + parámetros
    ▼
 Data / IA
    │
@@ -162,18 +196,19 @@ Pipeline IA
 
 Esta decisión **cierra la ambigüedad funcional sobre qué recibe IA**.
 
-Queda pendiente únicamente validar técnicamente el mecanismo de transporte/integración del archivo y su implementación.
+El mecanismo contractual de transporte queda definido como `multipart/form-data`. La implementación técnica y su prueba de integración deben validarse en las Issues correspondientes.
 
 ---
 
-# 5.1 Formatos de documento soportados por IA — 🟢 Definido
+# 5.1 Formatos de documento soportados por IA — 🟢 CERRADO
 
-En la reunión del equipo Data/IA se definieron inicialmente los formatos:
+Los formatos de documento soportados por el MVP son:
 
 - PDF
-- DOCX
 - Markdown
 - TXT
+
+**DOCX queda fuera del MVP.**
 
 IA será responsable de detectar el formato y aplicar el lector/extractor correspondiente.
 
@@ -248,30 +283,6 @@ puede producir ejemplos contextualizados en hospitales, clínicas o sistemas san
 
 **Responsabilidad BE:** validar y enviar el enum.  
 **Responsabilidad IA:** utilizarlo.
-
----
-
-# 9. Nivel de detalle
-
-🟢 **Definido**
-
-Valores:
-
-- Didactico
-- Tecnico Intermedio
-- Exhaustivo
-
-La especificación documentada propone Didactico como default.
-
-### Pregunta Q3 — 🟠
-
-¿Será obligatorio o tendrá default?
-
-**Alternativa A — default:** simplifica el request y mantiene compatibilidad.
-
-**Alternativa B — obligatorio:** evita solicitudes ambiguas.
-
-BE necesita esta decisión para cerrar validación del endpoint.
 
 ---
 
@@ -649,7 +660,6 @@ Antes de marcar el contrato como cerrado:
 - [x] perfiles MVP;
 - [x] formatos MVP;
 - [x] nicho;
-- [x] nivel de detalle definido;
 - [ ] request definitivo;
 - [ ] response definitivo validado contra código;
 - [ ] catálogo de errores;
@@ -666,7 +676,6 @@ Antes de marcar el contrato como cerrado:
 |---|---|---|---|
 | Q1 | ¿IA recibe archivo, texto o referencia OCI? | 🟢 Cerrada | Documento original + parámetros |
 | Q2 | ¿Senior = Líder Técnico? | 🟢 Cerrada | No bloquea; definición funcional confirmada |
-| Q3 | ¿nivel_detalle obligatorio o default? | 🟠 Media | Sí, validación |
 | Q4 | ¿Qué evidencia devuelve grounding? | 🔴 Alta | Sí, response |
 | Q5 | ¿Qué es contexto insuficiente? | 🔴 Alta | Sí, estados |
 | Q6 | ¿Cuántos reintentos? | 🟠 Media | Sí, timeout/estado |
@@ -684,7 +693,6 @@ Antes de marcar el contrato como cerrado:
 - validación de perfiles;
 - validación de formatos MVP;
 - validación de nichos;
-- validación de nivel de detalle;
 - estructura base del response;
 - validación de schema;
 - manejo de estados;
@@ -737,7 +745,7 @@ La trazabilidad permite identificar **qué decisión se está siguiendo, a qué 
 # 24. Resumen para Backend
 
     Request
-      ├── documento       ← 🔴 definir modalidad
+      ├── documento       ← 🟢 multipart/form-data
       ├── perfil          ← 🟢
       ├── formato         ← 🟢
       ├── nicho           ← 🟢
@@ -758,10 +766,10 @@ La trazabilidad permite identificar **qué decisión se está siguiendo, a qué 
 
 ### Los cinco puntos que pueden cambiar directamente la implementación BE
 
-1. modalidad del documento;
+1. transporte del documento;
 2. responsabilidad OCI;
 3. contexto insuficiente;
 4. evidencia de grounding;
 5. catálogo definitivo de errores.
 
-**Estos cinco puntos deben cerrarse antes de considerar congelado el contrato Backend ↔ IA.**
+**Estos puntos pendientes deben cerrarse antes de considerar congelado el contrato Backend ↔ IA.**
