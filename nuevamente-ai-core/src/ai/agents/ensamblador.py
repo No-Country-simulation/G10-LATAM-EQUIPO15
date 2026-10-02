@@ -8,8 +8,6 @@ from src.ai.state import EstadoPipelineAdaptacion
 from src.ai.schemas import (
     AdaptacionContenidoResponse,
     MetadatosAprendizaje,
-    EvaluacionCalidad,
-    AlmacenamientoOCI,
     PaqueteContenidoAdaptado,
     PerfilDestinatarioEnum,
     FormatoSalidaEnum,
@@ -63,23 +61,6 @@ def nodo_ensamblador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         nicho_contexto=nicho_enum
     )
 
-    evaluacion = EvaluacionCalidad(
-        anclaje_fuente_score=state.get("anclaje_fuente_score", 0.95),
-        claridad_pedagogica="Alta",
-        observaciones=state.get("critica_observaciones", "Auditado y verificado."),
-        reintentos_realizados=state.get("contador_intentos", 1) - 1
-    )
-
-    # Identificador preliminar de OCI
-    slug_titulo = "".join(c if c.isalnum() else "-" for c in titulo_doc.lower())[:30].strip("-")
-    objeto_id = f"{slug_titulo}_{perfil_enum.value.lower()}_{formato_enum.value.lower()}.json"
-
-    oci = AlmacenamientoOCI(
-        bucket="nuevamente-contenidos-educativos",
-        objeto_id=objeto_id,
-        status_upload="listo_para_subida"
-    )
-
     if formato_enum == FormatoSalidaEnum.MAPA_MENTAL and isinstance(items_raw, dict):
         from src.ai.utils.mermaid import sanitizar_codigo_mermaid
         nodo_central = items_raw.get("nodo_central", titulo_doc)
@@ -102,10 +83,7 @@ def nodo_ensamblador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     respuesta = AdaptacionContenidoResponse(
         status="exito",
         metadatos=metadatos,
-        contenido_adaptado=paquete_contenido,
-        evaluacion_calidad=evaluacion,
-        almacenamiento_oci=oci,
-        codigo_respuesta=200
+        contenido_adaptado=paquete_contenido
     )
 
     return {
