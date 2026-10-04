@@ -44,6 +44,14 @@ Se rediseñó la batería de pruebas en `tests/test_ai_pipeline.py` para utiliza
 *   **Failover Dinámico:** Se validó la conmutación de caída. Si Gemini se satura (HTTP 429), la generación hace *fallback* inmediato hacia **Groq (Llama 3.3)** sin que el usuario lo note.
 *   **Resolución de Bloqueos:** Se solucionaron bloqueos de concurrencia en SQLite (ChromaDB) limpiando el caché local `.chromadb_data/` entre sesiones de pruebas.
 
-## 5. Siguientes Pasos (Handoff a Backend)
+## 5. Resolución de Puntos Pendientes del Contrato (MVP v2.1)
+
+Durante esta integración, se tomaron decisiones arquitectónicas clave que **cierran oficialmente** los puntos pendientes del documento `contratos.md`:
+
+*   **Punto 13 / 15 (Evidencia de Grounding y Evaluación de Calidad):** Se cierra con la decisión de **excluir** los scores del JSON final. La validación de fidelidad ocurre internamente. Si falla, el motor devuelve un error 422; si pasa, el Backend puede confiar en que el contenido es fidedigno. Esto ahorra peso en el payload.
+*   **Punto 16 (Persistencia OCI):** Se cierra con la **Alternativa C (Responsabilidad Separada)**. IA solo entrega el JSON puro en memoria, y Backend asume la responsabilidad exclusiva de comunicarse con los buckets de OCI (Storage) y persistir los archivos generados.
+*   **Punto 24 (codigo_respuesta):** Se decidió eliminarlo del body JSON, delegando el manejo de códigos HTTP enteramente al framework FastAPI del Backend, evitando duplicación de estado.
+
+## 6. Siguientes Pasos (Handoff a Backend)
 
 El motor local ha quedado encapsulado de forma limpia. El próximo y último paso de integración es que el equipo Backend importe la función `ejecutar_pipeline_adaptacion_async` en el router de FastAPI (`src/api/router.py`), reemplace los mocks estáticos actuales, e implemente el validador de tamaño máximo (10MB) en el `UploadFile`.
