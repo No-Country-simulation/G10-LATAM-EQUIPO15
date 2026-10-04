@@ -76,7 +76,7 @@ def ejecutar_pipeline_adaptacion(
         filter={"document_id": vs_res.document_id} 
     )
     
-    fragmentos_relevantes = [{"texto": d.page_content, "metadatos": d.metadata} for d in docs_relevantes]
+    fragmentos_relevantes = [{"contenido": d.page_content, "metadatos": d.metadata} for d in docs_relevantes]
     texto_completo = " ".join([d.page_content for d in docs_relevantes])
 
     # 3. Fase de LangGraph (Generación y Crítica)
@@ -206,7 +206,7 @@ async def ejecutar_pipeline_adaptacion_async(
         filter={"document_id": vs_res.document_id} 
     )
     
-    fragmentos_relevantes = [{"texto": d.page_content, "metadatos": d.metadata} for d in docs_relevantes]
+    fragmentos_relevantes = [{"contenido": d.page_content, "metadatos": d.metadata} for d in docs_relevantes]
     texto_completo = " ".join([d.page_content for d in docs_relevantes])
 
     # 3. Fase de LangGraph Asíncrono

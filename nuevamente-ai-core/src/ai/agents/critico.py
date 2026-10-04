@@ -15,7 +15,7 @@ def nodo_critico(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     """
     borrador = state.get("borrador_contenido", {})
     fragmentos = state.get("fragmentos_relevantes", [])
-    texto_fuente = " ".join([f.get("contenido", "").lower() for f in fragmentos])
+    texto_fuente = " ".join([f.get("contenido", "").lower() for f in fragmentos]).strip()
     if not texto_fuente:
         texto_fuente = state.get("documento_contenido", "").lower()
 
@@ -34,7 +34,8 @@ def nodo_critico(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     # Cálculo heurístico de fidelidad semántica
     palabras_clave_fuente = set([w for w in texto_fuente.split() if len(w) > 4])
     if not palabras_clave_fuente:
-        score = 0.95
+        score = 0.0
+        observaciones = "Contexto Insuficiente: la fuente no contiene términos suficientes para evaluar el borrador."
     else:
         palabras_borrador = [w for w in texto_borrador.split() if len(w) > 4]
         coincidencias = sum(1 for w in palabras_borrador if w in palabras_clave_fuente)
