@@ -72,7 +72,7 @@ def ejecutar_pipeline_adaptacion(
     
     docs_relevantes = vectorstore.similarity_search(
         query=query_pedagogica,
-        k=5,
+        k=15,
         filter={"document_id": vs_res.document_id} 
     )
     
@@ -202,7 +202,7 @@ async def ejecutar_pipeline_adaptacion_async(
     
     docs_relevantes = vectorstore.similarity_search(
         query=query_pedagogica,
-        k=5,
+        k=15,
         filter={"document_id": vs_res.document_id} 
     )
     
