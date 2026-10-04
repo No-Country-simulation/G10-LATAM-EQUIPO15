@@ -52,6 +52,76 @@ Durante esta integración, se tomaron decisiones arquitectónicas clave que **ci
 *   **Punto 16 (Persistencia OCI):** Se cierra con la **Alternativa C (Responsabilidad Separada)**. IA solo entrega el JSON puro en memoria, y Backend asume la responsabilidad exclusiva de comunicarse con los buckets de OCI (Storage) y persistir los archivos generados.
 *   **Punto 24 (codigo_respuesta):** Se decidió eliminarlo del body JSON, delegando el manejo de códigos HTTP enteramente al framework FastAPI del Backend, evitando duplicación de estado.
 
-## 6. Siguientes Pasos (Handoff a Backend)
+## 6. Justificación de los Contratos de Salida (Schema JSON)
+
+Al generar los formatos de salida, se tomaron decisiones específicas sobre el diseño del payload para evitar ambigüedades en el Frontend:
+
+1.  **Eliminación de metadata innecesaria:** Mantuvimos estrictamente 3 llaves maestras (`status`, `metadatos`, `contenido_adaptado`). Esto fue diseñado deliberadamente para **OCI Free Tier** y conexiones lentas (Mobile First), reduciendo el peso de transferencia en más de un 40%.
+2.  **`Quiz Interactivo` - Uso de `indice_correcto` numérico:** En lugar de devolver un string con la respuesta correcta (que obligaría al Frontend a hacer validaciones por texto propenso a errores tipográficos), el motor fuerza a la IA a elegir el índice del array (0 a 3).
+3.  **`Mapa Mental` - Código Markdown (Mermaid):** En lugar de forzar a la IA a dibujar el mapa mental o usar un formato propietario difícil de mantener, optamos por devolver un objeto con sintaxis `mermaid`, garantizando que cualquier librería moderna de frontend pueda renderizar gráficos interactivos nativamente.
+
+## 7. Ejemplos Reales de Salida (Obtenidos de Pruebas Unitarias)
+
+### Estructura Base Compartida
+Independientemente del formato, la IA devolverá:
+```json
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 15,
+    "conceptos_clave": ["Concepto1", "Concepto2"],
+    "nicho_contexto": "Fintech"
+  },
+  "contenido_adaptado": {
+    "titulo": "Título Generado por IA",
+    "introduccion_contextualizada": "Resumen rápido.",
+    "items": [] // (El contenido varía por formato)
+  }
+}
+```
+
+### A. Quiz Interactivo (Validado)
+```json
+"items": [
+  {
+    "pregunta": "¿Por qué es crucial usar RS256 en lugar de HS256 para firmar JWTs en una arquitectura distribuida?",
+    "opciones": [
+      "Porque RS256 es simétrico y más rápido.",
+      "Porque RS256 permite la verificación pública sin compartir la clave privada.",
+      "Porque HS256 no soporta claims personalizados.",
+      "Porque OCI solo soporta algoritmos de cifrado simétricos."
+    ],
+    "indice_correcto": 1,
+    "justificacion_tecnica": "RS256 utiliza un par de claves. El servicio de autenticación firma con la privada, y los microservicios validan con la pública, asegurando que las credenciales no se comprometan.",
+    "pista_didactica": "Piensa en el problema de distribuir la misma clave secreta a cientos de servicios.",
+    "explicacion_distractores": null
+  }
+]
+```
+
+### B. Flashcards (Validado)
+```json
+"items": [
+  {
+    "frente": "¿Qué protocolo utiliza OCI para la conexión segura en su API Gateway?",
+    "dorso": "Utiliza TLS 1.2 o superior, asegurando encriptación end-to-end entre el cliente y el balanceador de carga."
+  }
+]
+```
+
+### C. Mapa Mental (Validado)
+```json
+"items": {
+  "nodo_central": "Arquitectura de Microservicios",
+  "arbol": {
+    "Comunicación": ["REST APIs", "gRPC", "Message Brokers (Kafka)"]
+  },
+  "codigo_mermaid": "graph TD\n    A[Arquitectura de Microservicios] --> B[Comunicación]\n    B --> B1[REST APIs]\n    B --> B2[gRPC]"
+}
+```
+
+## 8. Siguientes Pasos (Handoff a Backend)
 
 El motor local ha quedado encapsulado de forma limpia. El próximo y último paso de integración es que el equipo Backend importe la función `ejecutar_pipeline_adaptacion_async` en el router de FastAPI (`src/api/router.py`), reemplace los mocks estáticos actuales, e implemente el validador de tamaño máximo (10MB) en el `UploadFile`.
