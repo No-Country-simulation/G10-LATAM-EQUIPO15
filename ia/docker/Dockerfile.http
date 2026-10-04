@@ -1,0 +1,37 @@
+FROM python:3.14-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/nuevamente-ai-core/src \
+    ANONYMIZED_TELEMETRY=False
+
+WORKDIR /workspace
+COPY nuevamente-ai-core/requirements.txt nuevamente-ai-core/requirements.txt
+COPY ia/requirements-tests.txt ia/requirements-tests.txt
+RUN pip install --no-cache-dir -r nuevamente-ai-core/requirements.txt -r ia/requirements-tests.txt
+COPY ia/requirements-http.txt ia/requirements-http.txt
+RUN pip install --no-cache-dir -r ia/requirements-http.txt
+
+ENV PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/nuevamente-ai-core/src:/workspace/ia/src \
+    IA_STRICT_PROVIDERS=1 \
+    CHROMADB_DIR=/workspace/data/chromadb
+
+COPY nuevamente-ai-core/src nuevamente-ai-core/src
+# Compatibilidad con los imports existentes de AI Core y Data/IA.
+COPY ia/src/dataia nuevamente-ai-core/src/dataia
+COPY ia/src/ia_http ia/src/ia_http
+RUN useradd --create-home --shell /usr/sbin/nologin iauser \
+    && mkdir -p /workspace/data/chromadb \
+    && chown -R iauser:iauser /workspace
+USER iauser
+
+EXPOSE 8001
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2)"
+CMD ["python", "-m", "uvicorn", "ia_http.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+
+FROM runtime AS tests
+COPY nuevamente-ai-core/tests nuevamente-ai-core/tests
+COPY ia/tests ia/tests
+CMD ["python", "-m", "pytest", "ia/tests", "nuevamente-ai-core/tests/test_ai_pipeline.py", "nuevamente-ai-core/tests/test_critic_context.py", "-q", "--tb=short", "--timeout=30", "-k", "not ejecucion_pipeline and not fidelidad"]

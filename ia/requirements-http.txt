@@ -1,0 +1,6 @@
+# Adaptador HTTP del pipeline Data/IA.
+fastapi>=0.115,<1.0
+uvicorn>=0.34,<1.0
+python-multipart>=0.0.20,<0.1
+# También utilizado para identificar fallos de transporte del proveedor.
+httpx>=0.28,<1.0

@@ -1,0 +1,66 @@
+{
+    "status": "exito",
+    "metadatos": {
+        "perfil_aplicado": "Senior",
+        "formato_generado": "Flashcards",
+        "tiempo_estimado_estudio_minutos": 5,
+        "conceptos_clave": [
+            "OCI.pdf",
+            "Fragmento",
+            "También",
+            "Consulte",
+            "Detalles",
+            "JWKS"
+        ],
+        "nicho_contexto": "General"
+    },
+    "contenido_adaptado": {
+        "titulo": "Arquitectura de Autenticación y Autorización JWT en OCI API Gateway",
+        "introduccion_contextualizada": "Guía técnica avanzada para ingenieros de nube y arquitectos de software sobre la implementación, validación y control de seguridad mediante JSON Web Tokens (JWT) y políticas de autenticación en Oracle Cloud Infrastructure (OCI) API Gateway.",
+        "items": [
+            {
+                "frente": "¿Cuál es la diferencia principal entre las políticas de validación REMOTE_JWKS y STATIC_KEYS en OCI API Gateway?",
+                "dorso": "REMOTE_JWKS recupera dinámicamente claves de verificación públicas desde el proveedor de identidad en tiempo de ejecución, lo que implica llamadas de red externas. STATIC_KEYS utiliza claves públicas pre-emitidas almacenadas localmente, permitiendo una validación completamente en memoria y sin dependencias de red en runtime.",
+                "pista_didactica": "REMOTE_JWKS consulta la base de datos central en vivo; STATIC_KEYS utiliza un certificado de identidad anclado localmente.",
+                "categoria_dificultad": "Avanzado"
+            },
+            {
+                "frente": "¿Qué trade-off operativo y de rendimiento existe al utilizar la política de validación REMOTE_DISCOVERY con introspección de tokens?",
+                "dorso": "Requiere enviar las credenciales de cliente y el token al punto final de introspección del proveedor de identidad, incurriendo en latencia de red en cada validación a menos que se configure una caché (de 1 a 24 horas), lo que reduce las llamadas externas pero introduce el riesgo de persistencia temporal de estados revocados.",
+                "pista_didactica": "Validar contra el servidor central garantiza revocación inmediata a cambio de latencia de red.",
+                "categoria_dificultad": "Avanzado"
+            },
+            {
+                "frente": "¿Cómo gestiona OCI API Gateway la mitigación de ataques CSRF cuando se almacenan tokens JWT en cookies de sesión?",
+                "dorso": "Al habilitar 'Usar Cookies para la Sesión', el gateway emite un token CSRF en la cabecera de respuesta X-CSRF-TOKEN (y en la variable de contexto request.auth[apigw_csrf_token]). Las solicitudes de mutación (POST, PUT, DELETE) deben reenviar este token obligatoriamente en la cabecera X-CSRF-TOKEN.",
+                "pista_didactica": "La cookie viaja sola por el navegador; el encabezado CSRF exige que el cliente demuestre control activo del script.",
+                "categoria_dificultad": "Avanzado"
+            },
+            {
+                "frente": "¿Por qué se recomienda migrar de JWT_AUTHENTICATION a TOKEN_AUTHENTICATION en OCI API Gateway?",
+                "dorso": "TOKEN_AUTHENTICATION unifica la validación tanto para tokens JWT como opacos (no JWT), soporta puntos finales de introspección remotos y permite configurar políticas avanzadas de fallo de validación, incluyendo la generación automatizada de nuevos tokens.",
+                "pista_didactica": "TOKEN_AUTHENTICATION es el motor unificado y extensible que reemplaza al antiguo validador estricto de JWT.",
+                "categoria_dificultad": "Intermedio"
+            },
+            {
+                "frente": "¿Qué ocurre a nivel de contexto de ejecución en el gateway una vez que un JWT es validado exitosamente?",
+                "dorso": "El gateway extrae las reclamaciones (claims) de la carga útil como pares clave-valor y los almacena en el registro request.auth, permitiendo su uso como variables de marco en definiciones de backend HTTP o en políticas de autorización basadas en la reclamación scope.",
+                "pista_didactica": "El token se desarma y sus claims se transforman en variables de contexto inyectables en el backend.",
+                "categoria_dificultad": "Intermedio"
+            }
+        ]
+    },
+    "evaluacion_calidad": {
+        "anclaje_fuente_score": 0.8,
+        "claridad_pedagogica": "Alta",
+        "observaciones": "Calidad preliminar sub-umbral (0.8). Cobertura fáctica insuficiente. Términos clave no reflejados adecuadamente: definidos, emisor, tenga, consulte, básica. Se solicita reescribir integrando mayor fidelidad al documento fuente.",
+        "reintentos_realizados": 0
+    },
+    "almacenamiento_oci": {
+        "bucket": "nuevamente-contenidos-educativos",
+        "objeto_id": "manual-jwt-oci_senior_flashcards.json",
+        "status_upload": "listo_para_subida",
+        "ruta_publica_o_par": null
+    },
+    "codigo_respuesta": 200
+}

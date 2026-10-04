@@ -11,6 +11,7 @@ htmlcov/
 venv/
 
 .env
+.env.*
 *.log
 
 .vscode/
