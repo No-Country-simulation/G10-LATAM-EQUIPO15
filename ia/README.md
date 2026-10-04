@@ -1,6 +1,6 @@
-# Pruebas de Data & IA con Docker
+# Data & IA con Docker
 
-Este entorno permite diagnosticar la suite existente de AI Core junto con los módulos Data/IA. Requiere Docker Desktop o Docker Engine con Compose; no requiere instalar Python en la máquina local.
+Este entorno permite probar AI Core junto con los módulos Data/IA y ejecutar su servicio HTTP. Requiere Docker Desktop o Docker Engine con Compose; no requiere instalar Python en la máquina local.
 
 ## Fuentes utilizadas
 
@@ -36,7 +36,7 @@ docker compose -f ia/compose.tests.yaml run --rm ia-tests python -m pytest tests
 
 Estas pruebas no acreditan generación real, fidelidad del contenido, disponibilidad de proveedores ni almacenamiento en OCI. En particular, la prueba de respaldo verifica la configuración del objeto, sin provocar una caída real de Gemini.
 
-Este entorno es de pruebas; todavía no define cómo el Backend invocará IA ni ofrece una API HTTP.
+Estas configuraciones ejecutan pruebas e invocaciones directas. El servicio HTTP se levanta con la configuración independiente descrita a continuación.
 
 ## Ejecutar el pipeline con Gemini real
 
@@ -48,3 +48,76 @@ docker compose --env-file ia/.env -f ia/compose.real.yaml run --rm ia-real
 ```
 
 Esta ejecución habilita Internet, consume la cuota del proveedor e invoca el pipeline directamente con `tests/JWT en OCI.pdf`, perfil Junior y formato Flashcards. Utiliza `gemini-3.1-flash-lite`, configurable mediante `GEMINI_MODEL` en `ia/.env`, y el modelo de embeddings configurado en Data/IA. No importa la suite de pytest ni sus mocks. El modo `IA_STRICT_PROVIDERS=1` propaga los errores del enriquecimiento y la ejecución rechaza el borrador de contingencia del generador si Gemini no produce una salida válida. El campo de almacenamiento de la respuesta no acredita una subida real a OCI.
+
+## Servicio HTTP de IA
+
+El servicio expone el pipeline existente mediante FastAPI. La entrada sigue la frontera `multipart/form-data` del [contrato Backend ↔ IA v2.2](https://github.com/No-Country-simulation/G10-LATAM-EQUIPO15/blob/main/docs/CONTRATOS/CONTRATO_BACKEND_IA.md) disponible en `main`. El contrato todavía debe incorporarse a las ramas de implementación; la respuesta HTTP conserva el modelo `AdaptacionContenidoResponse` de AI Core, incluido su campo `almacenamiento_oci`. Ese campo no representa una subida a OCI.
+
+Desde la raíz del repositorio, con `GOOGLE_API_KEY` cargada en `ia/.env`:
+
+```powershell
+docker compose --env-file ia/.env -f ia/compose.http.yaml up -d --build ia-http
+Invoke-RestMethod http://localhost:18001/health
+```
+
+Swagger: <http://localhost:18001/docs>. Endpoint: `POST /api/v1/adaptar-contenido`.
+
+| Campo | Tipo / valores |
+|---|---|
+| `documento_original` | Archivo PDF, MD, Markdown o TXT |
+| `perfil_destinatario` | `Junior`, `Senior`, `Ejecutivo` |
+| `formato_salida` | `Flashcards`, `Quiz Interactivo`, `Resumen Ejecutivo`, `Mapa Mental` |
+| `nicho_sector` | `Fintech`, `Salud`, `E-commerce`, `General` |
+
+Los cuatro campos son obligatorios. El título se deriva del nombre del archivo. Se preservan sus bytes, se guardan en un directorio temporal independiente y se eliminan al finalizar la solicitud, incluso ante un rechazo del pipeline. IA realiza la extracción y la validación de contenido. El adaptador admite las extensiones documentadas; no toma el MIME declarado por el cliente como prueba del formato real.
+
+Ejemplo desde PowerShell, utilizando el PDF del repositorio:
+
+```powershell
+curl.exe -X POST http://localhost:18001/api/v1/adaptar-contenido `
+  -F "documento_original=@nuevamente-ai-core/tests/JWT en OCI.pdf" `
+  -F "perfil_destinatario=Junior" `
+  -F "formato_salida=Flashcards" `
+  -F "nicho_sector=General"
+```
+
+La adaptación consume cuota de Gemini y puede tardar varios minutos. El servicio requiere credenciales y modo estricto: si falla el generador, propaga el error en lugar de devolver un borrador de prueba. No cambia el algoritmo ni el umbral de fidelidad. `/health` comprueba disponibilidad HTTP; no consulta proveedores ni certifica que una adaptación pueda completarse.
+
+El puerto local es `18001`, configurable con `IA_PORT` en `ia/.env`, y se publica solo en loopback. Dentro de Docker el puerto es `8001`. El límite de documento es 10 MiB, configurable mediante `IA_MAX_DOCUMENT_BYTES`; se verifica al recibir el archivo y durante su copia. El parser multipart puede almacenar el cuerpo antes de esa verificación: para un despliegue público también corresponde limitar el cuerpo en el proxy de entrada.
+
+Se procesa un documento por vez por proceso; otras solicitudes de adaptación reciben `503 IA_OCUPADA` y pueden reintentarse. El contenedor arranca un único worker. La solicitud es síncrona, sin trabajos en segundo plano ni SSE. Chroma almacena los índices dentro del contenedor; se pierden al eliminarlo. La configuración de persistencia definitiva queda pendiente.
+
+### Respuestas del adaptador
+
+El éxito devuelve `200` con la respuesta tipada del pipeline. Los errores tienen esta forma:
+
+```json
+{"detail": {"codigo": "CONTEXTO_INSUFICIENTE", "mensaje": "IA rechazó el contenido por no alcanzar su criterio de fidelidad."}}
+```
+
+| HTTP | Situación |
+|---|---|
+| `413` | Documento mayor al límite configurado |
+| `415` | Extensión fuera de PDF, Markdown y TXT |
+| `422` | Parámetros inválidos, archivo vacío, rechazo de ingesta o rechazo por calidad |
+| `500` | Error interno no clasificado |
+| `502` | Fallo de proveedor, segmentación/indexación o respuesta incompatible con el esquema |
+| `503` | IA ocupada, credenciales/modo estricto faltantes, proveedor no disponible o cuota agotada |
+| `504` | El proveedor comunica un timeout |
+
+Este mapeo es el comportamiento del adaptador; el catálogo definitivo de errores debe alinearse con Backend. El pipeline actual convierte algunos fallos de segmentación/indexación en mensajes genéricos, por lo que esos casos se devuelven como `502` aunque su causa original pueda ser una cuota agotada. No se devuelven excepciones crudas, claves ni rutas internas. No hay un timeout global que cancele el pipeline.
+
+### Pruebas HTTP sin consumir cuota
+
+```powershell
+docker compose --env-file ia/.env -f ia/compose.http.yaml --profile tests build ia-http-tests
+docker compose --env-file ia/.env -f ia/compose.http.yaml --profile tests run --rm ia-http-tests
+```
+
+El contenedor de pruebas no recibe las credenciales y ejecuta sin red. La configuración Compose requiere `--env-file ia/.env` porque contiene también el servicio real, pero la clave solo se inyecta en `ia-http`. Las pruebas HTTP sustituyen la llamada al pipeline para verificar el transporte, validación, limpieza de archivos, ocupación, respuestas y errores; otras pruebas verifican la delegación al pipeline y que el generador respete el modo estricto. También se ejecutan las nueve comprobaciones locales anteriores.
+
+```powershell
+docker compose --env-file ia/.env -f ia/compose.http.yaml down
+```
+
+Este servicio habilita la invocación HTTP de IA. La conexión desde Backend, persistencia OCI y aprobación de fidelidad siguen pendientes.

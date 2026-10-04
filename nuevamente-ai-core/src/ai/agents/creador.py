@@ -3,6 +3,7 @@ Nodo 2: Redactor Pedagógico (Content Creator).
 Invoca al LLM para transformar la documentación técnica en el formato didáctico estructurado.
 """
 
+import os
 from typing import Any, Dict
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.ai.state import EstadoPipelineAdaptacion
@@ -57,6 +58,8 @@ def nodo_creador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         ])
         borrador_dict = resultado.model_dump()
     except Exception as e:
+        if os.getenv("IA_STRICT_PROVIDERS") == "1":
+            raise
         # Fallback de contingencia determinista si las API Keys no están configuradas en pruebas locales
         borrador_dict = _generar_borrador_fallback(titulo, perfil, formato, texto_fuente)
 
