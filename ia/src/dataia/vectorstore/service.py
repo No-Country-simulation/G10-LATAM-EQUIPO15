@@ -1,5 +1,7 @@
 from dataia.common.models import ChunkingResult, VectorStoreResponse, VectorStoreResult, VectorStoreError
 from dataia.vectorstore.client import insert_chunks, COLLECTION_NAME
+import os
+from dataia.common.providers import is_provider_error
 
 def process_vectorstore(chunking_result: ChunkingResult) -> VectorStoreResponse:
     """
@@ -24,6 +26,8 @@ def process_vectorstore(chunking_result: ChunkingResult) -> VectorStoreResponse:
         )
         
     except Exception as e:
+        if os.getenv("IA_STRICT_PROVIDERS") == "1" and is_provider_error(e):
+            raise
         return VectorStoreError(
             codigo="ERROR_VECTORSTORE",
             mensaje=f"Fallo críto en almacenamiento/embeddings vectorial: {str(e)}"

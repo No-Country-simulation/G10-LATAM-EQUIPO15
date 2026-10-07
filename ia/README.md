@@ -47,7 +47,7 @@ docker compose -f ia/compose.tests.yaml build ia-tests
 docker compose --env-file ia/.env -f ia/compose.real.yaml run --rm ia-real
 ```
 
-Esta ejecución habilita Internet, consume la cuota del proveedor e invoca el pipeline directamente con `tests/JWT en OCI.pdf`, perfil Junior y formato Flashcards. Utiliza `gemini-3.1-flash-lite`, configurable mediante `GEMINI_MODEL` en `ia/.env`, y el modelo de embeddings configurado en Data/IA. No importa la suite de pytest ni sus mocks. El modo `IA_STRICT_PROVIDERS=1` propaga los errores del enriquecimiento y la ejecución rechaza el borrador de contingencia del generador si Gemini no produce una salida válida. La respuesta actual no incluye información de almacenamiento; la persistencia en OCI sigue pendiente.
+Esta ejecución habilita Internet, consume la cuota del proveedor e invoca el pipeline directamente con `tests/JWT en OCI.pdf`, perfil Junior y formato Flashcards. Utiliza `gemini-3.5-flash-lite`, configurable mediante `GEMINI_MODEL` en `ia/.env`, y el modelo de embeddings configurado en Data/IA. No importa la suite de pytest ni sus mocks. El modo `IA_STRICT_PROVIDERS=1` propaga los errores del enriquecimiento y la ejecución rechaza el borrador de contingencia del generador si Gemini no produce una salida válida. La respuesta actual no incluye información de almacenamiento; la persistencia en OCI sigue pendiente.
 
 ## Servicio HTTP de IA
 
@@ -85,7 +85,24 @@ La adaptación consume cuota de Gemini y puede tardar varios minutos. El servici
 
 El puerto local es `18001`, configurable con `IA_PORT` en `ia/.env`, y se publica solo en loopback. Dentro de Docker el puerto es `8001`. El límite de documento es 10 MiB, configurable mediante `IA_MAX_DOCUMENT_BYTES`; se verifica al recibir el archivo y durante su copia. El parser multipart puede almacenar el cuerpo antes de esa verificación: para un despliegue público también corresponde limitar el cuerpo en el proxy de entrada.
 
-Se procesa un documento por vez por proceso; otras solicitudes de adaptación reciben `503 IA_OCUPADA` y pueden reintentarse. El contenedor arranca un único worker. La solicitud es síncrona, sin trabajos en segundo plano ni SSE. Chroma almacena los índices dentro del contenedor; se pierden al eliminarlo. La configuración de persistencia definitiva queda pendiente.
+Se procesa un documento por vez; otras solicitudes de adaptación reciben `503 IA_OCUPADA` y pueden reintentarse. El contenedor arranca un único worker HTTP. Cada adaptación se ejecuta en un proceso hijo supervisado: al agotar el presupuesto total, IA termina ese proceso, libera la ocupación y elimina el archivo temporal antes de responder. La solicitud sigue siendo síncrona, sin trabajos persistentes en segundo plano ni SSE. Chroma almacena los índices dentro del contenedor; se pierden al eliminarlo. La configuración de persistencia definitiva queda pendiente.
+
+### Límites de ejecución
+
+| Variable | Predeterminado | Uso |
+|---|---|---|
+| `IA_PROVIDER_TIMEOUT_SECONDS` | `60` | Timeout de una solicitud al proveedor, para generación, enriquecimiento y embeddings |
+| `IA_PROVIDER_MAX_RETRIES` | `1` | Hasta un reintento adicional; admite valores de 0 a 2 |
+| `IA_PIPELINE_TIMEOUT_SECONDS` | `480` | Presupuesto total de la adaptación HTTP, incluyendo el arranque del proceso hijo |
+| `IA_CALLER_TIMEOUT_SECONDS` | `600` | Tiempo disponible en el cliente; Compose de integración lo toma de `IA_HTTP_TIMEOUT_SECONDS` |
+
+Los tiempos deben ser positivos y finitos. El presupuesto de IA debe ser al menos cinco segundos menor que el del cliente; se recomienda conservar un margen mayor para transporte y cierre del proceso. Una configuración inválida devuelve `503 IA_NO_CONFIGURADA` antes de comenzar a procesar. Los valores se pueden cargar en `ia/.env`; Compose transmite estas opciones sin incorporar ese archivo a la imagen.
+
+Se fijan `langchain-google-genai==4.4.0` y `google-genai==2.28.0`, versiones con las que se verifica que los límites llegan a las solicitudes del SDK. En esa versión de LangChain, `max_retries` se transforma en intentos totales; la configuración anterior expresa reintentos adicionales y hace la conversión. Embeddings utiliza un cliente SDK con opciones HTTP explícitas porque la versión instalada no aplica su campo `request_options` a `embed_content`.
+
+Los logs registran etapas, duración, tipo de excepción y código original de Google, incluyendo `429` y `503`. El adaptador mantiene su catálogo público de errores. En modo estricto, un fallo del crítico se propaga como fallo del proveedor, sin convertirlo en una puntuación artificial de baja fidelidad. Los mensajes de excepciones, prompts, claves y rutas de documentos no se registran por este manejo de errores. El timeout global detiene el trabajo local pendiente; no revierte solicitudes que ya fueron enviadas a Google.
+
+Para Gemini 3, la fábrica conserva la temperatura predeterminada del modelo, conforme a la [recomendación de Google](https://ai.google.dev/gemini-api/docs/gemini-3#temperature). Gemini 2 mantiene la temperatura solicitada por cada módulo. Este ajuste no modifica los umbrales ni los criterios del crítico.
 
 ### Respuestas del adaptador
 
@@ -103,9 +120,9 @@ El éxito devuelve `200` con la respuesta tipada del pipeline. Los errores tiene
 | `500` | Error interno no clasificado |
 | `502` | Fallo de proveedor, segmentación/indexación o respuesta incompatible con el esquema |
 | `503` | IA ocupada, credenciales/modo estricto faltantes, proveedor no disponible o cuota agotada |
-| `504` | El proveedor comunica un timeout |
+| `504` | Timeout del proveedor o agotamiento del presupuesto total de IA |
 
-Este mapeo es el comportamiento del adaptador; el catálogo definitivo de errores debe alinearse con Backend. El pipeline actual convierte algunos fallos de segmentación/indexación en mensajes genéricos, por lo que esos casos se devuelven como `502` aunque su causa original pueda ser una cuota agotada. No se devuelven excepciones crudas, claves ni rutas internas. No hay un timeout global que cancele el pipeline.
+Este mapeo es el comportamiento del adaptador; el catálogo definitivo de errores debe alinearse con Backend. En modo estricto, los fallos reconocidos del proveedor conservan su causa durante segmentación e indexación para clasificarlos correctamente. Otros fallos de procesamiento devuelven `502`. No se devuelven excepciones crudas, claves ni rutas internas.
 
 ### Pruebas HTTP sin consumir cuota
 

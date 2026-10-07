@@ -6,6 +6,7 @@ Soporta Google Gemini (vía langchain-google-genai) con failover automático a G
 import os
 from typing import Optional
 from dotenv import load_dotenv
+from dataia.common.providers import create_gemini_llm, provider_limits
 
 try:
     # Habilitar caché global en memoria para ahorrar tokens
@@ -34,7 +35,8 @@ def obtener_llm_adaptacion(temperatura: float = 0.3, provider_override: Optional
             model=model_name,
             api_key=api_key,
             temperature=temperatura,
-            max_retries=2
+            max_retries=provider_limits()[1],
+            timeout=provider_limits()[0],
         )
 
     # Proveedor primario: Google Gemini
@@ -42,14 +44,7 @@ def obtener_llm_adaptacion(temperatura: float = 0.3, provider_override: Optional
     if not api_key:
         raise ValueError("GEMINI_API_KEY no encontrada en el entorno. Configure .env")
 
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    gemini_llm = ChatGoogleGenerativeAI(
-        model=model_name,
-        google_api_key=api_key,
-        temperature=temperatura,
-        max_retries=2
-    )
+    gemini_llm = create_gemini_llm(temperatura)
     
     # Failover automatico a Groq si falla Gemini
     groq_api_key = os.getenv("GROQ_API_KEY")
@@ -60,7 +55,8 @@ def obtener_llm_adaptacion(temperatura: float = 0.3, provider_override: Optional
                 model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
                 api_key=groq_api_key,
                 temperature=temperatura,
-                max_retries=1
+                max_retries=provider_limits()[1],
+                timeout=provider_limits()[0],
             )
             return gemini_llm.with_fallbacks([groq_llm])
         except ImportError:

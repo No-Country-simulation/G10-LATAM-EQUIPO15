@@ -2,7 +2,7 @@
 
 from io import BytesIO
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 import httpx
 import pytest
@@ -208,7 +208,7 @@ def test_adapter_calls_existing_pipeline(configured, monkeypatch, result):
     invoke = Mock(return_value=result)
     monkeypatch.setattr(runner, "ejecutar_pipeline_adaptacion", invoke)
     assert runner.run_pipeline(ruta_archivo="/tmp/documento.md", perfil="Junior") == result
-    invoke.assert_called_once_with(ruta_archivo="/tmp/documento.md", perfil="Junior")
+    invoke.assert_called_once_with(ruta_archivo="/tmp/documento.md", perfil="Junior", callback_telemetria=ANY)
 
 
 @pytest.mark.parametrize("missing", ["GOOGLE_API_KEY", "GEMINI_API_KEY", "IA_STRICT_PROVIDERS"])

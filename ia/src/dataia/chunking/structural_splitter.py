@@ -5,7 +5,7 @@ import uuid
 from typing import List, Dict, Tuple
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dataia.common.models import ExtractedContent, Chunk, ChunkMetadata
-from langchain_google_genai import ChatGoogleGenerativeAI
+from dataia.common.providers import create_gemini_llm, provider_call
 from pydantic import BaseModel, Field
 
 CACHE_DIR = ".dataia_cache/chunk_metadata"
@@ -28,14 +28,15 @@ def enrich_chunk_metadata(chunk_id: str, text: str) -> ChunkPedagogicalInfo:
             pass
 
     try:
-        llm = ChatGoogleGenerativeAI(model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"), temperature=0.0)
+        llm = create_gemini_llm()
         structured_llm = llm.with_structured_output(ChunkPedagogicalInfo)
         
         prompt = (
             "Analiza el siguiente fragmento de texto técnico y determina su tipo de contenido, nivel de dificultad (1-5) y concepto principal.\n\n"
             f"Fragmento:\n{text}\n"
         )
-        result = structured_llm.invoke(prompt)
+        with provider_call("ENRIQUECIMIENTO_FRAGMENTO"):
+            result = structured_llm.invoke(prompt)
         
         with open(cache_file, "w", encoding="utf-8") as f:
             f.write(result.model_dump_json(indent=2))

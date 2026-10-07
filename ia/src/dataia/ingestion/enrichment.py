@@ -1,14 +1,14 @@
 import os
 import json
 from dataia.common.models import DocumentPedagogicalMetadata
-from langchain_google_genai import ChatGoogleGenerativeAI
+from dataia.common.providers import create_gemini_llm, provider_call
 from pydantic import ValidationError
 
 CACHE_DIR = ".dataia_cache/metadata"
 
 def enrich_document_metadata(document_id: str, full_text: str) -> DocumentPedagogicalMetadata:
     """
-    Generates pedagogical metadata using Gemini 2.5 Flash.
+    Generates pedagogical metadata using the configured Gemini model.
     Caches the result in `.dataia_cache/metadata/{document_id}.json`.
     """
     os.makedirs(CACHE_DIR, exist_ok=True)
@@ -23,7 +23,7 @@ def enrich_document_metadata(document_id: str, full_text: str) -> DocumentPedago
             pass # Fallback to re-generating
 
     try:
-        llm = ChatGoogleGenerativeAI(model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"), temperature=0.0)
+        llm = create_gemini_llm()
         structured_llm = llm.with_structured_output(DocumentPedagogicalMetadata)
         
         prompt = (
@@ -32,7 +32,8 @@ def enrich_document_metadata(document_id: str, full_text: str) -> DocumentPedago
             f"Documento:\n{full_text[:4000000]}\n" # Limiting slightly to avoid exceeding 1M tokens just in case, but 5MB is well within 1M tokens.
         )
         
-        result = structured_llm.invoke(prompt)
+        with provider_call("ENRIQUECIMIENTO_DOCUMENTO"):
+            result = structured_llm.invoke(prompt)
         
         # Ensure document_id is correct
         result.document_id = document_id

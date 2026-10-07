@@ -5,6 +5,7 @@ Evalúa el anclaje_fuente_score con un juez LLM y rechaza el contexto vacío loc
 
 from typing import Any, Dict
 from src.ai.state import EstadoPipelineAdaptacion
+from dataia.common.providers import provider_call
 
 
 def nodo_critico(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
@@ -63,16 +64,18 @@ def nodo_critico(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     )
 
     try:
-        resultado = llm.invoke([
-            SystemMessage(content="Eres un juez implacable anti-alucinaciones."),
-            HumanMessage(content=instruccion_juez)
-        ])
+        with provider_call("CRITICO"):
+            resultado = llm.invoke([
+                SystemMessage(content="Eres un juez implacable anti-alucinaciones."),
+                HumanMessage(content=instruccion_juez)
+            ])
         score = resultado.anclaje_fuente_score
         observaciones = resultado.critica_observaciones
     except Exception as e:
-        print(f"Error en LLM crítico: {e}")
+        if os.getenv("IA_STRICT_PROVIDERS") == "1":
+            raise
         score = 0.50
-        observaciones = f"Fallo al evaluar fidelidad: {e}"
+        observaciones = "El proveedor no pudo completar la evaluación de fidelidad."
 
     # Penalizar si es el primer intento y el score es bajo
     intentos_previos = state.get("contador_intentos", 1)

@@ -4,6 +4,8 @@ from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from dataia.common.models import Chunk
+from dataia.common.providers import provider_call, provider_http_options
+from google import genai
 
 # Carpeta de persistencia configurable por entorno (Local / Docker-OCI)
 PERSIST_DIRECTORY = os.getenv("CHROMADB_DIR", os.path.join(os.getcwd(), ".chromadb_data"))
@@ -12,7 +14,14 @@ COLLECTION_NAME = os.getenv("CHROMADB_COLLECTION", "nuevamente_docs")
 def get_embeddings_model():
     """Inicializa el modelo de Embeddings de Gemini (requiere GOOGLE_API_KEY en entorno)."""
     model_name = os.getenv("GOOGLE_EMBEDDING_MODEL", "models/gemini-embedding-001")
-    return GoogleGenerativeAIEmbeddings(model=model_name)
+    embeddings = GoogleGenerativeAIEmbeddings(model=model_name)
+    # La versión instalada no aplica request_options a embed_content.
+    # Usamos el campo público client con opciones explícitas del SDK.
+    embeddings.client.close()
+    embeddings.client = genai.Client(
+        api_key=os.environ["GOOGLE_API_KEY"], http_options=provider_http_options(),
+    )
+    return embeddings
 
 def get_vector_store() -> Chroma:
     """Configura y retorna la conexión persistente a ChromaDB local."""
@@ -45,6 +54,7 @@ def insert_chunks(chunks: List[Chunk]) -> int:
     
     if documents:
         # La integración de LangChain con Chroma persiste automáticamente al agregar
-        vectorstore.add_documents(documents)
+        with provider_call("EMBEDDINGS_DOCUMENTOS"):
+            vectorstore.add_documents(documents)
         
     return len(documents)

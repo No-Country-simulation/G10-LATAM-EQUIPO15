@@ -9,6 +9,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from src.ai.state import EstadoPipelineAdaptacion
 from src.ai.config import obtener_llm_adaptacion
 from src.ai.schemas import PaqueteContenidoAdaptado
+from dataia.common.providers import provider_call
 
 
 def nodo_creador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
@@ -53,10 +54,11 @@ def nodo_creador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     try:
         llm = obtener_llm_adaptacion(temperatura=0.3)
         structured_llm = llm.with_structured_output(PaqueteContenidoAdaptado)
-        resultado: PaqueteContenidoAdaptado = structured_llm.invoke([
-            SystemMessage(content=prompt_sistema),
-            HumanMessage(content=instruccion_usuario)
-        ])
+        with provider_call("GENERADOR"):
+            resultado: PaqueteContenidoAdaptado = structured_llm.invoke([
+                SystemMessage(content=prompt_sistema),
+                HumanMessage(content=instruccion_usuario)
+            ])
         borrador_dict = resultado.model_dump()
     except Exception as e:
         if os.getenv("IA_STRICT_PROVIDERS") == "1":
