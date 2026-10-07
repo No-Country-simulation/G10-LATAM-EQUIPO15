@@ -86,8 +86,10 @@ def nodo_ensamblador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         observaciones=state.get("critica_observaciones"),
         reintentos_realizados=max(0, state.get("contador_intentos", 1) - 1)
     )
+    import re
+    sanitized_id = re.sub(r"[\\/]", "_", titulo_doc).strip()
     almacenamiento = AlmacenamientoOCI(
-        objeto_id=f"{titulo_doc}.json",
+        objeto_id=f"{sanitized_id or 'documento'}.json",
         status_upload="listo_para_subida"
     )
 

@@ -6,7 +6,7 @@ Define de forma estricta los tipos de entrada, salida y estructuras intermedias.
 from enum import Enum
 import re
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class PerfilDestinatarioEnum(str, Enum):
@@ -111,10 +111,12 @@ class MetadatosAprendizaje(BaseModel):
 
 
 class EvaluacionCalidad(BaseModel):
+    model_config = ConfigDict(extra="allow")
     anclaje_fuente_score: float = Field(..., ge=0.0, le=1.0, description="Métrica de fidelidad fáctica")
     claridad_pedagogica: str = Field("Alta", description="Evaluación cualitativa")
     observaciones: Optional[str] = Field(None, description="Dictamen del Agente Crítico")
     reintentos_realizados: int = Field(default=0, ge=0)
+    evidencia: Optional[List[str]] = Field(default_factory=list, description="Lista opcional de identificadores de evidencia")
 
 
 class AlmacenamientoOCI(BaseModel):

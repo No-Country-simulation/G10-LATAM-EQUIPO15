@@ -158,7 +158,12 @@ def nodo_creador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     ])
     if resultado is None:
         raise RuntimeError("El LLM no devolvió una salida estructurada válida.")
-    borrador_dict = resultado.model_dump()
+    if hasattr(resultado, "model_dump"):
+        borrador_dict = resultado.model_dump()
+    elif isinstance(resultado, dict):
+        borrador_dict = resultado
+    else:
+        borrador_dict = dict(resultado)
 
     intentos = state.get("contador_intentos", 0) + 1
 

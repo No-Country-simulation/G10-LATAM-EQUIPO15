@@ -71,8 +71,9 @@ def _preparar_estado_inicial(
         from src.dataia.ingestion.service import ingest_document
 
     sig = inspect.signature(ingest_document)
-    if "document_name" in sig.parameters and documento_nombre:
-        ingestion_res = ingest_document(ruta_archivo, document_name=documento_nombre)
+    doc_name = documento_nombre or documento_titulo
+    if "document_name" in sig.parameters and doc_name:
+        ingestion_res = ingest_document(ruta_archivo, document_name=doc_name)
     else:
         ingestion_res = ingest_document(ruta_archivo)
 

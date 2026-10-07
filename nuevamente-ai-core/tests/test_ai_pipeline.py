@@ -16,6 +16,8 @@ os.environ["CHROMADB_DIR"] = tempfile.mkdtemp(prefix="nuevamente_chroma_test_")
 os.environ["UMBRAL_ANCLAJE_MINIMO"] = "0.85"
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "ia", "src")))
 
 from unittest.mock import patch, MagicMock
 

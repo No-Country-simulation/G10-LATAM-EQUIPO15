@@ -137,36 +137,45 @@ def nodo_critico(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
             HumanMessage(content=instruccion_juez)
         ])
 
-        if resultado.veredictos:
-            veredictos_lista = [v.model_dump() for v in resultado.veredictos]
+        veredictos_raw = getattr(resultado, "veredictos", None)
+        if veredictos_raw:
+            veredictos_lista = [v.model_dump() if hasattr(v, "model_dump") else dict(v) for v in veredictos_raw]
             total_evaluables = 0
             respaldadas = 0
             contradichas = 0
             no_sust = []
-            for v in resultado.veredictos:
-                if v.estado == "didactica":
+            for v in veredictos_raw:
+                estado = getattr(v, "estado", None) or (v.get("estado") if isinstance(v, dict) else "")
+                afirmacion = getattr(v, "afirmacion_analizada", "") or (v.get("afirmacion_analizada") if isinstance(v, dict) else "")
+                obs = getattr(v, "observacion", "") or (v.get("observacion") if isinstance(v, dict) else "")
+                item_id = getattr(v, "item_id_o_nombre", "") or (v.get("item_id_o_nombre") if isinstance(v, dict) else "")
+
+                if estado == "didactica":
                     continue  # Analogías legítimas no penalizan
                 total_evaluables += 1
-                if v.estado == "respaldada":
+                if estado == "respaldada":
                     respaldadas += 1
-                elif v.estado == "contradicha":
+                elif estado == "contradicha":
                     contradichas += 1
-                    no_sust.append(f"{v.item_id_o_nombre}: [CONTRADICCIÓN] {v.afirmacion_analizada} ({v.observacion or ''})")
-                elif v.estado == "no_respaldada":
-                    no_sust.append(f"{v.item_id_o_nombre}: [NO SUSTENTADA] {v.afirmacion_analizada} ({v.observacion or ''})")
+                    no_sust.append(f"{item_id}: [CONTRADICCIÓN] {afirmacion} ({obs or ''})")
+                elif estado == "no_respaldada":
+                    no_sust.append(f"{item_id}: [NO SUSTENTADA] {afirmacion} ({obs or ''})")
 
             if total_evaluables == 0:
-                score = 1.0
+                score = 1.0 if respaldadas > 0 else 0.5
             else:
                 score = max(0.0, min(1.0, (respaldadas - (contradichas * 2)) / total_evaluables))
             no_sustentadas = no_sust
-            observaciones = resultado.critica_observaciones
+            observaciones = getattr(resultado, "critica_observaciones", "Evaluación completada.")
         else:
-            score = float(resultado.anclaje_fuente_score if resultado.anclaje_fuente_score is not None else 0.0)
-            no_sustentadas = resultado.afirmaciones_no_sustentadas
-            observaciones = resultado.critica_observaciones
+            raw_score = getattr(resultado, "anclaje_fuente_score", None)
+            score = float(raw_score if raw_score is not None else 0.0)
+            no_sustentadas = getattr(resultado, "afirmaciones_no_sustentadas", []) or []
+            observaciones = getattr(resultado, "critica_observaciones", "Evaluación completada.")
 
     except Exception as e:
+        if os.getenv("IA_STRICT_PROVIDERS") == "1":
+            raise
         logger.warning("LLM crítico no disponible (%s). Aplicando evaluación heurística de respaldo.", e)
         # Fallback heurístico para entornos de testing offline o sin API key
         palabras_clave_fuente = set([w.lower() for w in texto_fuente.split() if len(w) > 4])
