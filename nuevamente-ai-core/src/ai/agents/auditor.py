@@ -8,10 +8,9 @@ logger = logging.getLogger(__name__)
 
 class AuditorAgent:
     """
-    Agente de seguridad y calidad determinista (Pure Python).
-    Reemplaza al LLM para auditoría, ejecutando reglas heurísticas y Regex
-    en menos de 1 milisegundo sin latencia de red ni consumo de tokens.
-    Garantiza que solo se realice 1 llamada a API de LLM por petición de usuario.
+    Agente de seguridad determinista (Pure Python).
+    Ejecuta reglas heurísticas y Regex sobre el payload final
+    en menos de 1 milisegundo, sin latencia de red ni consumo de tokens.
     """
     
     def __init__(self):
@@ -58,10 +57,10 @@ class AuditorAgent:
                 recomendaciones.append("Revisar las barreras semánticas del Agente Crítico.")
                 
         # 4. Verificación de Integridad Lógica
-        contenido = payload_generado.get("contenido", {})
-        if not contenido:
+        contenido = payload_generado.get("contenido_adaptado", {})
+        if not contenido or not contenido.get("items"):
             is_secure = False
-            vulnerabilidades.append("Estructura rota: El paquete no contiene el nodo de 'contenido'.")
+            vulnerabilidades.append("Estructura rota: el paquete no contiene 'contenido_adaptado.items'.")
             recomendaciones.append("Activar mecanismo de reintento en el grafo.")
         else:
             # Heurística: Si generó un formato, el texto debería tener una longitud mínima

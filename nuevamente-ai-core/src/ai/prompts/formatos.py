@@ -31,8 +31,8 @@ INSTRUCCIONES_FORMATOS = {
         "Incluye:\n"
         "- nodo_central: El núcleo temático.\n"
         "- descripcion_general: Breve síntesis del alcance.\n"
-        "- arbol: Lista jerárquica de nodos y subnodos.\n"
-        "- codigo_mermaid: Bloque formal con sintaxis 'mindmap' de Mermaid.js válido."
+        "- arbol: Lista de 3 a 6 ramas, cada una con 1 a 5 subnodos (etiquetas cortas tomadas de la fuente).\n"
+        "No generes código Mermaid: se construye automáticamente a partir del árbol."
     ),
     FormatoSalidaEnum.GUIA_PASO_A_PASO: (
         "FORMATO SOLICITADO: GUÍA PASO A PASO (TUTORIAL PRÁCTICO).\n"
@@ -42,7 +42,8 @@ INSTRUCCIONES_FORMATOS = {
     FormatoSalidaEnum.RESUMEN_EJECUTIVO: (
         "FORMATO SOLICITADO: RESUMEN EJECUTIVO (TL;DR ESTRATÉGICO).\n"
         "Incluye un resumen en un párrafo, puntos clave de alto impacto, análisis de impacto en el negocio "
-        "y recomendaciones concretas de implementación."
+        "y recomendaciones concretas de implementación. Todo debe derivarse del documento: si la fuente no "
+        "describe impacto de negocio, indica en 'impacto_negocio' que el documento no lo especifica."
     )
 }
 
