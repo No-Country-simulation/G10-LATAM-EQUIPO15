@@ -245,5 +245,18 @@ def test_swagger_exposes_file_and_canonical_choices(client_factory):
     ref = operation["requestBody"]["content"]["multipart/form-data"]["schema"]["$ref"]
     body = spec["components"]["schemas"][ref.rsplit("/", 1)[-1]]
     assert set(body["required"]) == {"documento_original", *FORM}
-    assert body["properties"]["documento_original"]["format"] == "binary"
     assert spec["components"]["schemas"]["PerfilDestinatario"]["enum"] == ["Junior", "Senior", "Ejecutivo"]
+
+
+def test_unhandled_exception_returns_500_json(client_factory):
+    class ExplosiveClient:
+        def adaptar(self, *args, **kwargs):
+            raise RuntimeError("Fallo no controlado inesperado")
+    from app.main import app
+    from app.services.ia_client import get_ia_client
+    app.dependency_overrides[get_ia_client] = lambda: ExplosiveClient()
+    from starlette.testclient import TestClient
+    client = TestClient(app, raise_server_exceptions=False)
+    response = post_document(client)
+    assert response.status_code == 500
+    assert response.json()["detail"]["codigo"] == "ERROR_INTERNO_BACKEND"

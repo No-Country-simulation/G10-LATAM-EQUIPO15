@@ -34,6 +34,16 @@ async def invalid_request(_request, _error):
     }})
 
 
+@app.exception_handler(Exception)
+async def generic_backend_exception(_request, error):
+    if isinstance(error, HTTPException):
+        return JSONResponse(status_code=error.status_code, content={"detail": error.detail}, headers=error.headers)
+    return JSONResponse(status_code=500, content={"detail": {
+        "codigo": "ERROR_INTERNO_BACKEND",
+        "mensaje": "Error interno del servidor en Backend."
+    }})
+
+
 @app.post(
     f"{settings.API_V1_STR}/adaptar-contenido",
     response_model=AdaptacionResponse,

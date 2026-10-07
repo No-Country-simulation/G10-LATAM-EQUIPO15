@@ -53,6 +53,15 @@ async def invalid_response(_request, _error):
     )})
 
 
+@app.exception_handler(Exception)
+async def generic_exception(_request, error):
+    if isinstance(error, HTTPException):
+        return JSONResponse(status_code=error.status_code, content={"detail": error.detail}, headers=error.headers)
+    return JSONResponse(status_code=500, content={"detail": error_detail(
+        "ERROR_INTERNO", "Error interno en el procesamiento de IA."
+    )})
+
+
 @app.get("/health", tags=["Health"])
 def health():
     """Disponibilidad HTTP; no consulta Gemini ni valida la calidad del pipeline."""

@@ -278,3 +278,15 @@ def test_creator_keeps_legacy_fallback_outside_strict_mode(monkeypatch):
     monkeypatch.setattr(creador, "_generar_borrador_fallback", fallback)
     assert creador.nodo_creador({"documento_titulo": "JWT"})["borrador_contenido"] == {"titulo": "Borrador de prueba"}
     fallback.assert_called_once()
+
+
+def test_unhandled_exception_returns_500_json():
+    main.app.dependency_overrides[runner.get_pipeline_runner] = lambda: Mock(side_effect=RuntimeError("Fallo inesperado"))
+    try:
+        with TestClient(main.app, raise_server_exceptions=False) as client:
+            response = client.post("/api/v1/adaptar-contenido", data=FORM,
+                                   files={"documento_original": ("jwt.md", b"# JWT\ntexto")})
+            assert response.status_code == 500
+            assert response.json()["detail"]["codigo"] == "ERROR_INTERNO"
+    finally:
+        main.app.dependency_overrides.clear()

@@ -3,7 +3,7 @@
 **Documento Técnico de Ingeniería — NuevaMente**  
 **Hackathon:** ONE (Oracle Next Education) & Alura Latam — Cohorte G-10  
 **Carácter:** Especificación Arquitectónica Definitiva y Registro de Resoluciones Técnicas  
-**Estado:** Implementado, Auditado y Validado (115/115 Pruebas Aprobadas)
+**Estado:** Implementado, Auditado y Validado (117/117 Pruebas Aprobadas)
 
 ---
 
@@ -208,20 +208,27 @@ Las mediciones consolidadas sobre el conjunto de documentos técnicos de referen
 
 ---
 
-## 5. Matriz de Validación y Cobertura de Pruebas
+## 5. Matriz de Validación, Seguridad y Cobertura de Pruebas
 
-El sistema cuenta con una cobertura integral de pruebas automatizadas en todos los niveles, ejecutadas localmente y preparadas para integración continua en Docker:
+### 5.1 Blindaje de Seguridad y Resiliencia HTTP (Hardening)
+1. **Manejo Canónico de Errores no Capturados (500 Internal Server Error):** Tanto el servicio HTTP de IA como el Backend implementan `exception_handler(Exception)` con protección explícita para preservar `HTTPException` legítimas y convertir cualquier fallo imprevisto en un objeto JSON canónico `ErrorResponse` (`ERROR_INTERNO` / `ERROR_INTERNO_BACKEND`), garantizando que **nunca se filtren trazas de depuración, rutas internas del servidor o variables de entorno al cliente**.
+2. **Defensa contra DoS y Memory Exhaustion:** Procesamiento de carga en bloques de 64 KB con corte estricto ante archivos que excedan los 10 MB (`413 DOCUMENTO_DEMASIADO_GRANDE`) y rechazo inmediato de archivos vacíos de 0 bytes (`422 DOCUMENTO_VACIO`).
+3. **Aislamiento y Sanitización de Rutas:** Se neutralizan vectores de *Path Traversal* al extraer exclusivamente el nombre base del archivo, almacenar temporales con nombres estáticos prefijados (`documento.ext`) en directorios aislados autolimpiables (`TemporaryDirectory`), y sanitizar identificadores de almacenamiento en OCI Object Storage (`re.sub(r"[\\/]", "_", ...)`).
+4. **Consolidación de Formatos MVP:** El alcance del MVP se concentra de forma robusta en los 3 formatos fundamentales: `Flashcards`, `Quiz Interactivo` y `Resumen Ejecutivo`, rechazando `422 PARAMETROS_INVALIDOS` cualquier solicitud fuera de este catálogo tipado.
+
+### 5.2 Matriz de Pruebas Automatizadas
+El sistema cuenta con una cobertura integral de pruebas automatizadas en todos los niveles, ejecutadas de forma determinista y offline:
 
 ```text
 ============================= Resumen de Validación =============================
-1. backend/tests/test_ia_integration.py & suite Backend:    39 passed (0.55s)
-2. ia/tests/test_http_service.py (API REST & Runner):       39 passed (1.61s)
-3. ia/tests/test_dataia.py (Extracción, Normalizador, RAG): 13 passed (56.39s)
-4. nuevamente-ai-core/tests/test_ai_pipeline.py:            16 passed (52.27s)
+1. backend/tests/test_ia_integration.py & suite Backend:    40 passed (0.60s)
+2. ia/tests/test_http_service.py (API REST & Runner):       40 passed (1.56s)
+3. ia/tests/test_dataia.py (Extracción, Normalizador, RAG): 13 passed (21.27s)
+4. nuevamente-ai-core/tests/test_ai_pipeline.py:            16 passed (72.85s)
 5. nuevamente-ai-core/tests/test_contexto.py:               5 passed (12.29s)
 6. nuevamente-ai-core/tests/test_critic_context.py:         3 passed (0.13s)
 ---------------------------------------------------------------------------------
-TOTAL:                                                      115 passed (100% éxito)
+TOTAL:                                                      117 passed (100% éxito)
 ```
 
 ---
