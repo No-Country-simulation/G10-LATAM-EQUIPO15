@@ -24,11 +24,6 @@ def payload(formato="Flashcards"):
             "indice_correcto": 0, "justificacion_tecnica": "La firma verifica integridad.",
             "explicacion_distractores": "Firmar no cifra ni comprime el contenido.",
         }],
-        "Mapa Mental": {
-            "nodo_central": "JWT", "descripcion_general": "Conceptos de JWT",
-            "arbol": [{"id": "firma", "etiqueta": "Firma", "subnodos": []}],
-            "codigo_mermaid": "mindmap\n  root((JWT))\n    Firma",
-        },
         "Resumen Ejecutivo": {
             "tldr": "JWT transporta claims firmados.", "puntos_clave": ["Integridad"],
             "impacto_negocio": "Autenticación interoperable.", "recomendaciones": ["Validar firmas"],
@@ -98,7 +93,7 @@ def test_backend_forwards_exact_bytes_and_parameters(client_factory):
     assert len(calls) == 1
 
 
-@pytest.mark.parametrize("formato", ["Flashcards", "Quiz Interactivo", "Mapa Mental", "Resumen Ejecutivo"])
+@pytest.mark.parametrize("formato", ["Flashcards", "Quiz Interactivo", "Resumen Ejecutivo"])
 def test_all_mvp_formats_are_preserved(client_factory, formato):
     expected = payload(formato)
     # Campos adicionales deben sobrevivir al transporte y a la validación.
@@ -113,8 +108,8 @@ def test_all_mvp_formats_are_preserved(client_factory, formato):
 
 @pytest.mark.parametrize("field,value", [
     ("perfil_destinatario", "Principiante"), ("formato_salida", "Guia Paso a Paso"),
-    ("nicho_sector", "Otro"), ("perfil_destinatario", None),
-    ("formato_salida", None), ("nicho_sector", None),
+    ("formato_salida", "Mapa Mental"), ("nicho_sector", "Otro"),
+    ("perfil_destinatario", None), ("formato_salida", None), ("nicho_sector", None),
 ])
 def test_invalid_parameters_never_contact_ia(client_factory, field, value):
     def forbidden(request):
@@ -213,7 +208,7 @@ def test_response_for_other_parameters_is_rejected(client_factory, field, value)
 
 
 def test_wrong_content_shape_for_declared_format_is_rejected(client_factory):
-    incorrect = payload("Mapa Mental")
+    incorrect = payload("Resumen Ejecutivo")
     incorrect["metadatos"]["formato_generado"] = "Flashcards"
     client = client_factory(lambda request: httpx.Response(200, json=incorrect))
     assert post_document(client).status_code == 502

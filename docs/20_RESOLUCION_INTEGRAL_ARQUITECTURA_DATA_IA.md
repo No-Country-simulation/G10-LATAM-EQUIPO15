@@ -9,7 +9,7 @@
 
 ## 1. Visión y Propósito del Pipeline de IA
 
-El componente de Inteligencia Artificial de **NuevaMente** tiene un propósito bien definido: **transformar documentos técnicos complejos en materiales educativos de alto impacto pedagógico** adaptados para tres perfiles de destinatario (**Junior, Senior, Ejecutivo**) y formatos específicos (**Flashcards, Quiz Interactivo, Resumen Ejecutivo, Mapa Mental, Guía Paso a Paso**).
+El componente de Inteligencia Artificial de **NuevaMente** tiene un propósito bien definido: **transformar documentos técnicos complejos en materiales educativos de alto impacto pedagógico** adaptados para tres perfiles de destinatario (**Junior, Senior, Ejecutivo**) y formatos específicos (**Flashcards, Quiz Interactivo, Resumen Ejecutivo**).
 
 A diferencia de un sistema convencional de preguntas y respuestas (donde basta con responder dudas puntuales sobre fragmentos aislados), un sistema de adaptación educativa integral requiere:
 1. **Cobertura Documental Exhaustiva:** Ninguna sección conceptual relevante del documento fuente debe omitirse.

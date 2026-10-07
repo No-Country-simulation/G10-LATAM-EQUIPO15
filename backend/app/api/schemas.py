@@ -16,7 +16,6 @@ class FormatoSalida(str, Enum):
     FLASHCARDS = "Flashcards"
     QUIZ = "Quiz Interactivo"
     RESUMEN = "Resumen Ejecutivo"
-    MAPA = "Mapa Mental"
 
 
 class NichoSector(str, Enum):
@@ -48,19 +47,6 @@ class QuizItem(ContratoIA):
     explicacion_distractores: str | None = None
 
 
-class NodoMapaMental(ContratoIA):
-    id: str
-    etiqueta: str
-    subnodos: list["NodoMapaMental"] = Field(default_factory=list)
-
-
-class MapaMentalItem(ContratoIA):
-    nodo_central: str
-    descripcion_general: str
-    arbol: list[NodoMapaMental] = Field(default_factory=list)
-    codigo_mermaid: str | None = None
-
-
 class ResumenEjecutivoItem(ContratoIA):
     tldr: str
     puntos_clave: list[str] = Field(default_factory=list)
@@ -79,7 +65,7 @@ class MetadatosContenido(ContratoIA):
 class ContenidoAdaptado(ContratoIA):
     titulo: str
     introduccion_contextualizada: str
-    items: list[FlashcardItem] | list[QuizItem] | MapaMentalItem | ResumenEjecutivoItem
+    items: list[FlashcardItem] | list[QuizItem] | ResumenEjecutivoItem
 
 
 class EvaluacionCalidad(ContratoIA):
@@ -112,8 +98,6 @@ class AdaptacionResponse(ContratoIA):
             valid = isinstance(items, list) and all(isinstance(item, FlashcardItem) for item in items)
         elif formato == FormatoSalida.QUIZ:
             valid = isinstance(items, list) and all(isinstance(item, QuizItem) for item in items)
-        elif formato == FormatoSalida.MAPA:
-            valid = isinstance(items, MapaMentalItem)
         else:
             valid = isinstance(items, ResumenEjecutivoItem)
         if not valid:

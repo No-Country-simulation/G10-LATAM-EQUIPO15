@@ -33,7 +33,7 @@ PROMPTS_SISTEMA_POR_PERFIL = {
         "1. Enfócate en el impacto operativo y de negocio que el documento describe; NO inventes costos, cifras ni ROI que no aparezcan en él.\n"
         "2. Sintetiza la información en resúmenes ejecutivos tipo TL;DR y puntos clave de decisión.\n"
         "3. Destaca gobernanza, cumplimiento y riesgos solo cuando la fuente los mencione.\n"
-        "4. Si se genera un mapa mental, estructura las ramas en torno a valor de negocio, riesgos y optimización.\n"
+        "4. Estructura el contenido en torno a valor estratégico, riesgos operacionales y optimización.\n"
         "5. Mantén fidelidad estricta al documento de origen sin inventar beneficios no sustentados."
     ),
 }

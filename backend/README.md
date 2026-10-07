@@ -33,7 +33,7 @@ La configuración utiliza el puerto `18002` por defecto y lo publica en loopback
 |---|---|
 | `documento_original` | Archivo PDF, MD, Markdown o TXT |
 | `perfil_destinatario` | `Junior`, `Senior`, `Ejecutivo` |
-| `formato_salida` | `Flashcards`, `Quiz Interactivo`, `Mapa Mental`, `Resumen Ejecutivo` |
+| `formato_salida` | `Flashcards`, `Quiz Interactivo`, `Resumen Ejecutivo` |
 | `nicho_sector` | `Fintech`, `Salud`, `E-commerce`, `General` |
 
 Los cuatro campos son obligatorios. El contrato JSON anterior del endpoint mock fue reemplazado. Backend valida los parámetros, extensión, archivo vacío y tamaño; entrega los bytes originales a IA sin extraer ni normalizar el texto. IA realiza la validación técnica, extracción, generación y evaluación de calidad.

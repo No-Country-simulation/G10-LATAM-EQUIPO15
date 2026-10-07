@@ -35,33 +35,6 @@ class _PaqueteQuiz(BaseModel):
     items: List[QuizItem] = Field(..., min_length=1)
 
 
-class _SubnodoLLM(BaseModel):
-    id: str
-    etiqueta: str
-    fuentes: Optional[List[str]] = None
-
-
-class _NodoLLM(BaseModel):
-    id: str
-    etiqueta: str
-    subnodos: List[_SubnodoLLM] = Field(default_factory=list)
-    fuentes: Optional[List[str]] = None
-
-
-class _MapaMentalLLM(BaseModel):
-    """Versión no recursiva (2 niveles) de MapaMentalItem: los esquemas recursivos
-    no son bien soportados por el structured output de Gemini."""
-    nodo_central: str
-    descripcion_general: str
-    arbol: List[_NodoLLM] = Field(..., min_length=1)
-
-
-class _PaqueteMapaMental(BaseModel):
-    titulo: str
-    introduccion_contextualizada: str
-    items: _MapaMentalLLM
-
-
 class _PaqueteTutorial(BaseModel):
     titulo: str
     introduccion_contextualizada: str
@@ -77,7 +50,6 @@ class _PaqueteResumen(BaseModel):
 ESQUEMA_POR_FORMATO: Dict[FormatoSalidaEnum, Type[BaseModel]] = {
     FormatoSalidaEnum.FLASHCARDS: _PaqueteFlashcards,
     FormatoSalidaEnum.QUIZ_INTERACTIVO: _PaqueteQuiz,
-    FormatoSalidaEnum.MAPA_MENTAL: _PaqueteMapaMental,
     FormatoSalidaEnum.GUIA_PASO_A_PASO: _PaqueteTutorial,
     FormatoSalidaEnum.RESUMEN_EJECUTIVO: _PaqueteResumen,
 }
@@ -210,17 +182,6 @@ def _generar_borrador_fallback(titulo: str, perfil: str, formato: str, texto: st
                 "fuentes": ["F1"]
             }
         ]
-    elif formato == "Mapa Mental":
-        items = {
-            "nodo_central": titulo,
-            "descripcion_general": f"Estructura jerárquica de {titulo} para nivel {perfil}",
-            "arbol": [
-                {"id": "n1", "etiqueta": "Arquitectura y Fundamentos", "subnodos": []},
-                {"id": "n2", "etiqueta": "Seguridad y Políticas", "subnodos": []},
-                {"id": "n3", "etiqueta": "Operación y Buenas Prácticas", "subnodos": []}
-            ],
-            "codigo_mermaid": f"mindmap\n  root(({titulo}))\n    Arquitectura\n      Fundamentos\n      Componentes\n    Seguridad\n      Políticas\n      Reglas de Red\n    Operaciones\n      Monitoreo\n      Costos"
-        }
     else:
         items = {
             "tldr": f"Síntesis ejecutiva de {titulo} orientada a perfil {perfil}.",

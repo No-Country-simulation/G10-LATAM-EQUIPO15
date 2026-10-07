@@ -19,7 +19,7 @@ MAX_DOCUMENT_BYTES = int(os.getenv("IA_MAX_DOCUMENT_BYTES", "10485760"))
 if MAX_DOCUMENT_BYTES <= 0:
     raise ValueError("IA_MAX_DOCUMENT_BYTES debe ser positivo.")
 SUPPORTED_EXTENSIONS = {".pdf", ".md", ".markdown", ".txt"}
-FormatoMVP = Literal["Flashcards", "Quiz Interactivo", "Resumen Ejecutivo", "Mapa Mental"]
+FormatoMVP = Literal["Flashcards", "Quiz Interactivo", "Resumen Ejecutivo"]
 pipeline_lock = Lock()
 
 

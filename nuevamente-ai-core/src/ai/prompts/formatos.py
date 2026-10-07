@@ -25,15 +25,6 @@ INSTRUCCIONES_FORMATOS = {
         "- explicacion_distractores: Análisis de por qué cada una de las otras 3 opciones es inválida.\n"
         "- pista_didactica: Pista orientadora sin revelar directamente la respuesta."
     ),
-    FormatoSalidaEnum.MAPA_MENTAL: (
-        "FORMATO SOLICITADO: MAPA MENTAL JERÁRQUICO (Estructura de Árbol + Mermaid.js).\n"
-        "Genera una estructura de árbol conceptual centrada en el tema principal.\n"
-        "Incluye:\n"
-        "- nodo_central: El núcleo temático.\n"
-        "- descripcion_general: Breve síntesis del alcance.\n"
-        "- arbol: Lista de 3 a 6 ramas, cada una con 1 a 5 subnodos (etiquetas cortas tomadas de la fuente).\n"
-        "No generes código Mermaid: se construye automáticamente a partir del árbol."
-    ),
     FormatoSalidaEnum.GUIA_PASO_A_PASO: (
         "FORMATO SOLICITADO: GUÍA PASO A PASO (TUTORIAL PRÁCTICO).\n"
         "Incluye prerrequisitos, lista numerada de pasos con instrucciones detalladas, "

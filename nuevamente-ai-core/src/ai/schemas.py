@@ -18,7 +18,6 @@ class PerfilDestinatarioEnum(str, Enum):
 class FormatoSalidaEnum(str, Enum):
     FLASHCARDS = "Flashcards"
     QUIZ_INTERACTIVO = "Quiz Interactivo"
-    MAPA_MENTAL = "Mapa Mental"
     GUIA_PASO_A_PASO = "Guia Paso a Paso"
     RESUMEN_EJECUTIVO = "Resumen Ejecutivo"
 
@@ -63,20 +62,6 @@ class QuizItem(BaseModel):
     pista_didactica: Optional[str] = Field(None, description="Pista para orientar al estudiante")
     explicacion_distractores: Optional[str] = Field(None, description="Por qué las otras 3 opciones son erróneas")
     fuentes: Optional[List[str]] = Field(default=None, description="Identificadores de fragmentos que respaldan esta pregunta (ej. ['F2'])")
-
-
-class NodoMapaMental(BaseModel):
-    id: str = Field(..., description="Identificador único del nodo")
-    etiqueta: str = Field(..., description="Texto del concepto")
-    subnodos: List["NodoMapaMental"] = Field(default_factory=list, description="Ramas secundarias")
-    fuentes: Optional[List[str]] = Field(default=None, description="Identificadores de fragmentos asociados al nodo")
-
-
-class MapaMentalItem(BaseModel):
-    nodo_central: str = Field(..., description="Concepto núcleo")
-    descripcion_general: str = Field(..., description="Breve síntesis del mapa")
-    arbol: List[NodoMapaMental] = Field(default_factory=list, description="Estructura arbórea de conceptos")
-    codigo_mermaid: Optional[str] = Field(None, description="Sintaxis mindmap formal en Mermaid.js")
 
 
 class PasoTutorialItem(BaseModel):
@@ -132,7 +117,6 @@ class PaqueteContenidoAdaptado(BaseModel):
     items: Union[
         List[FlashcardItem],
         List[QuizItem],
-        MapaMentalItem,
         TutorialItem,
         ResumenEjecutivoItem,
         Dict[str, Any]

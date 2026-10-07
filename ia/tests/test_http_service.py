@@ -200,7 +200,7 @@ def test_openapi_exposes_multipart_and_current_response(http_client):
     assert set(schema["required"]) == {"documento_original", *FORM}
     assert schema["properties"]["documento_original"]["format"] == "binary"
     assert set(schema["properties"]["formato_salida"]["enum"]) == {
-        "Flashcards", "Quiz Interactivo", "Resumen Ejecutivo", "Mapa Mental",
+        "Flashcards", "Quiz Interactivo", "Resumen Ejecutivo",
     }
 
 

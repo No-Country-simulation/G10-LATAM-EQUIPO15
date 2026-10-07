@@ -104,7 +104,7 @@ Swagger: <http://localhost:18001/docs>. Endpoint: `POST /api/v1/adaptar-contenid
 |---|---|
 | `documento_original` | Archivo PDF, MD, Markdown o TXT |
 | `perfil_destinatario` | `Junior`, `Senior`, `Ejecutivo` |
-| `formato_salida` | `Flashcards`, `Quiz Interactivo`, `Resumen Ejecutivo`, `Mapa Mental` |
+| `formato_salida` | `Flashcards`, `Quiz Interactivo`, `Resumen Ejecutivo` |
 | `nicho_sector` | `Fintech`, `Salud`, `E-commerce`, `General` |
 
 Los cuatro campos son obligatorios. El título se deriva del nombre del archivo. Se preservan sus bytes, se guardan en un directorio temporal independiente y se eliminan al finalizar la solicitud, incluso ante un rechazo del pipeline. IA realiza la extracción y la validación de contenido. El adaptador admite las extensiones documentadas; no toma el MIME declarado por el cliente como prueba del formato real.

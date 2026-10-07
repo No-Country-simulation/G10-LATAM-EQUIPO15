@@ -30,6 +30,7 @@ from src.ai.schemas import (
     AdaptacionContenidoRequest,
     FlashcardItem,
     QuizItem,
+    ResumenEjecutivoItem,
 )
 from src.ai.graph import compilar_grafo_adaptacion
 from src.ai.pipeline import (
@@ -89,13 +90,14 @@ BORRADORES = {
             "justificacion_tecnica": "Header, Payload y Signature.",
         }],
     },
-    "_PaqueteMapaMental": {
+    "_PaqueteResumen": {
         "titulo": "Microservicios",
-        "introduccion_contextualizada": "Mapa de la arquitectura de microservicios.",
+        "introduccion_contextualizada": "Resumen ejecutivo de la arquitectura de microservicios.",
         "items": {
-            "nodo_central": "Microservicios",
-            "descripcion_general": "Servicios independientes en contenedores.",
-            "arbol": [{"id": "n1", "etiqueta": "Contenedores", "subnodos": [{"id": "n1a", "etiqueta": "Despliegue independiente"}]}],
+            "tldr": "Los microservicios dividen las aplicaciones en servicios independientes.",
+            "puntos_clave": ["Despliegue independiente", "Optimización de costos"],
+            "impacto_negocio": "Reduce tiempo de entrega al mercado.",
+            "recomendaciones": ["Adoptar contenedores"],
         },
     },
 }
@@ -224,8 +226,8 @@ async def test_ejecucion_pipeline_adaptacion_async_senior_quiz(llms):
     assert eventos == ["EXTRACCION", "INDEXACION", "GENERACION", "AUDITORIA", "COMPLETADO"]
 
 
-def test_ejecucion_pipeline_ejecutivo_mapa_mental(llms):
-    """Mapa Mental: el código Mermaid se deriva del árbol generado (sin ramas inventadas)."""
+def test_ejecucion_pipeline_ejecutivo_resumen(llms):
+    """Resumen Ejecutivo: valida estructura estratégica para perfiles directivos."""
     ruta = _archivo_temporal(
         "La arquitectura de microservicios divide las aplicaciones en servicios independientes "
         "desplegados en contenedores, optimizando el tiempo de entrega al mercado y reduciendo costos operativos."
@@ -233,17 +235,16 @@ def test_ejecucion_pipeline_ejecutivo_mapa_mental(llms):
     try:
         respuesta = ejecutar_pipeline_adaptacion(
             documento_titulo="Arquitectura Microservicios", ruta_archivo=ruta,
-            perfil="Ejecutivo", formato="Mapa Mental", nicho="E-commerce"
+            perfil="Ejecutivo", formato="Resumen Ejecutivo", nicho="E-commerce"
         )
     finally:
         os.remove(ruta)
 
     items = respuesta.contenido_adaptado.items
-    mermaid = items.codigo_mermaid
-    assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.MAPA_MENTAL
-    assert mermaid.startswith("mindmap")
-    assert "Contenedores" in mermaid and "Despliegue independiente" in mermaid
-    assert "Seguridad" not in mermaid  # antes se inyectaban ramas genéricas
+    assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.RESUMEN_EJECUTIVO
+    assert isinstance(items, ResumenEjecutivoItem)
+    assert items.tldr.startswith("Los microservicios")
+    assert "Despliegue independiente" in items.puntos_clave
 
 
 # ---------------------------------------------------------------------------

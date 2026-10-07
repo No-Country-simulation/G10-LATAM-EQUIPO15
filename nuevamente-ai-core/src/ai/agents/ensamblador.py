@@ -48,8 +48,6 @@ def nodo_ensamblador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         tiempo_calculado = len(items_raw) * 3
     elif formato_enum == FormatoSalidaEnum.GUIA_PASO_A_PASO and isinstance(items_raw, dict):
         tiempo_calculado = 5 + len(items_raw.get("pasos", [])) * 4
-    elif formato_enum == FormatoSalidaEnum.MAPA_MENTAL and isinstance(items_raw, dict):
-        tiempo_calculado = 3 + len(items_raw.get("arbol", [])) * 2
     else:
         tiempo_calculado = 5
     tiempo_calculado = max(1, min(180, tiempo_calculado))
@@ -61,17 +59,6 @@ def nodo_ensamblador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         conceptos_clave=state.get("conceptos_clave") or [titulo_doc],
         nicho_contexto=nicho_enum
     )
-
-    if formato_enum == FormatoSalidaEnum.MAPA_MENTAL and isinstance(items_raw, dict):
-        from src.ai.utils.mermaid import sanitizar_codigo_mermaid
-        nodo_central = items_raw.get("nodo_central", titulo_doc)
-        arbol = items_raw.get("arbol", [])
-        # Mermaid se deriva siempre del árbol estructurado (fuente única de verdad).
-        items_raw["codigo_mermaid"] = sanitizar_codigo_mermaid(
-            codigo=None,
-            nodo_central=nodo_central,
-            arbol=arbol
-        )
 
     paquete_contenido = PaqueteContenidoAdaptado(
         titulo=borrador.get("titulo") or f"{titulo_doc} para {perfil_enum.value}",
