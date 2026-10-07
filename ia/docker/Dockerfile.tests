@@ -1,0 +1,25 @@
+FROM python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/nuevamente-ai-core/src \
+    ANONYMIZED_TELEMETRY=False
+
+WORKDIR /workspace
+COPY nuevamente-ai-core/requirements.txt nuevamente-ai-core/requirements.txt
+COPY ia/requirements-tests.txt ia/requirements-tests.txt
+RUN pip install --no-cache-dir -r nuevamente-ai-core/requirements.txt -r ia/requirements-tests.txt
+
+COPY nuevamente-ai-core/src nuevamente-ai-core/src
+COPY nuevamente-ai-core/tests nuevamente-ai-core/tests
+# AI Core importa src.dataia; Data/IA usa dataia en sus imports internos.
+# Esta disposicion permite evaluar ambas partes sin modificar sus fuentes.
+COPY ia/src/dataia nuevamente-ai-core/src/dataia
+
+RUN useradd --create-home --shell /usr/sbin/nologin testuser \
+    && chown -R testuser:testuser /workspace
+USER testuser
+WORKDIR /workspace/nuevamente-ai-core
+
+CMD ["python", "-m", "pytest", "tests/test_ai_pipeline.py", "-q", "--tb=short", "--timeout=30", "--junitxml=/tmp/ia-tests.xml"]

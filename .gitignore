@@ -21,3 +21,7 @@ coverage/
 
 # Logs
 *.log
+
+# Archivos internos y documentación local de trabajo
+/ia/DIAGNOSTICO_PRUEBAS_IA.md
+/docs/docuemntacion-proyecto.pdf

@@ -1,56 +1,113 @@
-from typing import List, Optional
-from pydantic import BaseModel, Field
+"""Contrato de transporte compatible con la respuesta actual de AI Core."""
 
-# -------------------------------------------------------------
-# 1. ESQUEMA DE ENTRADA (Request)
-# -------------------------------------------------------------
-class AdaptacionRequest(BaseModel):
-    documento_titulo: str = Field(..., min_length=3, max_length=150, example="Introduccion a la Arquitectura de Redes VCN en OCI")
-    documento_contenido: str = Field(..., min_length=50, example="La Virtual Cloud Network (VCN) es una red privada y personalizable...")
-    perfil_destinatario: str = Field(..., example="Principiante")  # Principiante | Desarrollador Junior | Lider Tecnico | Gestor Ejecutivo
-    formato_salida: str = Field(..., example="Flashcards")         # Flashcards | Quiz Interactivo | Guia Paso a Paso | Resumen Ejecutivo
-    nicho_sector: str = Field("General", example="General")         # Fintech | Salud | E-commerce | General
-    nivel_detalle: Optional[str] = Field("Didactico", example="Didactico")
+from enum import Enum
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
-# -------------------------------------------------------------
-# 2. ESQUEMAS SECUNDARIOS / COMPONENTES DE SALIDA
-# -------------------------------------------------------------
-class ElementoDidactico(BaseModel):
-    frente: str = Field(..., example="¿Qué es una VCN en Oracle Cloud?")
-    dorso: str = Field(..., example="Es tu red virtual privada y personalizada dentro de la nube de Oracle.")
-    pista_didactica: Optional[str] = Field(None, example="Piensa en ella como el terreno cercado donde residen tus servidores.")
-    opciones: Optional[List[str]] = Field(None, description="Aplica para Quizzes")
-    respuesta_correcta_indice: Optional[int] = Field(None, description="Aplica para Quizzes")
+class PerfilDestinatario(str, Enum):
+    JUNIOR = "Junior"
+    SENIOR = "Senior"
+    EJECUTIVO = "Ejecutivo"
 
-class MetadatosContenido(BaseModel):
-    perfil_aplicado: str
-    formato_generado: str
-    tiempo_estimado_estudio_minutos: int
-    conceptos_clave: List[str]
 
-class ContenidoAdaptado(BaseModel):
+class FormatoSalida(str, Enum):
+    FLASHCARDS = "Flashcards"
+    QUIZ = "Quiz Interactivo"
+    RESUMEN = "Resumen Ejecutivo"
+    MAPA = "Mapa Mental"
+
+
+class NichoSector(str, Enum):
+    FINTECH = "Fintech"
+    SALUD = "Salud"
+    ECOMMERCE = "E-commerce"
+    GENERAL = "General"
+
+
+class ContratoIA(BaseModel):
+    # Conserva campos adicionales del proveedor; Backend no genera ni
+    # recalcula metadatos pedagógicos o evidencia de calidad.
+    model_config = ConfigDict(extra="allow")
+
+
+class FlashcardItem(ContratoIA):
+    frente: str
+    dorso: str
+    pista_didactica: str | None = None
+    categoria_dificultad: str | None = None
+
+
+class QuizItem(ContratoIA):
+    pregunta: str
+    opciones: list[str] = Field(min_length=4, max_length=4)
+    indice_correcto: int = Field(ge=0, le=3)
+    justificacion_tecnica: str
+    pista_didactica: str | None = None
+    explicacion_distractores: str | None = None
+
+
+class NodoMapaMental(ContratoIA):
+    id: str
+    etiqueta: str
+    subnodos: list["NodoMapaMental"] = Field(default_factory=list)
+
+
+class MapaMentalItem(ContratoIA):
+    nodo_central: str
+    descripcion_general: str
+    arbol: list[NodoMapaMental] = Field(default_factory=list)
+    codigo_mermaid: str | None = None
+
+
+class ResumenEjecutivoItem(ContratoIA):
+    tldr: str
+    puntos_clave: list[str] = Field(default_factory=list)
+    impacto_negocio: str
+    recomendaciones: list[str] = Field(default_factory=list)
+
+
+class MetadatosContenido(ContratoIA):
+    perfil_aplicado: PerfilDestinatario
+    formato_generado: FormatoSalida
+    tiempo_estimado_estudio_minutos: int = Field(ge=1, le=180)
+    conceptos_clave: list[str] = Field(min_length=1)
+    nicho_contexto: NichoSector = NichoSector.GENERAL
+
+
+class ContenidoAdaptado(ContratoIA):
     titulo: str
     introduccion_contextualizada: str
-    items: List[ElementoDidactico]
-
-class EvaluacionCalidad(BaseModel):
-    anclaje_fuente_score: float = Field(..., ge=0.0, le=1.0)
-    claridad_pedagogica: str
-    observaciones: Optional[str] = None
-
-class AlmacenamientoOCI(BaseModel):
-    bucket: str
-    objeto_id: str
-    status_upload: str
+    items: list[FlashcardItem] | list[QuizItem] | MapaMentalItem | ResumenEjecutivoItem
 
 
-# -------------------------------------------------------------
-# 3. ESQUEMA DE SALIDA PRINCIPAL (Response)
-# -------------------------------------------------------------
-class AdaptacionResponse(BaseModel):
-    status: str = Field("exito", example="exito")
+class AdaptacionResponse(ContratoIA):
+    status: Literal["exito", "success"]
     metadatos: MetadatosContenido
     contenido_adaptado: ContenidoAdaptado
-    evaluacion_calidad: EvaluacionCalidad
-    almacenamiento_oci: AlmacenamientoOCI
+
+    @model_validator(mode="after")
+    def validar_formato_contenido(self):
+        items = self.contenido_adaptado.items
+        formato = self.metadatos.formato_generado
+        if formato == FormatoSalida.FLASHCARDS:
+            valid = isinstance(items, list) and all(isinstance(item, FlashcardItem) for item in items)
+        elif formato == FormatoSalida.QUIZ:
+            valid = isinstance(items, list) and all(isinstance(item, QuizItem) for item in items)
+        elif formato == FormatoSalida.MAPA:
+            valid = isinstance(items, MapaMentalItem)
+        else:
+            valid = isinstance(items, ResumenEjecutivoItem)
+        if not valid:
+            raise ValueError("El contenido no corresponde al formato declarado por IA.")
+        return self
+
+
+class ErrorDetail(BaseModel):
+    codigo: str
+    mensaje: str
+
+
+class ErrorResponse(BaseModel):
+    detail: ErrorDetail

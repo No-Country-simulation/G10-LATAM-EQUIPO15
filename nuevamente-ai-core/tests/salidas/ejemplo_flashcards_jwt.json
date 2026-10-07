@@ -1,0 +1,72 @@
+{
+    "status": "exito",
+    "metadatos": {
+        "perfil_aplicado": "Senior",
+        "formato_generado": "Flashcards",
+        "tiempo_estimado_estudio_minutos": 5,
+        "conceptos_clave": [
+            "OCI.pdf",
+            "Fragmento",
+            "También",
+            "Consulte",
+            "Detalles",
+            "JWKS"
+        ],
+        "nicho_contexto": "General"
+    },
+    "contenido_adaptado": {
+        "titulo": "Flashcards de Arquitectura: Autenticación y Validación JWT en OCI API Gateway",
+        "introduccion_contextualizada": "Conjunto de tarjetas de memorización activa optimizadas para arquitectos cloud e ingenieros DevOps que diseñan despliegues seguros en Oracle Cloud Infrastructure (OCI), enfocándose en la validación de tokens en el API Gateway y el uso de directivas TOKEN_AUTHENTICATION.",
+        "items": [
+            {
+                "frente": "¿Cuál es la política recomendada en OCI API Gateway para la validación de nuevos tokens JWT en lugar de la heredada JWT_AUTHENTICATION?",
+                "dorso": "Se debe utilizar TOKEN_AUTHENTICATION. Permite validar tanto tokens JWT como non-JWT, utilizar puntos finales de introspección del proveedor de identidad, e implementar políticas avanzadas de fallo de validación.",
+                "pista_didactica": "Piensa en TOKEN_AUTHENTICATION como una pasarela de seguridad universal que acepta credenciales variadas, a diferencia del estándar anterior que era exclusivo para JWT.",
+                "categoria_dificultad": "Intermedio"
+            },
+            {
+                "frente": "¿Cuáles son los tres tipos de políticas de validación soportadas por OCI API Gateway para verificar tokens en tiempo de ejecución?",
+                "dorso": "1. REMOTE_DISCOVERY (Punto final de introspección OAuth 2.0 con caché opcional de 1 a 24 horas). 2. REMOTE_JWKS (Claves públicas recuperadas del proveedor de identidad en tiempo de ejecución). 3. STATIC_KEYS (Claves públicas estáticas emitidas previamente para validación local y de alta velocidad).",
+                "pista_didactica": "Recuérdalos por sus alcances de red: Introspección remota (remota con caché), JWKS remoto ( dinámico vía red), y Claves estáticas (locales y rápidas).",
+                "categoria_dificultad": "Avanzado"
+            },
+            {
+                "frente": "¿Cómo maneja OCI API Gateway las reclamaciones (claims) de un JWT tras una validación exitosa?",
+                "dorso": "El API Gateway extrae las reclamaciones como pares clave-valor y las almacena en la tabla request.auth. Estas pueden utilizarse como variables de marco en definiciones de backend HTTP o en políticas de autorización basadas en la reclamación scope.",
+                "pista_didactica": "request.auth actúa como el contexto de sesión seguro inyectado en el flujo del API Gateway para que el backend HTTP consuma los metadatos del usuario.",
+                "categoria_dificultad": "Intermedio"
+            },
+            {
+                "frente": "¿Qué opciones de políticas de fallo de validación ofrece OCI API Gateway si la validación del token falla o está ausente?",
+                "dorso": "1. Por defecto (retorna HTTP 401 Unauthorized). 2. Respuesta personalizada o MODIFY_RESPONSE (retorna una respuesta modificada alternativa). 3. OAuth 2.0 (obtiene automáticamente un nuevo JWT válido del proveedor de identidad para solicitudes GET utilizando parámetros almacenados).",
+                "pista_didactica": "El comportamiento por defecto es el clásico 401, pero arquitectónicamente puedes interceptar el error para transformar la respuesta o negociar un token nuevo.",
+                "categoria_dificultad": "Avanzado"
+            },
+            {
+                "frente": "¿Qué reclamaciones estándar (reservadas) valida por defecto el API Gateway en un JWT?",
+                "dorso": "Por defecto valida la caducidad (exp), el público (aud), el emisor (iss) y, si está presente, la reclamación 'no antes de' (nbf).",
+                "pista_didactica": "Mnemotecnia: 'AEI-N' (Aud, Exp, Iss y Nbf).",
+                "categoria_dificultad": "Básico"
+            },
+            {
+                "frente": "Al configurar una política de fallo de validación OAuth 2.0 que genera un nuevo JWT, ¿cómo se transmite el token resultante si no se usan cookies de sesión?",
+                "dorso": "El API Gateway devuelve un token no legible por humano en la cabecera de respuesta HTTP X-APIGW-TOKEN. Las solicitudes posteriores deben incluir este mismo token en la cabecera de solicitud X-APIGW-TOKEN.",
+                "pista_didactica": "Piensa en X-APIGW-TOKEN como un portador de sesión personalizado gestionado directamente a nivel de cabeceras HTTP por el Gateway.",
+                "categoria_dificultad": "Avanzado"
+            }
+        ]
+    },
+    "evaluacion_calidad": {
+        "anclaje_fuente_score": 0.81,
+        "claridad_pedagogica": "Alta",
+        "observaciones": "Calidad preliminar sub-umbral (0.81). Cobertura fáctica insuficiente. Términos clave no reflejados adecuadamente: definidos, 2026-06-25, tenga, consulte, básica. Se solicita reescribir integrando mayor fidelidad al documento fuente.",
+        "reintentos_realizados": 0
+    },
+    "almacenamiento_oci": {
+        "bucket": "nuevamente-contenidos-educativos",
+        "objeto_id": "manual-jwt-oci_senior_flashcards.json",
+        "status_upload": "listo_para_subida",
+        "ruta_publica_o_par": null
+    },
+    "codigo_respuesta": 200
+}
