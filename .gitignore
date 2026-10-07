@@ -36,3 +36,4 @@ remote-repo-temp/
 *.txt
 mock_salida.py
 test_salida.py
+.specify/

@@ -33,3 +33,12 @@ htmlcov/
 *.swp
 *.swo
 .DS_Store
+
+# Archivos de prueba locales y salidas temporales
+*.pdf
+salida_*.json
+scripts/
+benchmark_archivos.py
+cli_interactiva.py
+run_demo_local.py
+data/
