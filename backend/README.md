@@ -2,7 +2,7 @@
 
 API REST de adaptación de contenido educativo construida con FastAPI.
 
-> **Estado actual:** el endpoint principal recibe el documento original y llama al servicio HTTP de IA. La persistencia en OCI sigue pendiente; el campo `almacenamiento_oci` de la respuesta describe lo que devuelve IA y no acredita una subida.
+> **Estado actual:** el endpoint principal recibe el documento original y llama al servicio HTTP de IA. La respuesta actual contiene `status`, `metadatos` y `contenido_adaptado`. La persistencia en OCI sigue pendiente.
 
 ## Requisitos
 
@@ -47,6 +47,8 @@ curl.exe -X POST http://localhost:18002/api/v1/adaptar-contenido `
 ```
 
 La solicitud es síncrona y puede consumir cuota y tardar varios minutos. Backend valida que la respuesta corresponda al perfil, formato y nicho solicitados; conserva los campos adicionales, incluidos Mermaid, distractores, reintentos y evidencia cuando IA los devuelve. No calcula metadatos ni modifica el criterio de fidelidad. El éxito es `200`; un rechazo de calidad continúa siendo un rechazo.
+
+El contrato de salida requiere `status`, `metadatos` y `contenido_adaptado`. Ya no exige `evaluacion_calidad`, `almacenamiento_oci` ni `codigo_respuesta`, eliminados del payload público por IA; si una versión anterior los devuelve, se conservan como campos adicionales. Backend no los inventa ni genera valores de calidad o almacenamiento. El estado HTTP se comunica mediante la respuesta HTTP.
 
 | HTTP | Comportamiento |
 |---|---|

@@ -43,7 +43,8 @@ def nodo_creador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         )
 
     instruccion_usuario += (
-        f"⚠️ REQUERIMIENTO DE NICHO (CRÍTICO): Adapta todos los ejemplos, analogías y la introducción estrictamente al contexto de {nicho}.\n\n"
+        f"⚠️ REQUERIMIENTO DE NICHO (CRÍTICO): Adapta todos los ejemplos, analogías y la introducción estrictamente al contexto de {nicho}.\n"
+        f"⚠️ REGLA DE FIDELIDAD (ANTI-ALUCINACIÓN): Las analogías deben construirse ÚNICAMENTE sobre conceptos presentes en el TEXTO FUENTE. NO inventes características técnicas, reglas de negocio o afirmaciones fácticas que no estén explícitamente en el documento.\n\n"
         "Genera un objeto PaqueteContenidoAdaptado con 'titulo', 'introduccion_contextualizada' e 'items' "
         "conforme a las directrices de formato, perfil y nicho."
     )

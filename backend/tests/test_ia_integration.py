@@ -35,19 +35,12 @@ def payload(formato="Flashcards"):
         },
     }[formato]
     return {
-        "status": "exito", "codigo_respuesta": 200,
+        "status": "exito",
         "metadatos": {
             "perfil_aplicado": "Senior", "formato_generado": formato, "nicho_contexto": "Salud",
             "tiempo_estimado_estudio_minutos": 3, "conceptos_clave": ["JWT"],
         },
         "contenido_adaptado": {"titulo": "JWT", "introduccion_contextualizada": "JWT en salud.", "items": items},
-        "evaluacion_calidad": {
-            "anclaje_fuente_score": 0.91, "claridad_pedagogica": "Alta", "reintentos_realizados": 1,
-            "observaciones": "Evaluado por IA.",
-        },
-        "almacenamiento_oci": {
-            "bucket": "prueba", "objeto_id": "jwt.json", "status_upload": "listo_para_subida", "ruta_publica_o_par": None,
-        },
     }
 
 
@@ -104,11 +97,36 @@ def test_all_mvp_formats_are_preserved(client_factory, formato):
     # Campos adicionales deben sobrevivir al transporte y a la validación.
     expected["document_id"] = "doc-123"
     expected["metadatos"]["origen"] = "IA"
-    expected["evaluacion_calidad"]["evidencia"] = ["chunk-1"]
+    expected["trazabilidad"] = {"evidencia": ["chunk-1"]}
     client = client_factory(lambda request: httpx.Response(200, json=expected))
     response = post_document(client, form={**FORM, "formato_salida": formato})
     assert response.status_code == 200
     assert response.json() == expected
+
+
+def test_previous_response_fields_are_preserved_if_ia_sends_them(client_factory):
+    expected = payload()
+    expected.update({
+        "codigo_respuesta": 200,
+        "evaluacion_calidad": {"anclaje_fuente_score": 0.91, "evidencia": ["chunk-1"]},
+        "almacenamiento_oci": {
+            "bucket": "prueba", "objeto_id": "jwt.json", "status_upload": "listo_para_subida",
+        },
+    })
+    client = client_factory(lambda request: httpx.Response(200, json=expected))
+    response = post_document(client)
+    assert response.status_code == 200
+    assert response.json() == expected
+
+
+@pytest.mark.parametrize("missing", ["status", "metadatos", "contenido_adaptado"])
+def test_current_response_fields_remain_required(client_factory, missing):
+    incorrect = payload()
+    incorrect.pop(missing)
+    client = client_factory(lambda request: httpx.Response(200, json=incorrect))
+    response = post_document(client)
+    assert response.status_code == 502
+    assert response.json()["detail"]["codigo"] == "RESPUESTA_IA_INVALIDA"
 
 
 @pytest.mark.parametrize("field,value", [
@@ -252,3 +270,6 @@ def test_swagger_exposes_file_and_canonical_choices(client_factory):
     assert set(body["required"]) == {"documento_original", *FORM}
     assert body["properties"]["documento_original"]["format"] == "binary"
     assert spec["components"]["schemas"]["PerfilDestinatario"]["enum"] == ["Junior", "Senior", "Ejecutivo"]
+    response_schema = spec["components"]["schemas"]["AdaptacionResponse"]
+    assert set(response_schema["required"]) == {"status", "metadatos", "contenido_adaptado"}
+    assert set(response_schema["properties"]) == {"status", "metadatos", "contenido_adaptado"}

@@ -168,9 +168,6 @@ class AdaptacionContenidoResponse(BaseModel):
     status: str = Field(default="exito")
     metadatos: MetadatosAprendizaje
     contenido_adaptado: PaqueteContenidoAdaptado
-    evaluacion_calidad: EvaluacionCalidad
-    almacenamiento_oci: AlmacenamientoOCI
-    codigo_respuesta: Optional[int] = Field(default=200)
 
 
 class TelemetriaEstadoResponse(BaseModel):

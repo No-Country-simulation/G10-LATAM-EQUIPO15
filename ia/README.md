@@ -4,10 +4,10 @@ Este entorno permite probar AI Core junto con los módulos Data/IA y ejecutar su
 
 ## Fuentes utilizadas
 
-- AI Core: `dev-ia`, commit `2af23861ea3462ec79fdd2646ab28abed34a3c3e`, en `nuevamente-ai-core/`.
+- AI Core: `dev-ia`, commit `d895a1a87424c76699c99b72ee5267126decbef5`, en `nuevamente-ai-core/`. Incluye el juez LLM para fidelidad, recuperación de hasta 15 chunks y la respuesta pública de tres campos.
 - Data/IA: `feature/ia-02-03-04-ingestion-chunking-vectorstore`, commit `5ee736e43cb8e8fb1369cb29201bb46fbf96c968`. Se incorporaron únicamente los módulos de `ia/src/dataia/`; posteriormente se hicieron configurables el modelo y el manejo estricto de fallos en el enriquecimiento del documento y de los chunks.
 
-El pipeline entrega los fragmentos con la propiedad `contenido`, que utilizan los agentes. El crítico rechaza una fuente sin términos evaluables y puede utilizar el documento de respaldo si los fragmentos están vacíos.
+El pipeline entrega los fragmentos con la propiedad `contenido`, que utilizan los agentes. El crítico conserva el juez LLM de IA, rechaza localmente una fuente vacía sin invocar al proveedor y puede utilizar el documento de respaldo si los fragmentos están vacíos.
 
 AI Core importa `src.dataia`, pero los módulos Data/IA importan `dataia`. El contenedor copia estos módulos dentro de `nuevamente-ai-core/src/dataia` y habilita ambas rutas mediante `PYTHONPATH`. Esta disposición permite probar la combinación; la estructura definitiva de paquetes sigue pendiente. Ambos nombres pueden cargar módulos distintos, lo que también afecta el alcance de los mocks de la suite.
 
@@ -47,11 +47,11 @@ docker compose -f ia/compose.tests.yaml build ia-tests
 docker compose --env-file ia/.env -f ia/compose.real.yaml run --rm ia-real
 ```
 
-Esta ejecución habilita Internet, consume la cuota del proveedor e invoca el pipeline directamente con `tests/JWT en OCI.pdf`, perfil Junior y formato Flashcards. Utiliza `gemini-3.1-flash-lite`, configurable mediante `GEMINI_MODEL` en `ia/.env`, y el modelo de embeddings configurado en Data/IA. No importa la suite de pytest ni sus mocks. El modo `IA_STRICT_PROVIDERS=1` propaga los errores del enriquecimiento y la ejecución rechaza el borrador de contingencia del generador si Gemini no produce una salida válida. El campo de almacenamiento de la respuesta no acredita una subida real a OCI.
+Esta ejecución habilita Internet, consume la cuota del proveedor e invoca el pipeline directamente con `tests/JWT en OCI.pdf`, perfil Junior y formato Flashcards. Utiliza `gemini-3.1-flash-lite`, configurable mediante `GEMINI_MODEL` en `ia/.env`, y el modelo de embeddings configurado en Data/IA. No importa la suite de pytest ni sus mocks. El modo `IA_STRICT_PROVIDERS=1` propaga los errores del enriquecimiento y la ejecución rechaza el borrador de contingencia del generador si Gemini no produce una salida válida. La respuesta actual no incluye información de almacenamiento; la persistencia en OCI sigue pendiente.
 
 ## Servicio HTTP de IA
 
-El servicio expone el pipeline existente mediante FastAPI. La entrada sigue la frontera `multipart/form-data` del [contrato Backend ↔ IA v2.2](https://github.com/No-Country-simulation/G10-LATAM-EQUIPO15/blob/main/docs/CONTRATOS/CONTRATO_BACKEND_IA.md) disponible en `main`. El contrato todavía debe incorporarse a las ramas de implementación; la respuesta HTTP conserva el modelo `AdaptacionContenidoResponse` de AI Core, incluido su campo `almacenamiento_oci`. Ese campo no representa una subida a OCI.
+El servicio expone el pipeline existente mediante FastAPI. La entrada sigue la frontera `multipart/form-data` del [contrato Backend ↔ IA v2.2](https://github.com/No-Country-simulation/G10-LATAM-EQUIPO15/blob/main/docs/CONTRATOS/CONTRATO_BACKEND_IA.md) disponible en `main`. El contrato todavía debe incorporarse a las ramas de implementación; la respuesta HTTP conserva el modelo actual `AdaptacionContenidoResponse` de AI Core: `status`, `metadatos` y `contenido_adaptado`. Los scores de calidad se evalúan internamente y la persistencia en OCI sigue pendiente.
 
 Desde la raíz del repositorio, con `GOOGLE_API_KEY` cargada en `ia/.env`:
 
@@ -114,7 +114,7 @@ docker compose --env-file ia/.env -f ia/compose.http.yaml --profile tests build 
 docker compose --env-file ia/.env -f ia/compose.http.yaml --profile tests run --rm ia-http-tests
 ```
 
-El contenedor de pruebas no recibe las credenciales y ejecuta sin red. La configuración Compose requiere `--env-file ia/.env` porque contiene también el servicio real, pero la clave solo se inyecta en `ia-http`. Las pruebas HTTP sustituyen la llamada al pipeline para verificar el transporte, validación, limpieza de archivos, ocupación, respuestas y errores; otras pruebas verifican la delegación al pipeline y que el generador respete el modo estricto. También se ejecutan las nueve comprobaciones locales anteriores.
+El contenedor de pruebas no recibe las credenciales y ejecuta sin red. La configuración Compose requiere `--env-file ia/.env` porque contiene también el servicio real, pero la clave solo se inyecta en `ia-http`. Las pruebas HTTP sustituyen la llamada al pipeline para verificar el transporte, validación, limpieza de archivos, ocupación, respuestas y errores; otras pruebas verifican la delegación al pipeline y que el generador respete el modo estricto. También se ejecutan las comprobaciones locales del grafo y las regresiones del contexto del crítico, usando un juez simulado para no consumir cuota.
 
 ```powershell
 docker compose --env-file ia/.env -f ia/compose.http.yaml down

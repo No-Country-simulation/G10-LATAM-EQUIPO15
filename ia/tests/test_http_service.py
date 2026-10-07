@@ -29,8 +29,6 @@ def result():
             "titulo": "JWT", "introduccion_contextualizada": "Introducción técnica.",
             "items": [{"frente": "¿Qué es JWT?", "dorso": "Un formato de token firmado."}],
         },
-        "evaluacion_calidad": {"anclaje_fuente_score": 0.9},
-        "almacenamiento_oci": {"objeto_id": "jwt.json", "status_upload": "listo_para_subida"},
     })
 
 
@@ -67,8 +65,8 @@ def test_original_file_reaches_pipeline_and_is_deleted(http_client, extension):
     response = client.post("/api/v1/adaptar-contenido", data=FORM,
                            files={"documento_original": (f"JWT en OCI.{extension}", original)})
     assert response.status_code == 200
-    assert response.json()["evaluacion_calidad"]["anclaje_fuente_score"] == 0.9
-    assert response.json()["almacenamiento_oci"]["status_upload"] == "listo_para_subida"
+    assert set(response.json()) == {"status", "metadatos", "contenido_adaptado"}
+    assert response.json()["contenido_adaptado"]["items"][0]["dorso"] == "Un formato de token firmado."
     call = captured[0]
     assert call["bytes"] == original
     assert call["documento_titulo"] == "JWT en OCI"
@@ -202,6 +200,8 @@ def test_openapi_exposes_multipart_and_current_response(http_client):
     assert set(schema["properties"]["formato_salida"]["enum"]) == {
         "Flashcards", "Quiz Interactivo", "Resumen Ejecutivo", "Mapa Mental",
     }
+    response_schema = spec["components"]["schemas"]["AdaptacionContenidoResponse"]
+    assert set(response_schema["properties"]) == {"status", "metadatos", "contenido_adaptado"}
 
 
 def test_adapter_calls_existing_pipeline(configured, monkeypatch, result):

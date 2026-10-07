@@ -82,27 +82,10 @@ class ContenidoAdaptado(ContratoIA):
     items: list[FlashcardItem] | list[QuizItem] | MapaMentalItem | ResumenEjecutivoItem
 
 
-class EvaluacionCalidad(ContratoIA):
-    anclaje_fuente_score: float = Field(ge=0.0, le=1.0)
-    claridad_pedagogica: str = "Alta"
-    observaciones: str | None = None
-    reintentos_realizados: int = Field(default=0, ge=0)
-
-
-class AlmacenamientoOCI(ContratoIA):
-    bucket: str
-    objeto_id: str
-    status_upload: str
-    ruta_publica_o_par: str | None = None
-
-
 class AdaptacionResponse(ContratoIA):
     status: Literal["exito", "success"]
     metadatos: MetadatosContenido
     contenido_adaptado: ContenidoAdaptado
-    evaluacion_calidad: EvaluacionCalidad
-    almacenamiento_oci: AlmacenamientoOCI
-    codigo_respuesta: Literal[200] = 200
 
     @model_validator(mode="after")
     def validar_formato_contenido(self):
