@@ -1,0 +1,35 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Principiante",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 5,
+    "conceptos_clave": ["VCN", "Subredes", "Internet Gateway", "Security Lists"]
+  },
+  "contenido_adaptado": {
+    "titulo": "Dominando Redes en la Nube (VCN) desde Cero",
+    "introduccion_contextualizada": "Imagina la VCN como tu propio barrio privado y seguro dentro de la nube de Oracle, donde tu decides quien entra y quien sale.",
+    "items": [
+      {
+        "frente": "Que es una VCN en Oracle Cloud?",
+        "dorso": "Es tu red virtual privada y personalizada dentro de la nube de Oracle, funcionando como la infraestructura de red de tu empresa.",
+        "pista_didactica": "Piensa en ella como el terreno cercado donde residen tus servidores."
+      },
+      {
+        "frente": "Para que sirven las Security Lists (Listas de Seguridad)?",
+        "dorso": "Son como guardias virtuales con listas de reglas que definen exactamente que tipo de trafico de datos puede entrar o salir de tu red.",
+        "pista_didactica": "Reglas de entrada (ingress) y reglas de salida (egress)."
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 0.98,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Lenguaje ajustado con analogias para publico principiante, sin tecnicismos excesivos."
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "contenido-vcn-principiante-flashcards-001.json",
+    "status_upload": "completado"
+  }
+}
