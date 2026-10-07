@@ -1,0 +1,50 @@
+name: nuevamente-integration
+
+services:
+  backend:
+    image: adaptive-content-backend:dev
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      target: runtime
+    init: true
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-18002}:8000"
+    environment:
+      IA_BASE_URL: http://ia-http:8001
+      IA_HTTP_TIMEOUT_SECONDS: "${IA_HTTP_TIMEOUT_SECONDS:-600}"
+      MAX_DOCUMENT_BYTES: "${IA_MAX_DOCUMENT_BYTES:-10485760}"
+      OCI_BUCKET_NAME: "${OCI_BUCKET_NAME:-nuevamente-contenidos-educativos}"
+    depends_on:
+      ia-http:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  ia-http:
+    image: adaptive-content-ia-http:dev
+    build:
+      context: .
+      dockerfile: ia/docker/Dockerfile.http
+      target: runtime
+    init: true
+    expose: ["8001"]
+    environment:
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
+      GEMINI_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
+      # Opcional: clave propia para ingestión, chunking y embeddings (Data/IA); si está vacía se usa GOOGLE_API_KEY
+      DATAIA_GOOGLE_API_KEY: "${DATAIA_GOOGLE_API_KEY:-}"
+      LLM_PROVIDER: gemini
+      GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.1-flash-lite}"
+      IA_STRICT_PROVIDERS: "1"
+      IA_MAX_DOCUMENT_BYTES: "${IA_MAX_DOCUMENT_BYTES:-10485760}"
+    # ChromaDB, registro de documentos y cachés: un documento se ingiere una sola vez
+    volumes:
+      - ia-data:/workspace/data
+
+volumes:
+  ia-data:

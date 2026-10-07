@@ -173,6 +173,7 @@ def ejecutar_pipeline_adaptacion(
         documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir
     )
 
+
     emitir("GENERACION", 3, 60, f"LangGraph generando contenido para perfil '{perfil}'...")
     estado_final = grafo_adaptacion_compilado.invoke(estado_inicial)
 
@@ -227,6 +228,7 @@ async def ejecutar_pipeline_adaptacion_async(
         _preparar_estado_inicial,
         documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir_desde_hilo
     )
+
 
     await _invocar_callback_async(callback_telemetria, "GENERACION", 3, 60, f"LangGraph generando contenido para perfil '{perfil}'...")
     estado_final = await grafo_adaptacion_compilado.ainvoke(estado_inicial)
