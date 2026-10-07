@@ -52,6 +52,7 @@ class FlashcardItem(BaseModel):
     dorso: str = Field(..., description="Explicación pedagógica, definición o respuesta")
     pista_didactica: Optional[str] = Field(None, description="Analogía o mnemotecnia de apoyo")
     categoria_dificultad: Optional[str] = Field("Intermedio", description="Básico, Intermedio o Avanzado")
+    fuentes: Optional[List[str]] = Field(default=None, description="Identificadores de fragmentos que respaldan esta tarjeta (ej. ['F1', 'F3'])")
 
 
 class QuizItem(BaseModel):
@@ -61,12 +62,14 @@ class QuizItem(BaseModel):
     justificacion_tecnica: str = Field(..., description="Explicación técnica del porqué la respuesta es correcta")
     pista_didactica: Optional[str] = Field(None, description="Pista para orientar al estudiante")
     explicacion_distractores: Optional[str] = Field(None, description="Por qué las otras 3 opciones son erróneas")
+    fuentes: Optional[List[str]] = Field(default=None, description="Identificadores de fragmentos que respaldan esta pregunta (ej. ['F2'])")
 
 
 class NodoMapaMental(BaseModel):
     id: str = Field(..., description="Identificador único del nodo")
     etiqueta: str = Field(..., description="Texto del concepto")
     subnodos: List["NodoMapaMental"] = Field(default_factory=list, description="Ramas secundarias")
+    fuentes: Optional[List[str]] = Field(default=None, description="Identificadores de fragmentos asociados al nodo")
 
 
 class MapaMentalItem(BaseModel):
@@ -82,6 +85,7 @@ class PasoTutorialItem(BaseModel):
     instrucciones: str
     bloque_codigo: Optional[str] = None
     resultado_esperado: Optional[str] = None
+    fuentes: Optional[List[str]] = Field(default=None, description="Identificadores de fragmentos que respaldan este paso")
 
 
 class TutorialItem(BaseModel):
@@ -95,6 +99,7 @@ class ResumenEjecutivoItem(BaseModel):
     puntos_clave: List[str] = Field(default_factory=list, description="Puntos de alto impacto")
     impacto_negocio: str = Field(..., description="Beneficios operativos y comerciales")
     recomendaciones: List[str] = Field(default_factory=list, description="Acciones de implementación")
+    fuentes: Optional[List[str]] = Field(default=None, description="Identificadores de fragmentos que respaldan el resumen")
 
 
 class MetadatosAprendizaje(BaseModel):
@@ -168,6 +173,9 @@ class AdaptacionContenidoResponse(BaseModel):
     status: str = Field(default="exito")
     metadatos: MetadatosAprendizaje
     contenido_adaptado: PaqueteContenidoAdaptado
+    evaluacion_calidad: Optional[EvaluacionCalidad] = None
+    almacenamiento_oci: Optional[AlmacenamientoOCI] = None
+    codigo_respuesta: Optional[int] = Field(default=200)
 
 
 class TelemetriaEstadoResponse(BaseModel):

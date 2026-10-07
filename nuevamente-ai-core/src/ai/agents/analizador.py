@@ -25,7 +25,10 @@ def nodo_analizador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     prompt_combinado = f"{prompt_sistema}\n\n{instrucciones_formato}"
 
     # Conceptos clave: se priorizan los extraídos por DataIA (metadata pedagógica) si vienen en el estado.
-    conceptos_unicos = [c for c in (state.get("conceptos_clave") or []) if c and c.strip()][:8]
+    conceptos_candidatos = state.get("conceptos_clave") or []
+    if not conceptos_candidatos and state.get("metadata_documento"):
+        conceptos_candidatos = (state.get("metadata_documento") or {}).get("conceptos_clave") or []
+    conceptos_unicos = [c for c in conceptos_candidatos if c and c.strip()][:8]
 
     if not conceptos_unicos:
         # Respaldo heurístico: términos que aparecen capitalizados en mitad de frase (siglas / nombres propios).

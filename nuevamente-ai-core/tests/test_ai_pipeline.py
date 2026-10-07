@@ -42,16 +42,30 @@ from src.ai.agents.critico import EvaluacionFidelidad
 # Dobles de prueba
 # ---------------------------------------------------------------------------
 
-# Embeddings: un vector por texto (Chroma exige misma cardinalidad).
-_patcher_emb = patch("src.dataia.vectorstore.client.GoogleGenerativeAIEmbeddings", autospec=True)
-_mock_emb = _patcher_emb.start()
-_mock_emb.return_value.embed_documents.side_effect = lambda textos: [[0.1, 0.2, 0.3] for _ in textos]
-_mock_emb.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
-
-# Enriquecimiento DataIA: forzar el respaldo local inmediato (sin llamadas de red).
 _sin_red = MagicMock(side_effect=RuntimeError("sin red en tests"))
-patch("src.dataia.ingestion.enrichment.ChatGoogleGenerativeAI", _sin_red).start()
-patch("src.dataia.chunking.structural_splitter.ChatGoogleGenerativeAI", _sin_red).start()
+
+for target in [
+    "src.dataia.vectorstore.client.GoogleGenerativeAIEmbeddings",
+    "dataia.vectorstore.client.GoogleGenerativeAIEmbeddings",
+]:
+    try:
+        p = patch(target, autospec=True)
+        m = p.start()
+        m.return_value.embed_documents.side_effect = lambda textos: [[0.1, 0.2, 0.3] for _ in textos]
+        m.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+    except Exception:
+        pass
+
+for target in [
+    "src.dataia.ingestion.enrichment.ChatGoogleGenerativeAI",
+    "dataia.ingestion.enrichment.ChatGoogleGenerativeAI",
+    "src.dataia.chunking.structural_splitter.ChatGoogleGenerativeAI",
+    "dataia.chunking.structural_splitter.ChatGoogleGenerativeAI",
+]:
+    try:
+        patch(target, _sin_red).start()
+    except Exception:
+        pass
 
 
 BORRADORES = {

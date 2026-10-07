@@ -79,10 +79,24 @@ def nodo_ensamblador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         items=items_raw
     )
 
+    from src.ai.schemas import EvaluacionCalidad, AlmacenamientoOCI
+    evaluacion = EvaluacionCalidad(
+        anclaje_fuente_score=float(state.get("anclaje_fuente_score") or 0.0),
+        claridad_pedagogica="Alta",
+        observaciones=state.get("critica_observaciones"),
+        reintentos_realizados=max(0, state.get("contador_intentos", 1) - 1)
+    )
+    almacenamiento = AlmacenamientoOCI(
+        objeto_id=f"{titulo_doc}.json",
+        status_upload="listo_para_subida"
+    )
+
     respuesta = AdaptacionContenidoResponse(
         status="exito",
         metadatos=metadatos,
-        contenido_adaptado=paquete_contenido
+        contenido_adaptado=paquete_contenido,
+        evaluacion_calidad=evaluacion,
+        almacenamiento_oci=almacenamiento
     )
 
     return {

@@ -110,6 +110,7 @@ def adaptar_contenido(
                     perfil=perfil_destinatario.value,
                     formato=formato_salida,
                     nicho=nicho_sector.value,
+                    documento_nombre=filename,
                 )
             except PipelineServiceError as error:
                 raise HTTPException(error.status_code, error_detail(error.codigo, error.mensaje)) from error

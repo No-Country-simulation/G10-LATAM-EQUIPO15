@@ -32,3 +32,7 @@ coverage/
 .dataia_cache/
 # Copia local de la versión anterior de ia/ (commit 12ee492), solo para comparar
 ia_old/
+remote-repo-temp/
+*.txt
+mock_salida.py
+test_salida.py

@@ -48,8 +48,9 @@ def _preparar_estado_inicial(
     nicho: str,
     nivel_detalle: str,
     emitir,
+    documento_nombre: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Ejecuta Ingesta -> Chunking -> VectorStore -> Recuperación y devuelve el estado inicial del grafo."""
+    """Ejecuta Ingesta -> Chunking -> VectorStore -> Selección pedagógica (Fase B) y devuelve el estado inicial del grafo."""
     # Validación temprana del formato (define el esquema de salida).
     try:
         FormatoSalidaEnum(formato)
@@ -64,16 +65,28 @@ def _preparar_estado_inicial(
 
     # 1. Extracción
     emitir("EXTRACCION", 1, 20, "Extrayendo y normalizando texto del documento...")
-    from src.dataia.ingestion.service import ingest_document
-    ingestion_res = ingest_document(ruta_archivo)
+    try:
+        from dataia.ingestion.service import ingest_document
+    except ImportError:
+        from src.dataia.ingestion.service import ingest_document
+
+    sig = inspect.signature(ingest_document)
+    if "document_name" in sig.parameters and documento_nombre:
+        ingestion_res = ingest_document(ruta_archivo, document_name=documento_nombre)
+    else:
+        ingestion_res = ingest_document(ruta_archivo)
+
     if getattr(ingestion_res, "status", None) != "aprobado":
         raise ValueError(f"Error de Ingestión: {getattr(ingestion_res, 'mensaje', 'Desconocido')}")
 
     # 2. Chunking e indexación vectorial
     emitir("INDEXACION", 2, 40, "Segmentando fragmentos jerárquicos y calculando embeddings...")
-    from src.dataia.chunking.service import process_chunks
-    from src.dataia.vectorstore.service import process_vectorstore
-    from src.dataia.vectorstore.client import get_vector_store
+    try:
+        from dataia.chunking.service import process_chunks
+        from dataia.vectorstore.service import process_vectorstore
+    except ImportError:
+        from src.dataia.chunking.service import process_chunks
+        from src.dataia.vectorstore.service import process_vectorstore
 
     chunking_res = process_chunks(ingestion_res)
     if getattr(chunking_res, "status", None) != "aprobado":
@@ -83,43 +96,45 @@ def _preparar_estado_inicial(
     if getattr(vs_res, "status", None) != "aprobado":
         raise ValueError(f"Error de VectorStore: {getattr(vs_res, 'mensaje', 'Desconocido')}")
 
-    docs_relevantes = get_vector_store().similarity_search(
-        query=_construir_query_pedagogica(documento_titulo, formato),
-        k=TOP_K_FRAGMENTOS,
-        filter={"document_id": vs_res.document_id}
+    # 3. Selección del contexto completo (Fase B)
+    from src.ai.contexto import (
+        obtener_chunks_documento,
+        obtener_registro_documento,
+        seleccionar_fragmentos,
+        formatear_texto_fuente_etiquetado
     )
-    if not docs_relevantes:
+
+    doc_id = vs_res.document_id
+    todos_chunks = obtener_chunks_documento(doc_id)
+    if not todos_chunks:
         raise ContextoInsuficienteError("Contexto Insuficiente (Error 422): no se recuperaron fragmentos del documento.")
 
-    # Deduplicar y reordenar por posición en el documento para preservar la coherencia narrativa.
-    vistos = set()
-    fragmentos_relevantes = []
-    for d in sorted(docs_relevantes, key=lambda d: str(d.metadata.get("chunk_id", ""))):
-        clave = d.metadata.get("chunk_id") or d.page_content
-        if clave in vistos:
-            continue
-        vistos.add(clave)
-        # Clave 'contenido': es la que leen analizador, creador y crítico.
-        fragmentos_relevantes.append({"contenido": d.page_content, "metadatos": d.metadata})
+    fragmentos_relevantes = seleccionar_fragmentos(todos_chunks, formato)
+    if not fragmentos_relevantes:
+        raise ContextoInsuficienteError("Contexto Insuficiente (Error 422): no se seleccionaron fragmentos válidos para el formato.")
 
-    meta_pedagogica = getattr(ingestion_res, "pedagogical_metadata", None)
-    conceptos_ingesta = list(getattr(meta_pedagogica, "conceptos_clave", None) or [])
+    # Registro y metadata pedagógica consolidada
+    metadata_doc = obtener_registro_documento(doc_id, ingestion_res=ingestion_res, chunking_res=chunking_res)
+    conceptos_ingesta = metadata_doc.get("conceptos_clave") or []
+    texto_fuente_formateado = formatear_texto_fuente_etiquetado(fragmentos_relevantes)
 
     return {
         "documento_titulo": documento_titulo,
-        "documento_contenido": "\n---\n".join(f["contenido"] for f in fragmentos_relevantes),
+        "documento_contenido": texto_fuente_formateado or "\n---\n".join(f["contenido"] for f in fragmentos_relevantes),
         "perfil_destinatario": perfil,
         "formato_salida": formato,
         "nicho_sector": nicho,
         "nivel_detalle": nivel_detalle,
         "fragmentos_relevantes": fragmentos_relevantes,
         "conceptos_clave": conceptos_ingesta,
+        "metadata_documento": metadata_doc,
         "prompt_sistema_calibrado": "",
         "tiempo_estimado_minutos": 5,
         "borrador_contenido": None,
         "codigo_mermaid": None,
         "anclaje_fuente_score": 0.0,
         "critica_observaciones": None,
+        "veredictos_critico": None,
         "contador_intentos": 0,
         "paquete_final_json": None,
         "status": "iniciando",
@@ -159,7 +174,8 @@ def ejecutar_pipeline_adaptacion(
     formato: str = "Flashcards",
     nicho: str = "General",
     nivel_detalle: str = "Didactico",
-    callback_telemetria: Optional[Any] = None
+    callback_telemetria: Optional[Any] = None,
+    documento_nombre: Optional[str] = None,
 ) -> AdaptacionContenidoResponse:
     """
     Ejecuta el ciclo integral de adaptación pedagógica (versión síncrona, para scripts/CLI).
@@ -170,9 +186,9 @@ def ejecutar_pipeline_adaptacion(
             callback_telemetria(etapa, paso, progreso, mensaje)
 
     estado_inicial = _preparar_estado_inicial(
-        documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir
+        documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir,
+        documento_nombre=documento_nombre
     )
-
 
     emitir("GENERACION", 3, 60, f"LangGraph generando contenido para perfil '{perfil}'...")
     estado_final = grafo_adaptacion_compilado.invoke(estado_inicial)
@@ -205,7 +221,8 @@ async def ejecutar_pipeline_adaptacion_async(
     formato: str = "Flashcards",
     nicho: str = "General",
     nivel_detalle: str = "Didactico",
-    callback_telemetria: Optional[Any] = None
+    callback_telemetria: Optional[Any] = None,
+    documento_nombre: Optional[str] = None,
 ) -> AdaptacionContenidoResponse:
     """
     Versión asíncrona para consumo no bloqueante en endpoints de FastAPI.
@@ -226,7 +243,8 @@ async def ejecutar_pipeline_adaptacion_async(
 
     estado_inicial = await asyncio.to_thread(
         _preparar_estado_inicial,
-        documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir_desde_hilo
+        documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir_desde_hilo,
+        documento_nombre
     )
 
 
