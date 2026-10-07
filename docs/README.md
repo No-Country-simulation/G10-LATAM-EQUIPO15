@@ -31,6 +31,7 @@ docs/
 ├── 15_DOCUMENTACION_FINAL_AI_CORE.md          # Documentación definitiva técnica del motor integrado
 ├── 18_MEJORAS_DATA_IA_FASE_A.md               # Mejoras de ingestión, chunking y vector store (Data/IA)
 ├── 19_PROPUESTA_CAMBIOS_AI_CORE.md            # Propuesta de cambios para AI Core y Backend tras la Fase A
+├── 20_RESOLUCION_INTEGRAL_ARQUITECTURA_DATA_IA.md # Documento técnico maestro: 25 resoluciones de arquitectura Data/IA
 ├── CHECKLIST_MAESTRO_AVANCES_Y_HITOS.md       # Tablero maestro de seguimiento, fechas, tareas y checklist por área
 └── adr/                                       # Architectural Decision Records (Decisiones de Ingeniería)
     ├── 001-seleccion-langgraph-vs-cadenas-monoliticas.md
@@ -50,7 +51,8 @@ docs/
 | **`06_ARQUITECTURA_DE_IA_Y_SISTEMA_MULTIAGENTE.md`** | Equipo de IA | Especificación de PyMuPDF, chunking jerárquico, LangGraph y VectorStore. |
 | **`15_DOCUMENTACION_FINAL_AI_CORE.md`** | Frontend, Backend e IA | Documentación definitiva del motor Multi-Agente, failover a Groq y rendimientos esperados. |
 | **`18_MEJORAS_DATA_IA_FASE_A.md`** | Equipo de IA y Datos | Diagnóstico del pipeline, cambios en ingestión, chunking y vector store, mediciones antes/después y fases siguientes. |
-| **`19_PROPUESTA_CAMBIOS_AI_CORE.md`** | AI Core y Backend | Impacto de la Fase A en otros equipos y propuesta de cambios en selección de contexto y agente crítico. |
+| **`19_PROPUESTA_CAMBIOS_AI_CORE.md`** | AI Core y Backend | Propuesta de cambios para AI Core y Backend tras la Fase A. |
+| **`20_RESOLUCION_INTEGRAL_ARQUITECTURA_DATA_IA.md`** | Todos los Squads / Evaluadores | Documento maestro definitivo con la resolución integral de las 25 deficiencias de arquitectura en Data/IA y AI Core. |
 
 ---
 
