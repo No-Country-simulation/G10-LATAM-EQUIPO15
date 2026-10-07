@@ -9,9 +9,40 @@ Este entorno permite probar AI Core junto con los módulos Data/IA y ejecutar su
 
 El pipeline entrega los fragmentos con la propiedad `contenido`, que utilizan los agentes. El crítico rechaza una fuente sin términos evaluables y puede utilizar el documento de respaldo si los fragmentos están vacíos.
 
+### Ingestión, chunking y vector store
+
+La versión anterior de estos módulos corresponde al commit `12ee492`. El detalle de los cambios y sus mediciones está en [docs/18_MEJORAS_DATA_IA_FASE_A.md](../docs/18_MEJORAS_DATA_IA_FASE_A.md).
+
+- **Extracción:** los PDF se convierten a Markdown por página con `pymupdf4llm` (títulos, listas y código), ignorando imágenes y gráficos para no perder el texto superpuesto a ellos; las tablas dibujadas con líneas quedan como texto. Si `pymupdf4llm` falla o una página conserva menos del 90 % de las palabras del texto plano, esa página se extrae con PyMuPDF. Los enlaces se reducen a su texto y se eliminan los encabezados y pies repetidos en la mayoría de las páginas. La normalización conserva la indentación y el interior de los bloques de código.
+- **Identidad:** `document_id` es `doc-` + los primeros 16 caracteres hexadecimales del SHA-256 del archivo. El mismo archivo produce el mismo id; `ingest_document(ruta, document_name=...)` conserva el nombre original.
+- **Chunking:** se segmenta el documento completo, no página por página. Cada chunk registra `page` (inicio), `page_end` (fin) y `section` (título vigente, sin confundir comentarios `#` de código con títulos).
+- **Enriquecimiento:** los chunks se clasifican en lotes de `DATAIA_ENRICH_BATCH_SIZE` (15 por defecto) y la caché se indexa por el hash del texto en `DATAIA_CACHE_DIR`.
+- **Vector store:** el `chunk_id` es el id del vector. Si el documento ya está indexado con los mismos fragmentos no se recalculan embeddings; si cambió, se reemplazan sus vectores. La metadata pedagógica del documento se guarda en `DATAIA_DOCUMENTS_DIR/<document_id>.json`. `get_document_chunks(document_id)` devuelve todos los chunks en orden y `load_document_record(document_id)` su registro.
+- **Persistencia:** las configuraciones Compose montan el volumen `ia-data` en `/workspace/data` (ChromaDB, registro y cachés).
+
 AI Core importa `src.dataia`, pero los módulos Data/IA importan `dataia`. El contenedor copia estos módulos dentro de `nuevamente-ai-core/src/dataia` y habilita ambas rutas mediante `PYTHONPATH`. Esta disposición permite probar la combinación; la estructura definitiva de paquetes sigue pendiente. Ambos nombres pueden cargar módulos distintos, lo que también afecta el alcance de los mocks de la suite.
 
-## Ejecutar las pruebas
+## Ejecutar las pruebas sin Docker
+
+Con el Python de Anaconda se crea un entorno virtual en la raíz del repositorio (`.venv/`, ignorado por Git) con las mismas dependencias de la imagen:
+
+```powershell
+C:\ProgramData\anaconda3\python.exe -m venv .venv
+.venv\Scripts\python.exe -m pip install -r nuevamente-ai-core/requirements.txt -r ia/requirements-tests.txt -r ia/requirements-http.txt
+```
+
+Pruebas de Data/IA (sin red ni proveedores):
+
+```powershell
+$env:PYTHONPATH = "ia/src"
+.venv\Scripts\python.exe -m pytest ia/tests/test_dataia.py -q
+```
+
+Para llamar a Gemini desde esta máquina, Python debe usar el almacén de certificados de Windows: instalar `truststore` en `.venv` y ejecutar `truststore.inject_into_ssl()` antes de crear los clientes. Sin eso, las llamadas fallan con `CERTIFICATE_VERIFY_FAILED`.
+
+La suite completa requiere la disposición del contenedor (`dataia` dentro de `nuevamente-ai-core/src`); para ejecutarla fuera de Docker se replica esa estructura en un directorio temporal y se usa el mismo `PYTHONPATH` del Dockerfile.
+
+## Ejecutar las pruebas con Docker
 
 Desde la raíz del repositorio:
 
@@ -41,6 +72,13 @@ Estas configuraciones ejecutan pruebas e invocaciones directas. El servicio HTTP
 ## Ejecutar el pipeline con Gemini real
 
 Cargar la clave localmente en `ia/.env` como `GOOGLE_API_KEY`. Ese archivo está ignorado por Git y excluido de la imagen. No mostrar la configuración expandida de Compose, ya que contiene la clave.
+
+Opcionalmente, `DATAIA_GOOGLE_API_KEY` define una clave propia para ingestión, chunking y embeddings, de modo que esas etapas consuman una cuota separada de la que usa AI Core en la generación. Si no está definida, también usan `GOOGLE_API_KEY`. Ninguna clave se versiona: cada persona configura las suyas en `ia/.env`.
+
+```dotenv
+GOOGLE_API_KEY=clave-para-ai-core
+DATAIA_GOOGLE_API_KEY=clave-para-data-ia   # opcional
+```
 
 ```powershell
 docker compose -f ia/compose.tests.yaml build ia-tests

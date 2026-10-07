@@ -25,3 +25,10 @@ coverage/
 # Archivos internos y documentación local de trabajo
 /ia/DIAGNOSTICO_PRUEBAS_IA.md
 /docs/docuemntacion-proyecto.pdf
+
+# Datos locales generados por Data/IA (ChromaDB, registro y cachés)
+.chromadb_data/
+.dataia_documents/
+.dataia_cache/
+# Copia local de la versión anterior de ia/ (commit 12ee492), solo para comparar
+ia_old/

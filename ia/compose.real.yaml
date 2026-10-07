@@ -6,6 +6,8 @@ services:
     environment:
       GOOGLE_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
       GEMINI_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
+      # Opcional: clave propia para ingestión, chunking y embeddings (Data/IA); si está vacía se usa GOOGLE_API_KEY
+      DATAIA_GOOGLE_API_KEY: "${DATAIA_GOOGLE_API_KEY:-}"
       LLM_PROVIDER: gemini
       GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.1-flash-lite}"
       IA_STRICT_PROVIDERS: "1"
