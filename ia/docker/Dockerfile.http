@@ -3,7 +3,7 @@ FROM python:3.14-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/nuevamente-ai-core/src \
+    PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/ia/src \
     ANONYMIZED_TELEMETRY=False
 
 WORKDIR /workspace
@@ -13,16 +13,17 @@ RUN pip install --no-cache-dir -r nuevamente-ai-core/requirements.txt -r ia/requ
 COPY ia/requirements-http.txt ia/requirements-http.txt
 RUN pip install --no-cache-dir -r ia/requirements-http.txt
 
-ENV PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/nuevamente-ai-core/src:/workspace/ia/src \
+ENV PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/ia/src \
     IA_STRICT_PROVIDERS=1 \
-    CHROMADB_DIR=/workspace/data/chromadb
+    CHROMADB_DIR=/workspace/data/chromadb \
+    DATAIA_DOCUMENTS_DIR=/workspace/data/documents \
+    DATAIA_CACHE_DIR=/workspace/data/cache
 
 COPY nuevamente-ai-core/src nuevamente-ai-core/src
-# Compatibilidad con los imports existentes de AI Core y Data/IA.
-COPY ia/src/dataia nuevamente-ai-core/src/dataia
+COPY ia/src/dataia ia/src/dataia
 COPY ia/src/ia_http ia/src/ia_http
 RUN useradd --create-home --shell /usr/sbin/nologin iauser \
-    && mkdir -p /workspace/data/chromadb \
+    && mkdir -p /workspace/data/chromadb /workspace/data/documents /workspace/data/cache \
     && chown -R iauser:iauser /workspace
 USER iauser
 
@@ -34,4 +35,4 @@ CMD ["python", "-m", "uvicorn", "ia_http.main:app", "--host", "0.0.0.0", "--port
 FROM runtime AS tests
 COPY nuevamente-ai-core/tests nuevamente-ai-core/tests
 COPY ia/tests ia/tests
-CMD ["python", "-m", "pytest", "ia/tests", "nuevamente-ai-core/tests/test_ai_pipeline.py", "nuevamente-ai-core/tests/test_critic_context.py", "-q", "--tb=short", "--timeout=30", "-k", "not ejecucion_pipeline and not fidelidad"]
+CMD ["python", "-m", "pytest", "ia/tests", "nuevamente-ai-core/tests/test_ai_pipeline.py", "nuevamente-ai-core/tests/test_critic_context.py", "-q", "--tb=short", "--timeout=30"]

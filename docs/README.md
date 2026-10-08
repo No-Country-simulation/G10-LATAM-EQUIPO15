@@ -29,6 +29,8 @@ docs/
 ├── 13_INFORME_FINAL_AI_CORE_SEMANA_1.md       # Informe de finalización del Sprint 1 para IA
 ├── 14_REPORTE_BENCHMARK_Y_RENDIMIENTO_APIs.md # Reporte de latencia de Groq vs Gemini
 ├── 15_DOCUMENTACION_FINAL_AI_CORE.md          # Documentación definitiva técnica del motor integrado
+├── 18_MEJORAS_DATA_IA_FASE_A.md               # Mejoras de ingestión, chunking y vector store (Data/IA)
+├── 19_PROPUESTA_CAMBIOS_AI_CORE.md            # Propuesta de cambios para AI Core y Backend tras la Fase A
 ├── CHECKLIST_MAESTRO_AVANCES_Y_HITOS.md       # Tablero maestro de seguimiento, fechas, tareas y checklist por área
 └── adr/                                       # Architectural Decision Records (Decisiones de Ingeniería)
     ├── 001-seleccion-langgraph-vs-cadenas-monoliticas.md
@@ -47,6 +49,8 @@ docs/
 | **`05_CONTRATOS_DE_DATOS_Y_SCHEMAS.md`** | Backend e IA | Código Python con esquemas Pydantic V2 de entrada, salida y telemetría. |
 | **`06_ARQUITECTURA_DE_IA_Y_SISTEMA_MULTIAGENTE.md`** | Equipo de IA | Especificación de PyMuPDF, chunking jerárquico, LangGraph y VectorStore. |
 | **`15_DOCUMENTACION_FINAL_AI_CORE.md`** | Frontend, Backend e IA | Documentación definitiva del motor Multi-Agente, failover a Groq y rendimientos esperados. |
+| **`18_MEJORAS_DATA_IA_FASE_A.md`** | Equipo de IA y Datos | Diagnóstico del pipeline, cambios en ingestión, chunking y vector store, mediciones antes/después y fases siguientes. |
+| **`19_PROPUESTA_CAMBIOS_AI_CORE.md`** | AI Core y Backend | Impacto de la Fase A en otros equipos y propuesta de cambios en selección de contexto y agente crítico. |
 
 ---
 

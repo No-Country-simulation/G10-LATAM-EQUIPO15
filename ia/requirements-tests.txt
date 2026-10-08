@@ -9,3 +9,5 @@ pydantic>=2.13.5
 pymupdf>=1.28.2
 python-dotenv>=1.2.3
 pytest-timeout>=2.3.1
+# Extracción de PDF a Markdown (títulos, listas y tablas) para el chunking estructural.
+pymupdf4llm>=0.0.17,<1.0

@@ -43,7 +43,7 @@ def ejecutar_pipeline_adaptacion(
         callback_telemetria("EXTRACCION", 1, 20, "Extrayendo y normalizando texto del documento...")
 
     if ruta_archivo:
-        from src.dataia.ingestion.service import ingest_document
+        from dataia.ingestion.service import ingest_document
         ingestion_res = ingest_document(ruta_archivo)
         if not getattr(ingestion_res, "status", None) == "aprobado":
             raise ValueError(f"Error de Ingestión: {getattr(ingestion_res, 'mensaje', 'Desconocido')}")
@@ -56,13 +56,13 @@ def ejecutar_pipeline_adaptacion(
     if callback_telemetria:
         callback_telemetria("INDEXACION", 2, 40, "Segmentando fragmentos jerárquicos y calculando embeddings...")
 
-    from src.dataia.chunking.service import process_chunks
+    from dataia.chunking.service import process_chunks
     chunking_res = process_chunks(ingestion_res)
     if not getattr(chunking_res, "status", None) == "aprobado":
         raise ValueError(f"Error de Chunking: {getattr(chunking_res, 'mensaje', 'Desconocido')}")
 
-    from src.dataia.vectorstore.service import process_vectorstore
-    from src.dataia.vectorstore.client import get_vector_store
+    from dataia.vectorstore.service import process_vectorstore
+    from dataia.vectorstore.client import get_vector_store
     
     vs_res = process_vectorstore(chunking_res)
     if not getattr(vs_res, "status", None) == "aprobado":
@@ -175,7 +175,7 @@ async def ejecutar_pipeline_adaptacion_async(
     await _invocar_callback_async(callback_telemetria, "EXTRACCION", 1, 20, "Extrayendo y normalizando texto del documento...")
 
     if ruta_archivo:
-        from src.dataia.ingestion.service import ingest_document
+        from dataia.ingestion.service import ingest_document
         ingestion_res = ingest_document(ruta_archivo)
         if not getattr(ingestion_res, "status", None) == "aprobado":
             raise ValueError(f"Error de Ingestión: {getattr(ingestion_res, 'mensaje', 'Desconocido')}")
@@ -187,13 +187,13 @@ async def ejecutar_pipeline_adaptacion_async(
     # 2. Fase de Chunking e Indexación Vectorial
     await _invocar_callback_async(callback_telemetria, "INDEXACION", 2, 40, "Segmentando fragmentos jerárquicos y calculando embeddings...")
 
-    from src.dataia.chunking.service import process_chunks
+    from dataia.chunking.service import process_chunks
     chunking_res = process_chunks(ingestion_res)
     if not getattr(chunking_res, "status", None) == "aprobado":
         raise ValueError(f"Error de Chunking: {getattr(chunking_res, 'mensaje', 'Desconocido')}")
 
-    from src.dataia.vectorstore.service import process_vectorstore
-    from src.dataia.vectorstore.client import get_vector_store
+    from dataia.vectorstore.service import process_vectorstore
+    from dataia.vectorstore.client import get_vector_store
     
     vs_res = process_vectorstore(chunking_res)
     if not getattr(vs_res, "status", None) == "aprobado":

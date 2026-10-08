@@ -5,13 +5,44 @@ Este entorno permite probar AI Core junto con los módulos Data/IA y ejecutar su
 ## Fuentes utilizadas
 
 - AI Core: `dev-ia`, commit `d895a1a87424c76699c99b72ee5267126decbef5`, en `nuevamente-ai-core/`. Incluye el juez LLM para fidelidad, recuperación de hasta 15 chunks y la respuesta pública de tres campos.
-- Data/IA: `feature/ia-02-03-04-ingestion-chunking-vectorstore`, commit `5ee736e43cb8e8fb1369cb29201bb46fbf96c968`. Se incorporaron únicamente los módulos de `ia/src/dataia/`; posteriormente se hicieron configurables el modelo y el manejo estricto de fallos en el enriquecimiento del documento y de los chunks.
+- Data/IA: base `5ee736e43cb8e8fb1369cb29201bb46fbf96c968` y mejoras Fase A de `feat/dataia-fase-a`, commit `0ebbd155438781e4afcd9b10746c45a8a95835d4`. Se combinan extracción estructural, clasificación por lotes y persistencia con los límites y el manejo estricto de errores del proveedor.
 
 El pipeline entrega los fragmentos con la propiedad `contenido`, que utilizan los agentes. El crítico conserva el juez LLM de IA, rechaza localmente una fuente vacía sin invocar al proveedor y puede utilizar el documento de respaldo si los fragmentos están vacíos.
 
-AI Core importa `src.dataia`, pero los módulos Data/IA importan `dataia`. El contenedor copia estos módulos dentro de `nuevamente-ai-core/src/dataia` y habilita ambas rutas mediante `PYTHONPATH`. Esta disposición permite probar la combinación; la estructura definitiva de paquetes sigue pendiente. Ambos nombres pueden cargar módulos distintos, lo que también afecta el alcance de los mocks de la suite.
+### Ingestión, chunking y vector store
 
-## Ejecutar las pruebas
+La versión anterior de estos módulos corresponde al commit `12ee492`. El detalle de los cambios y sus mediciones está en [docs/18_MEJORAS_DATA_IA_FASE_A.md](../docs/18_MEJORAS_DATA_IA_FASE_A.md).
+
+- **Extracción:** los PDF se convierten a Markdown por página con `pymupdf4llm` (títulos, listas y código), ignorando imágenes y gráficos para no perder el texto superpuesto a ellos; las tablas dibujadas con líneas quedan como texto. Si `pymupdf4llm` falla o una página conserva menos del 90 % de las palabras del texto plano, esa página se extrae con PyMuPDF. Los enlaces se reducen a su texto y se eliminan los encabezados y pies repetidos en la mayoría de las páginas. La normalización conserva la indentación y el interior de los bloques de código.
+- **Identidad:** `document_id` es `doc-` + los primeros 16 caracteres hexadecimales del SHA-256 del archivo. El mismo archivo produce el mismo id; `ingest_document(ruta, document_name=...)` conserva el nombre original.
+- **Chunking:** se segmenta el documento completo, no página por página. Cada chunk registra `page` (inicio), `page_end` (fin) y `section` (título vigente, sin confundir comentarios `#` de código con títulos).
+- **Enriquecimiento:** los chunks se clasifican en lotes de `DATAIA_ENRICH_BATCH_SIZE` (15 por defecto) y la caché se indexa por el hash del texto en `DATAIA_CACHE_DIR`.
+- **Vector store:** el `chunk_id` es el id del vector. Si el documento ya está indexado con los mismos fragmentos no se recalculan embeddings; si cambió, se reemplazan sus vectores. La metadata pedagógica del documento se guarda en `DATAIA_DOCUMENTS_DIR/<document_id>.json`. `get_document_chunks(document_id)` devuelve todos los chunks en orden y `load_document_record(document_id)` su registro.
+- **Persistencia:** Compose HTTP e integración montan el volumen `ia-data` en `/workspace/data` (ChromaDB, registro y cachés). Sobrevive a la recreación del contenedor; `docker compose down -v` elimina también el volumen. Cada proyecto Compose tiene su propio volumen. Esto no implementa Object Storage de OCI.
+
+AI Core y Data/IA utilizan una sola ruta de importación, `dataia.*`. Las imágenes copian el paquete en `/workspace/ia/src/dataia` y lo incluyen en `PYTHONPATH`; no crean una segunda copia bajo `src.dataia`. Los proveedores simulados de las pruebas tienen alcance por prueba.
+
+## Ejecutar las pruebas sin Docker
+
+Con el Python de Anaconda se crea un entorno virtual en la raíz del repositorio (`.venv/`, ignorado por Git) con las mismas dependencias de la imagen:
+
+```powershell
+C:\ProgramData\anaconda3\python.exe -m venv .venv
+.venv\Scripts\python.exe -m pip install -r nuevamente-ai-core/requirements.txt -r ia/requirements-tests.txt -r ia/requirements-http.txt
+```
+
+Pruebas de Data/IA (sin red ni proveedores):
+
+```powershell
+$env:PYTHONPATH = "ia/src"
+.venv\Scripts\python.exe -m pytest ia/tests/test_dataia.py -q
+```
+
+Para llamar a Gemini desde esta máquina, Python debe usar el almacén de certificados de Windows: instalar `truststore` en `.venv` y ejecutar `truststore.inject_into_ssl()` antes de crear los clientes. Sin eso, las llamadas fallan con `CERTIFICATE_VERIFY_FAILED`.
+
+Para ejecutar la suite combinada fuera de Docker, usar `PYTHONPATH=ia/src;nuevamente-ai-core` en PowerShell. No se requiere copiar los módulos a otra carpeta.
+
+## Ejecutar las pruebas con Docker
 
 Desde la raíz del repositorio:
 
@@ -22,7 +53,7 @@ docker compose -f ia/compose.tests.yaml run --rm ia-tests
 
 La construcción necesita acceso a Internet para descargar la imagen y las dependencias. Las pruebas se ejecutan con la red deshabilitada, sin puertos publicados, volúmenes del host ni credenciales reales. Los archivos `.env` no se incorporan a la imagen.
 
-La suite existente utiliza claves ficticias y un mock de embeddings, pero también contiene pruebas del pipeline que intentan utilizar proveedores externos. Por eso una ejecución sin red puede detectar tanto problemas de integración como dependencias externas sin simular. No representa una validación del procesamiento real con Gemini o Groq.
+Las pruebas del pipeline ejecutan ingesta, Chroma y LangGraph con embeddings, generación y juez explícitamente simulados. Los mocks se restauran al finalizar cada prueba. La ejecución sin red verifica la integración local y no representa una validación del procesamiento real con Gemini o Groq.
 
 Cada prueba tiene un límite de 30 segundos. Pytest devuelve código `0` si pasan todas, `1` ante fallos y `2` ante errores de colección/importación. El resultado JUnit se genera dentro del contenedor en `/tmp/ia-tests.xml` y se elimina al usar `--rm`; la salida de terminal contiene el diagnóstico.
 
@@ -41,6 +72,13 @@ Estas configuraciones ejecutan pruebas e invocaciones directas. El servicio HTTP
 ## Ejecutar el pipeline con Gemini real
 
 Cargar la clave localmente en `ia/.env` como `GOOGLE_API_KEY`. Ese archivo está ignorado por Git y excluido de la imagen. No mostrar la configuración expandida de Compose, ya que contiene la clave.
+
+Opcionalmente, `DATAIA_GOOGLE_API_KEY` define una clave propia para ingestión, chunking y embeddings, de modo que esas etapas consuman una cuota separada de la que usa AI Core en la generación. Si no está definida, también usan `GOOGLE_API_KEY`. Ninguna clave se versiona: cada persona configura las suyas en `ia/.env`.
+
+```dotenv
+GOOGLE_API_KEY=clave-para-ai-core
+DATAIA_GOOGLE_API_KEY=clave-para-data-ia   # opcional
+```
 
 ```powershell
 docker compose -f ia/compose.tests.yaml build ia-tests
@@ -85,7 +123,7 @@ La adaptación consume cuota de Gemini y puede tardar varios minutos. El servici
 
 El puerto local es `18001`, configurable con `IA_PORT` en `ia/.env`, y se publica solo en loopback. Dentro de Docker el puerto es `8001`. El límite de documento es 10 MiB, configurable mediante `IA_MAX_DOCUMENT_BYTES`; se verifica al recibir el archivo y durante su copia. El parser multipart puede almacenar el cuerpo antes de esa verificación: para un despliegue público también corresponde limitar el cuerpo en el proxy de entrada.
 
-Se procesa un documento por vez; otras solicitudes de adaptación reciben `503 IA_OCUPADA` y pueden reintentarse. El contenedor arranca un único worker HTTP. Cada adaptación se ejecuta en un proceso hijo supervisado: al agotar el presupuesto total, IA termina ese proceso, libera la ocupación y elimina el archivo temporal antes de responder. La solicitud sigue siendo síncrona, sin trabajos persistentes en segundo plano ni SSE. Chroma almacena los índices dentro del contenedor; se pierden al eliminarlo. La configuración de persistencia definitiva queda pendiente.
+Se procesa un documento por vez; otras solicitudes de adaptación reciben `503 IA_OCUPADA` y pueden reintentarse. El contenedor arranca un único worker HTTP. Cada adaptación se ejecuta en un proceso hijo supervisado: al agotar el presupuesto total, IA termina ese proceso, libera la ocupación y elimina el archivo temporal antes de responder. La solicitud sigue siendo síncrona, sin trabajos persistentes en segundo plano ni SSE. Chroma, registros y cachés se conservan en el volumen Docker descrito anteriormente; Object Storage y la persistencia definitiva en OCI siguen pendientes.
 
 ### Límites de ejecución
 
@@ -97,6 +135,8 @@ Se procesa un documento por vez; otras solicitudes de adaptación reciben `503 I
 | `IA_CALLER_TIMEOUT_SECONDS` | `600` | Tiempo disponible en el cliente; Compose de integración lo toma de `IA_HTTP_TIMEOUT_SECONDS` |
 
 Los tiempos deben ser positivos y finitos. El presupuesto de IA debe ser al menos cinco segundos menor que el del cliente; se recomienda conservar un margen mayor para transporte y cierre del proceso. Una configuración inválida devuelve `503 IA_NO_CONFIGURADA` antes de comenzar a procesar. Los valores se pueden cargar en `ia/.env`; Compose transmite estas opciones sin incorporar ese archivo a la imagen.
+
+`DATAIA_GOOGLE_API_KEY` es opcional: Data/IA usa esa clave si se configura y, de lo contrario, `GOOGLE_API_KEY`. AI Core mantiene sus credenciales. Ambas rutas conservan los límites HTTP del proveedor. Compose también transmite `DATAIA_ENRICH_BATCH_SIZE`, con valor predeterminado `15`. Los lotes y los reintentos individuales registran su etapa sin imprimir el contenido de los fragmentos.
 
 Se fijan `langchain-google-genai==4.4.0` y `google-genai==2.28.0`, versiones con las que se verifica que los límites llegan a las solicitudes del SDK. En esa versión de LangChain, `max_retries` se transforma en intentos totales; la configuración anterior expresa reintentos adicionales y hace la conversión. Embeddings utiliza un cliente SDK con opciones HTTP explícitas porque la versión instalada no aplica su campo `request_options` a `embed_content`.
 
