@@ -1,0 +1,116 @@
+:root {
+  --azul: #1a3fa0;
+  --azul-claro: #eaf0ff;
+  --gris: #666;
+  --error: #c0392b;
+  --borde: #d7dce5;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #f7f9fc;
+  color: #222;
+}
+
+.encabezado {
+  background: var(--azul);
+  color: white;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+.encabezado h1 { margin: 0; font-size: 1.8rem; }
+.encabezado p { margin: 0.25rem 0 0; opacity: 0.9; }
+
+.contenedor-principal {
+  max-width: 640px;
+  margin: 2rem auto;
+  background: white;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.oculto { display: none; }
+
+.campo {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+label { font-weight: 600; font-size: 0.9rem; }
+
+input, select {
+  padding: 0.6rem;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  background: var(--azul);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+button:hover { opacity: 0.9; }
+button:disabled { opacity: 0.6; cursor: wait; }
+.boton-secundario { background: white; color: var(--azul); border: 1px solid var(--azul); }
+:focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; }
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--azul-claro);
+  border-top-color: var(--azul);
+  border-radius: 50%;
+  margin: 1.5rem auto;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.meta {
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+
+.grid-flashcards {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.flashcard {
+  background: var(--azul-claro);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.flashcard-frente { margin: 0 0 0.5rem; }
+.flashcard-dorso { margin: 0 0 0.5rem; }
+.flashcard-pista { margin: 0; color: var(--gris); font-size: 0.85rem; }
+summary { cursor: pointer; font-weight: 600; }
+.quiz-pregunta { margin: 0; padding: 1rem; border: 1px solid var(--borde); border-radius: 10px; }
+.quiz-pregunta legend { font-weight: 600; padding: 0 0.4rem; }
+.quiz-opcion { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem 0; font-weight: normal; }
+.quiz-opcion input { margin-top: 0.3rem; }
+.quiz-feedback { white-space: pre-wrap; }
+.respuesta-correcta { color: #196438; }
+.respuesta-incorrecta { color: var(--error); }
+.flashcard, .quiz-pregunta, #resultado-items { overflow-wrap: anywhere; }
+
+#seccion-error h2 { color: var(--error); }
+#mensaje-error { color: var(--error); }

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NuevaMente</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="encabezado">
+    <h1>NuevaMente</h1>
+    <p>Convierte conocimiento técnico en aprendizaje real</p>
+  </header>
+
+  <main class="contenedor-principal">
+
+    <!-- Estado IDLE: en esta sección hacemos la carga del documento + configuración (FE-01 / FE-02) -->
+    <section id="seccion-carga">
+      <h2>Cargar el documento y configurarlo</h2>
+      <form id="form-configuracion">
+        <div class="campo">
+          <label for="documento">Documento técnico (PDF, Markdown o texto)</label>
+          <input type="file" id="documento" name="documento_original" accept=".pdf,.md,.markdown,.txt" required />
+        </div>
+
+        <div class="campo">
+          <label for="perfil_destinatario">Perfil del destinatario</label>
+          <select id="perfil_destinatario" name="perfil_destinatario" required>
+            <option value="Junior">Junior / Principiante</option>
+            <option value="Senior">Líder Técnico / Arquitecto</option>
+            <option value="Ejecutivo">Ejecutivo</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="formato_salida">Formato pedagógico de salida</label>
+          <select id="formato_salida" name="formato_salida" required>
+            <option value="Flashcards">Flashcards de memorización</option>
+            <option value="Quiz Interactivo">Quiz interactivo con justificaciones</option>
+            <option value="Resumen Ejecutivo">Resumen ejecutivo</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="nicho_sector">Nicho / contexto de aplicación</label>
+          <select id="nicho_sector" name="nicho_sector" required>
+            <option value="General">General</option>
+            <option value="Fintech">Fintech</option>
+            <option value="Salud">Salud</option>
+            <option value="E-commerce">E-commerce</option>
+          </select>
+        </div>
+
+        <button id="boton-generar" type="submit">Generar contenido educativo</button>
+      </form>
+    </section>
+
+    <section id="seccion-procesando" class="oculto" role="status" aria-live="polite">
+      <h2>2. Procesando tu documento…</h2>
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Estamos extrayendo el contenido y generando tu material educativo.</p>
+      <p class="meta">La adaptación puede tardar varios minutos. Esperá sin volver a enviar el documento.</p>
+    </section>
+
+    <section id="seccion-resultado" class="oculto">
+      <h2 id="resultado-titulo"></h2>
+      <p id="resultado-intro"></p>
+      <p id="resultado-tiempo" class="meta"></p>
+      <p id="resultado-conceptos" class="meta"></p>
+      <p id="resultado-calidad" class="meta"></p>
+
+      <div id="resultado-items" class="grid-flashcards"></div>
+
+      <button id="boton-nuevo">Generar otro contenido</button>
+    </section>
+
+    <!-- Estado ERROR -->
+    <section id="seccion-error" class="oculto" role="alert">
+      <h2>Ocurrió un problema</h2>
+      <p id="mensaje-error"></p>
+      <button id="boton-reintentar">Reintentar</button>
+      <button id="boton-volver" class="boton-secundario">Cambiar documento o configuración</button>
+    </section>
+
+  </main>
+
+  <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

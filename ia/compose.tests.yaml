@@ -1,0 +1,9 @@
+name: nuevamente-ia-diagnostics
+
+services:
+  ia-tests:
+    image: nuevamente-ia-tests:dev
+    build:
+      context: ..
+      dockerfile: ia/docker/Dockerfile.tests
+    network_mode: none

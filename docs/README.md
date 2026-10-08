@@ -1,69 +1,39 @@
-# DOSSIER DE DOCUMENTACIÓN — NUEVAMENTE
+# Documentación de NuevaMente
 
-## Proyecto
+La referencia operativa es el código consolidado, los README de ejecución y las pruebas reproducibles. Los planes y ADR registran decisiones y objetivos; no demuestran que un componente está implementado.
 
-**NuevaMente — Sistema Inteligente de Adaptación y Generación de Contenido Educativo**
+## Ejecución y contratos vigentes
 
-**Hackathon:** ONE (Oracle Next Education) & Alura Latam — Cohorte G-10
+- [README del proyecto](../README.md)
+- [Backend](../backend/README.md), [Data/IA y servicio HTTP](../ia/README.md), [Frontend](../frontend/README.md)
+- [Pruebas reproducibles offline y Gemini](../tests/README.md)
+- [Contrato Backend ↔ IA v2.3](CONTRATOS/CONTRATO_BACKEND_IA.md)
+- [Schema Response v2.3](CONTRATOS/SCHEMA_RESPONSE.md)
 
-> **Nota de estado:** Este dossier parte de la documentación técnica propuesta inicialmente por Marco. Los documentos se incorporarán y revisarán progresivamente para alinearlos con las decisiones reales del equipo, el alcance del MVP y la estructura actual del repositorio.
+La API pública acepta PDF, Markdown y TXT y devuelve Flashcards, Quiz Interactivo o Resumen Ejecutivo. Calidad y estado pendiente de almacenamiento acompañan la salida. El Frontend envía multipart al Backend mediante Nginx y representa los tres formatos. OCI Object Storage, despliegue cloud y SSE continúan pendientes.
 
----
+## Arquitectura y seguimiento
 
-## 1. Documentación prevista
+- [Matriz de alcance MVP](ARQ-02_MATRIZ_ALCANCE_MVP.md)
+- [Pipeline IA](IA/PIPELINE_IA_MVP.md)
+- [Estrategia RAG](IA/ESTRATEGIA_RAG_MVP.md)
+- [Grounding y validación](IA/GROUNDING_Y_VALIDACION.md)
+- [Matriz de GAPs](GAPS/README_GAPS.md)
+- [Alineación de arquitectura](ALINEACION_ARQUITECTURA_MVP.md)
+- [Checklist maestro](CHECKLIST_MAESTRO_AVANCES_Y_HITOS.md)
 
-La documentación técnica se organizará en los siguientes documentos:
+Estos documentos conservan antecedentes y propuestas. Ante diferencias de enums, transporte, recuperación o salida, prevalecen los contratos v2.3 y los schemas ejecutables.
 
-| Documento | Propósito |
-|---|---|
-| `01_PRD_PRODUCT_REQUIREMENTS_DOCUMENT.md` | Requisitos de producto, visión, perfiles y requisitos funcionales. |
-| `02_SISTEMA_DE_DISENO_Y_UI_UX.md` | Lineamientos de diseño, componentes y experiencia de usuario. |
-| `03_WBS_Y_DEFINICION_DE_TAREAS.md` | Desglose de trabajo, responsabilidades y dependencias. |
-| `04_TIMELINE_EXTENDIDO_Y_HITOS.md` | Cronograma, hitos y puntos de control. |
-| `05_CONTRATOS_DE_DATOS_Y_SCHEMAS.md` | Contratos de datos y esquemas de entrada/salida. |
-| `06_ARQUITECTURA_DE_IA_Y_SISTEMA_MULTIAGENTE.md` | Arquitectura de IA, RAG, embeddings, LLM y orquestación. |
-| `07_DIAGRAMAS_DE_ARQUITECTURA_Y_FLUJOS.md` | Diagramas de arquitectura, flujos e integración. |
-| `08_BUENAS_PRACTICAS_SKILLS_Y_RESILIENCIA.md` | Buenas prácticas, manejo de errores y resiliencia. |
-| `adr/` | Registros de decisiones arquitectónicas relevantes. |
+## Aportes Data/IA y AI Core
 
----
+- [Mejoras Fase A](18_MEJORAS_DATA_IA_FASE_A.md): ingesta, chunking, hash, cachés y vector store.
+- [Propuesta AI Core](19_PROPUESTA_CAMBIOS_AI_CORE.md): propuestas posteriores a la Fase A.
+- [Resolución integral de Marcos](20_RESOLUCION_INTEGRAL_ARQUITECTURA_DATA_IA.md): cambios y pendientes identificados por AI Core.
+- [Reporte de integración](18_REPORTE_INTEGRACION_DATAIA_LANGGRAPH.md)
+- [Formatos de salida](16_FORMATOS_DE_SALIDA_JSON.md)
 
-## 2. Criterio de mantenimiento
+## Dossier y planes
 
-La documentación no debe convertirse en una carga adicional para los equipos.
+Los documentos numerados 01–17 contienen PRD, diseño, WBS, cronograma, contratos iniciales, arquitectura, prácticas, planes por squad, reportes y evaluación. `adr/` conserva las decisiones de orquestación, OCI y telemetría. También hay planes en `plan_squad_ia_data/` y especificaciones en `specs/`.
 
-Cada equipo es responsable principalmente de:
-
-- subir y mantener su código;
-- mantener la documentación mínima necesaria para instalar, ejecutar y entender su componente;
-- registrar decisiones técnicas relevantes cuando afecten la integración con otros equipos.
-
-La documentación transversal del proyecto se mantendrá en esta carpeta.
-
----
-
-## 3. Estado de la documentación
-
-Los documentos propuestos por Marco se consideran **material de referencia inicial** hasta que sean revisados y alineados con las decisiones del equipo.
-
-En particular, antes de considerar una especificación como definitiva se deberán validar:
-
-- alcance real del MVP;
-- responsabilidades entre Frontend, Backend e IA/Data;
-- contrato entre Backend e IA;
-- estrategia de RAG y embeddings;
-- proveedor/modelo LLM;
-- estrategia de orquestación;
-- validación de fidelidad;
-- integración con OCI;
-- funcionalidades adicionales como telemetría, mapas, flashcards 3D, quiz interactivo y exportaciones.
-
----
-
-## 4. Referencia del proyecto
-
-El README principal del repositorio se encuentra en la raíz:
-
-`README.md`
-
-Este archivo funciona únicamente como índice de la documentación técnica ubicada en `docs/`.
+Para cerrar un pendiente se requiere decisión documentada, implementación verificable y prueba. No presentar como desplegado un objetivo que solo aparece en estos planes.
