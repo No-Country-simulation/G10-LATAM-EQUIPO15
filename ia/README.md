@@ -1,5 +1,8 @@
 # Data & IA con Docker
 
+Para ejecutar la suite completa de Backend, Data/IA y AI Core y reproducir la
+integración HTTP con Gemini y persistencia, ver [tests/README.md](../tests/README.md).
+
 Este entorno permite probar AI Core junto con los módulos Data/IA y ejecutar su servicio HTTP. Requiere Docker Desktop o Docker Engine con Compose; no requiere instalar Python en la máquina local.
 
 ## Fuentes utilizadas

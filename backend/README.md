@@ -133,3 +133,8 @@ docker compose -f backend/compose.yaml --profile tests run --rm backend-tests
 Las pruebas se ejecutan sin red y sin claves. Verifican el transporte multipart con un servicio HTTP simulado, conservación de bytes y formatos, validación, errores, timeout y respuestas incompatibles. La prueba entre contenedores reales debe distinguirse de estas pruebas locales; una respuesta `422` del pipeline demuestra el recorrido de rechazo, sin acreditar una adaptación exitosa.
 
 Las credenciales y secretos no deben incluirse en la imagen ni versionarse en el repositorio. El diagnóstico interno de IA tampoco forma parte de esta entrega.
+
+## Pruebas reproducibles de la integración
+
+Las suites de Backend, Data/IA y AI Core y el ensayo real con Gemini pueden
+ejecutarse desde la raíz siguiendo [tests/README.md](../tests/README.md).
