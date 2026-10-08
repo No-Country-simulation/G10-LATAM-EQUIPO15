@@ -1,12 +1,28 @@
 """
 Punto de entrada público del pipeline de IA para NuevaMente.
-Orquesta Ingesta -> Segmentación -> Vector Store -> LangGraph -> Paquete Validado.
+Orquesta Ingesta -> Segmentación -> Vector Store -> LangGraph -> Auditoría -> Paquete Validado.
 """
 
-from typing import Any, Dict, List, Optional
+import asyncio
+import inspect
+import logging
+from typing import Any, Dict, Optional, Tuple
 
 from src.ai.graph import grafo_adaptacion_compilado
-from src.ai.schemas import AdaptacionContenidoResponse
+from src.ai.schemas import AdaptacionContenidoResponse, FormatoSalidaEnum
+from src.ai.agents.critico import obtener_umbral
+
+logger = logging.getLogger(__name__)
+
+TOP_K_FRAGMENTOS = 15
+
+
+class ContextoInsuficienteError(ValueError):
+    """El contenido generado no supera el umbral de fidelidad (mapear a HTTP 422 en Backend)."""
+
+
+class ContenidoInseguroError(ValueError):
+    """La auditoría determinista detectó contenido inseguro o estructura rota (mapear a HTTP 422/500)."""
 
 
 def _construir_query_pedagogica(titulo: str, formato: str) -> str:
@@ -16,11 +32,139 @@ def _construir_query_pedagogica(titulo: str, formato: str) -> str:
         return f"Definiciones, conceptos clave, glosario y terminología de {titulo}"
     elif "quiz" in fmt:
         return f"Afirmaciones verificables, datos técnicos, buenas prácticas y reglas de {titulo}"
-    elif "guion" in fmt or "tutorial" in fmt:
+    elif "guia" in fmt or "tutorial" in fmt:
         return f"Ejemplos prácticos, instrucciones paso a paso, fundamentos y aplicación de {titulo}"
     elif "resumen" in fmt or "tldr" in fmt:
         return f"Resumen ejecutivo, impacto de negocio, ventajas y visión general de {titulo}"
     return f"Conceptos principales, arquitectura y reglas de {titulo}"
+
+
+def _preparar_estado_inicial(
+    documento_titulo: str,
+    documento_contenido: Optional[str],
+    ruta_archivo: Optional[str],
+    perfil: str,
+    formato: str,
+    nicho: str,
+    nivel_detalle: str,
+    emitir,
+    documento_nombre: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Ejecuta Ingesta -> Chunking -> VectorStore -> Selección pedagógica (Fase B) y devuelve el estado inicial del grafo."""
+    # Validación temprana del formato (define el esquema de salida).
+    try:
+        FormatoSalidaEnum(formato)
+    except ValueError:
+        validos = ", ".join(f.value for f in FormatoSalidaEnum)
+        raise ValueError(f"Formato '{formato}' no soportado. Valores válidos: {validos}.")
+
+    if not ruta_archivo:
+        if documento_contenido:
+            raise ValueError("El pipeline DataIA requiere una ruta de archivo (ruta_archivo) para operar.")
+        raise ValueError("Debe proporcionar 'ruta_archivo'.")
+
+    # 1. Extracción
+    emitir("EXTRACCION", 1, 20, "Extrayendo y normalizando texto del documento...")
+    try:
+        from dataia.ingestion.service import ingest_document
+    except ImportError:
+        from src.dataia.ingestion.service import ingest_document
+
+    sig = inspect.signature(ingest_document)
+    doc_name = documento_nombre or documento_titulo
+    if "document_name" in sig.parameters and doc_name:
+        ingestion_res = ingest_document(ruta_archivo, document_name=doc_name)
+    else:
+        ingestion_res = ingest_document(ruta_archivo)
+
+    if getattr(ingestion_res, "status", None) != "aprobado":
+        raise ValueError(f"Error de Ingestión: {getattr(ingestion_res, 'mensaje', 'Desconocido')}")
+
+    # 2. Chunking e indexación vectorial
+    emitir("INDEXACION", 2, 40, "Segmentando fragmentos jerárquicos y calculando embeddings...")
+    try:
+        from dataia.chunking.service import process_chunks
+        from dataia.vectorstore.service import process_vectorstore
+    except ImportError:
+        from src.dataia.chunking.service import process_chunks
+        from src.dataia.vectorstore.service import process_vectorstore
+
+    chunking_res = process_chunks(ingestion_res)
+    if getattr(chunking_res, "status", None) != "aprobado":
+        raise ValueError(f"Error de Chunking: {getattr(chunking_res, 'mensaje', 'Desconocido')}")
+
+    vs_res = process_vectorstore(chunking_res)
+    if getattr(vs_res, "status", None) != "aprobado":
+        raise ValueError(f"Error de VectorStore: {getattr(vs_res, 'mensaje', 'Desconocido')}")
+
+    # 3. Selección del contexto completo (Fase B)
+    from src.ai.contexto import (
+        obtener_chunks_documento,
+        obtener_registro_documento,
+        seleccionar_fragmentos,
+        formatear_texto_fuente_etiquetado
+    )
+
+    doc_id = vs_res.document_id
+    todos_chunks = obtener_chunks_documento(doc_id)
+    if not todos_chunks:
+        raise ContextoInsuficienteError("Contexto Insuficiente (Error 422): no se recuperaron fragmentos del documento.")
+
+    fragmentos_relevantes = seleccionar_fragmentos(todos_chunks, formato)
+    if not fragmentos_relevantes:
+        raise ContextoInsuficienteError("Contexto Insuficiente (Error 422): no se seleccionaron fragmentos válidos para el formato.")
+
+    # Registro y metadata pedagógica consolidada
+    metadata_doc = obtener_registro_documento(doc_id, ingestion_res=ingestion_res, chunking_res=chunking_res)
+    conceptos_ingesta = metadata_doc.get("conceptos_clave") or []
+    texto_fuente_formateado = formatear_texto_fuente_etiquetado(fragmentos_relevantes)
+
+    return {
+        "documento_titulo": documento_titulo,
+        "documento_contenido": texto_fuente_formateado or "\n---\n".join(f["contenido"] for f in fragmentos_relevantes),
+        "perfil_destinatario": perfil,
+        "formato_salida": formato,
+        "nicho_sector": nicho,
+        "nivel_detalle": nivel_detalle,
+        "fragmentos_relevantes": fragmentos_relevantes,
+        "conceptos_clave": conceptos_ingesta,
+        "metadata_documento": metadata_doc,
+        "prompt_sistema_calibrado": "",
+        "tiempo_estimado_minutos": 5,
+        "borrador_contenido": None,
+        "codigo_mermaid": None,
+        "anclaje_fuente_score": 0.0,
+        "critica_observaciones": None,
+        "veredictos_critico": None,
+        "contador_intentos": 0,
+        "paquete_final_json": None,
+        "status": "iniciando",
+        "error": None
+    }
+
+
+def _validar_fidelidad(estado_final: Dict[str, Any], formato: str) -> Tuple[float, Dict[str, Any]]:
+    """Aplica el umbral de fidelidad (fail-closed) y devuelve (score, paquete_json)."""
+    score = float(estado_final.get("anclaje_fuente_score") or 0.0)
+    umbral = obtener_umbral(formato)
+    if score < umbral:
+        raise ContextoInsuficienteError(
+            f"Contexto Insuficiente (Error 422): el contenido generado no está suficientemente anclado "
+            f"al documento (Score: {score} vs Umbral {umbral}). Detalle: {estado_final.get('critica_observaciones')}"
+        )
+
+    paquete_json = estado_final.get("paquete_final_json")
+    if not paquete_json:
+        raise RuntimeError("El grafo finalizó sin producir un paquete JSON válido.")
+    return score, paquete_json
+
+
+def _aplicar_auditoria(resultado_auditoria) -> bool:
+    is_secure, vulns, recs = resultado_auditoria
+    if not is_secure:
+        logger.warning("Auditoría detectó problemas: %s. Recomendaciones: %s", vulns, recs)
+        raise ContenidoInseguroError(f"Auditoría de seguridad rechazó el contenido: {vulns}")
+    return is_secure
 
 
 def ejecutar_pipeline_adaptacion(
@@ -31,116 +175,32 @@ def ejecutar_pipeline_adaptacion(
     formato: str = "Flashcards",
     nicho: str = "General",
     nivel_detalle: str = "Didactico",
-    callback_telemetria: Optional[Any] = None
+    callback_telemetria: Optional[Any] = None,
+    documento_nombre: Optional[str] = None,
 ) -> AdaptacionContenidoResponse:
     """
-    Ejecuta el ciclo integral de adaptación pedagógica.
-    Permite invocar tanto con texto plano en memoria como con ruta a archivo local (.pdf, .md, .txt).
+    Ejecuta el ciclo integral de adaptación pedagógica (versión síncrona, para scripts/CLI).
+    En FastAPI usar `ejecutar_pipeline_adaptacion_async`.
     """
-    # 1. Fase de Extracción
-    if callback_telemetria:
-        callback_telemetria("EXTRACCION", 1, 20, "Extrayendo y normalizando texto del documento...")
+    def emitir(etapa, paso, progreso, mensaje):
+        if callback_telemetria:
+            callback_telemetria(etapa, paso, progreso, mensaje)
 
-    if ruta_archivo:
-        from src.dataia.ingestion.service import ingest_document
-        ingestion_res = ingest_document(ruta_archivo)
-        if not getattr(ingestion_res, "status", None) == "aprobado":
-            raise ValueError(f"Error de Ingestión: {getattr(ingestion_res, 'mensaje', 'Desconocido')}")
-    elif documento_contenido:
-        raise ValueError("El nuevo pipeline DataIA requiere una ruta de archivo (ruta_archivo) para operar.")
-    else:
-        raise ValueError("Debe proporcionar 'ruta_archivo'.")
-
-    # 2. Fase de Chunking e Indexación Vectorial
-    if callback_telemetria:
-        callback_telemetria("INDEXACION", 2, 40, "Segmentando fragmentos jerárquicos y calculando embeddings...")
-
-    from src.dataia.chunking.service import process_chunks
-    chunking_res = process_chunks(ingestion_res)
-    if not getattr(chunking_res, "status", None) == "aprobado":
-        raise ValueError(f"Error de Chunking: {getattr(chunking_res, 'mensaje', 'Desconocido')}")
-
-    from src.dataia.vectorstore.service import process_vectorstore
-    from src.dataia.vectorstore.client import get_vector_store
-    
-    vs_res = process_vectorstore(chunking_res)
-    if not getattr(vs_res, "status", None) == "aprobado":
-        raise ValueError(f"Error de VectorStore: {getattr(vs_res, 'mensaje', 'Desconocido')}")
-
-    query_pedagogica = _construir_query_pedagogica(documento_titulo, formato)
-    vectorstore = get_vector_store()
-    
-    docs_relevantes = vectorstore.similarity_search(
-        query=query_pedagogica,
-        k=15,
-        filter={"document_id": vs_res.document_id} 
+    estado_inicial = _preparar_estado_inicial(
+        documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir,
+        documento_nombre=documento_nombre
     )
-    
-    fragmentos_relevantes = [{"texto": d.page_content, "metadatos": d.metadata} for d in docs_relevantes]
-    texto_completo = " ".join([d.page_content for d in docs_relevantes])
 
-    # 3. Fase de LangGraph (Generación y Crítica)
-    if callback_telemetria:
-        callback_telemetria("GENERACION", 3, 60, f"LangGraph generando contenido para perfil '{perfil}'...")
-
-    estado_inicial = {
-        "documento_titulo": documento_titulo,
-        "documento_contenido": texto_completo,
-        "perfil_destinatario": perfil,
-        "formato_salida": formato,
-        "nicho_sector": nicho,
-        "nivel_detalle": nivel_detalle,
-        "fragmentos_relevantes": fragmentos_relevantes,
-        "conceptos_clave": [],
-        "prompt_sistema_calibrado": "",
-        "tiempo_estimado_minutos": 5,
-        "borrador_contenido": None,
-        "codigo_mermaid": None,
-        "anclaje_fuente_score": 0.0,
-        "critica_observaciones": None,
-        "contador_intentos": 0,
-        "paquete_final_json": None,
-        "status": "iniciando",
-        "error": None
-    }
-
-    # Ejecutar grafo
+    emitir("GENERACION", 3, 60, f"LangGraph generando contenido para perfil '{perfil}'...")
     estado_final = grafo_adaptacion_compilado.invoke(estado_inicial)
 
-    # 4. Fase de Auditoría y Crítica
-    score = estado_final.get("anclaje_fuente_score", 0.95)
-    import os
-    umbral_base = float(os.getenv("UMBRAL_ANCLAJE_MINIMO", 0.85))
-    umbral = 0.75 if "Quiz" in formato else umbral_base
-    if score < umbral:
-        raise ValueError(f"Contexto Insuficiente (Error 422): El documento carece de información relevante (Score: {score} vs Umbral {umbral}).")
-        
-    if callback_telemetria:
-        callback_telemetria(
-            "AUDITORIA",
-            4,
-            80,
-            f"Agente Crítico: Fidelidad evaluada ({score}). Iniciando Auditoría heurística..."
-        )
-
-    # 5. Retorno tipado Pydantic y Auditoría Heurística
-    paquete_json = estado_final.get("paquete_final_json")
-    if not paquete_json:
-        raise RuntimeError("El grafo finalizó sin producir un paquete JSON válido.")
+    score, paquete_json = _validar_fidelidad(estado_final, formato)
+    emitir("AUDITORIA", 4, 80, f"Agente Crítico: Fidelidad evaluada ({score}). Iniciando auditoría heurística...")
 
     from src.ai.agents.auditor import AuditorAgent
-    import asyncio
-    import logging
-    
-    auditor = AuditorAgent()
-    is_secure, vulns, recs = asyncio.run(auditor.auditar_seguridad_async(paquete_json))
-    
-    if not is_secure:
-        logging.getLogger(__name__).warning(f"Auditoría Hermes detectó problemas: {vulns}. Recomendaciones: {recs}")
+    _aplicar_auditoria(asyncio.run(AuditorAgent().auditar_seguridad_async(paquete_json)))
 
-    if callback_telemetria:
-        callback_telemetria("COMPLETADO", 5, 100, f"Contenido generado y auditado (Seguro: {is_secure}).")
-
+    emitir("COMPLETADO", 5, 100, "Contenido generado y auditado.")
     return AdaptacionContenidoResponse(**paquete_json)
 
 
@@ -148,7 +208,6 @@ async def _invocar_callback_async(callback: Optional[Any], etapa: str, paso: int
     """Invoca el callback de telemetría soportando tanto funciones síncronas como asíncronas."""
     if not callback:
         return
-    import inspect
     if inspect.iscoroutinefunction(callback):
         await callback(etapa, paso, progreso, mensaje)
     else:
@@ -163,105 +222,41 @@ async def ejecutar_pipeline_adaptacion_async(
     formato: str = "Flashcards",
     nicho: str = "General",
     nivel_detalle: str = "Didactico",
-    callback_telemetria: Optional[Any] = None
+    callback_telemetria: Optional[Any] = None,
+    documento_nombre: Optional[str] = None,
 ) -> AdaptacionContenidoResponse:
     """
-    Versión nativamente asíncrona para consumo no bloqueante en endpoints de FastAPI.
-    Utiliza .ainvoke() sobre el StateGraph de LangGraph.
+    Versión asíncrona para consumo no bloqueante en endpoints de FastAPI.
+    La fase DataIA (bloqueante: PyMuPDF + embeddings) se ejecuta en un hilo; el grafo usa .ainvoke().
     """
-    # 1. Fase de Extracción
-    await _invocar_callback_async(callback_telemetria, "EXTRACCION", 1, 20, "Extrayendo y normalizando texto del documento...")
+    loop = asyncio.get_running_loop()
 
-    if ruta_archivo:
-        from src.dataia.ingestion.service import ingest_document
-        ingestion_res = ingest_document(ruta_archivo)
-        if not getattr(ingestion_res, "status", None) == "aprobado":
-            raise ValueError(f"Error de Ingestión: {getattr(ingestion_res, 'mensaje', 'Desconocido')}")
-    elif documento_contenido:
-        raise ValueError("El nuevo pipeline DataIA requiere una ruta de archivo (ruta_archivo) para operar.")
-    else:
-        raise ValueError("Debe proporcionar 'ruta_archivo'.")
+    def emitir_desde_hilo(etapa, paso, progreso, mensaje):
+        """Reenvía la telemetría al event loop en tiempo real desde el hilo de DataIA."""
+        if not callback_telemetria:
+            return
+        if inspect.iscoroutinefunction(callback_telemetria):
+            asyncio.run_coroutine_threadsafe(
+                callback_telemetria(etapa, paso, progreso, mensaje), loop
+            ).result(timeout=10)
+        else:
+            loop.call_soon_threadsafe(callback_telemetria, etapa, paso, progreso, mensaje)
 
-    # 2. Fase de Chunking e Indexación Vectorial
-    await _invocar_callback_async(callback_telemetria, "INDEXACION", 2, 40, "Segmentando fragmentos jerárquicos y calculando embeddings...")
-
-    from src.dataia.chunking.service import process_chunks
-    chunking_res = process_chunks(ingestion_res)
-    if not getattr(chunking_res, "status", None) == "aprobado":
-        raise ValueError(f"Error de Chunking: {getattr(chunking_res, 'mensaje', 'Desconocido')}")
-
-    from src.dataia.vectorstore.service import process_vectorstore
-    from src.dataia.vectorstore.client import get_vector_store
-    
-    vs_res = process_vectorstore(chunking_res)
-    if not getattr(vs_res, "status", None) == "aprobado":
-        raise ValueError(f"Error de VectorStore: {getattr(vs_res, 'mensaje', 'Desconocido')}")
-
-    query_pedagogica = _construir_query_pedagogica(documento_titulo, formato)
-    vectorstore = get_vector_store()
-    
-    docs_relevantes = vectorstore.similarity_search(
-        query=query_pedagogica,
-        k=15,
-        filter={"document_id": vs_res.document_id} 
+    estado_inicial = await asyncio.to_thread(
+        _preparar_estado_inicial,
+        documento_titulo, documento_contenido, ruta_archivo, perfil, formato, nicho, nivel_detalle, emitir_desde_hilo,
+        documento_nombre
     )
-    
-    fragmentos_relevantes = [{"texto": d.page_content, "metadatos": d.metadata} for d in docs_relevantes]
-    texto_completo = " ".join([d.page_content for d in docs_relevantes])
 
-    # 3. Fase de LangGraph Asíncrono
+
     await _invocar_callback_async(callback_telemetria, "GENERACION", 3, 60, f"LangGraph generando contenido para perfil '{perfil}'...")
-
-    estado_inicial = {
-        "documento_titulo": documento_titulo,
-        "documento_contenido": texto_completo,
-        "perfil_destinatario": perfil,
-        "formato_salida": formato,
-        "nicho_sector": nicho,
-        "nivel_detalle": nivel_detalle,
-        "fragmentos_relevantes": fragmentos_relevantes,
-        "conceptos_clave": [],
-        "prompt_sistema_calibrado": "",
-        "tiempo_estimado_minutos": 5,
-        "borrador_contenido": None,
-        "codigo_mermaid": None,
-        "anclaje_fuente_score": 0.0,
-        "critica_observaciones": None,
-        "contador_intentos": 0,
-        "paquete_final_json": None,
-        "status": "iniciando",
-        "error": None
-    }
-
-    # Invocación asíncrona no bloqueante
     estado_final = await grafo_adaptacion_compilado.ainvoke(estado_inicial)
 
-    # 4. Fase de Auditoría y Crítica
-    score = estado_final.get("anclaje_fuente_score", 0.95)
-    
-    import os
-    umbral_base = float(os.getenv("UMBRAL_ANCLAJE_MINIMO", 0.85))
-    umbral = 0.75 if "Quiz" in formato else umbral_base
-    if score < umbral:
-        raise ValueError(f"Contexto Insuficiente (Error 422): El documento carece de información relevante (Score: {score} vs Umbral {umbral}).")
-        
-    await _invocar_callback_async(callback_telemetria, "AUDITORIA", 4, 80, f"Agente Crítico: Fidelidad evaluada ({score}). Iniciando Auditoría heurística...")
-
-    paquete_json = estado_final.get("paquete_final_json")
-    if not paquete_json:
-        raise RuntimeError("El grafo finalizó sin producir un paquete JSON válido.")
+    score, paquete_json = _validar_fidelidad(estado_final, formato)
+    await _invocar_callback_async(callback_telemetria, "AUDITORIA", 4, 80, f"Agente Crítico: Fidelidad evaluada ({score}). Iniciando auditoría heurística...")
 
     from src.ai.agents.auditor import AuditorAgent
-    auditor = AuditorAgent()
-    is_secure, vulns, recs = await auditor.auditar_seguridad_async(paquete_json)
-    
-    # Agregar resultados de auditoría al paquete o log
-    if not is_secure:
-        # Aquí se podría decidir abortar o simplemente registrar el fallo (fail-open vs fail-closed)
-        import logging
-        logging.getLogger(__name__).warning(f"Auditoría Hermes detectó problemas: {vulns}. Recomendaciones: {recs}")
-        
-    await _invocar_callback_async(callback_telemetria, "COMPLETADO", 5, 100, f"Contenido generado y auditado (Seguro: {is_secure}).")
+    _aplicar_auditoria(await AuditorAgent().auditar_seguridad_async(paquete_json))
 
+    await _invocar_callback_async(callback_telemetria, "COMPLETADO", 5, 100, "Contenido generado y auditado.")
     return AdaptacionContenidoResponse(**paquete_json)
-

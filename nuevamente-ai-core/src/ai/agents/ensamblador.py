@@ -28,62 +28,64 @@ def nodo_ensamblador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
     # Mapear a enums de forma segura
     try:
         perfil_enum = PerfilDestinatarioEnum(perfil_str)
-    except Exception:
+    except ValueError:
         perfil_enum = PerfilDestinatarioEnum.JUNIOR
 
-    try:
-        formato_enum = FormatoSalidaEnum(formato_str)
-    except Exception:
-        formato_enum = FormatoSalidaEnum.FLASHCARDS
+    # El formato determina la forma de 'items': si no es válido, no se etiqueta erróneamente.
+    formato_enum = FormatoSalidaEnum(formato_str)
 
     try:
         nicho_enum = NichoSectorEnum(nicho_str)
-    except Exception:
+    except ValueError:
         nicho_enum = NichoSectorEnum.GENERAL
 
     items_raw = borrador.get("items", [])
-    
-    # F2: Cálculo matemático del tiempo estimado
-    num_items = len(items_raw) if isinstance(items_raw, list) else 1
-    if formato_enum == FormatoSalidaEnum.FLASHCARDS:
-        tiempo_calculado = num_items * 3
-    elif formato_enum == FormatoSalidaEnum.QUIZ_INTERACTIVO:
-        tiempo_calculado = num_items * 5
-    else:
-        tiempo_calculado = 15
 
-    # Construir modelos
+    # Tiempo estimado calculado sobre el contenido realmente generado.
+    if formato_enum == FormatoSalidaEnum.FLASHCARDS:
+        tiempo_calculado = len(items_raw) * 2
+    elif formato_enum == FormatoSalidaEnum.QUIZ_INTERACTIVO:
+        tiempo_calculado = len(items_raw) * 3
+    elif formato_enum == FormatoSalidaEnum.GUIA_PASO_A_PASO and isinstance(items_raw, dict):
+        tiempo_calculado = 5 + len(items_raw.get("pasos", [])) * 4
+    else:
+        tiempo_calculado = 5
+    tiempo_calculado = max(1, min(180, tiempo_calculado))
+
     metadatos = MetadatosAprendizaje(
         perfil_aplicado=perfil_enum,
         formato_generado=formato_enum,
-        tiempo_estimado_estudio_minutos=state.get("tiempo_estimado_minutos", tiempo_calculado),
-        conceptos_clave=state.get("conceptos_clave", [titulo_doc]),
+        tiempo_estimado_estudio_minutos=tiempo_calculado,
+        conceptos_clave=state.get("conceptos_clave") or [titulo_doc],
         nicho_contexto=nicho_enum
     )
 
-    if formato_enum == FormatoSalidaEnum.MAPA_MENTAL and isinstance(items_raw, dict):
-        from src.ai.utils.mermaid import sanitizar_codigo_mermaid
-        nodo_central = items_raw.get("nodo_central", titulo_doc)
-        arbol = items_raw.get("arbol", [])
-        items_raw["codigo_mermaid"] = sanitizar_codigo_mermaid(
-            codigo=items_raw.get("codigo_mermaid"),
-            nodo_central=nodo_central,
-            arbol=arbol
-        )
-
     paquete_contenido = PaqueteContenidoAdaptado(
-        titulo=borrador.get("titulo", f"{titulo_doc} para {perfil_enum.value}"),
-        introduccion_contextualizada=borrador.get(
-            "introduccion_contextualizada",
-            f"Contenido estructurado para perfil {perfil_enum.value}."
-        ),
+        titulo=borrador.get("titulo") or f"{titulo_doc} para {perfil_enum.value}",
+        introduccion_contextualizada=borrador.get("introduccion_contextualizada") or "",
         items=items_raw
+    )
+
+    from src.ai.schemas import EvaluacionCalidad, AlmacenamientoOCI
+    evaluacion = EvaluacionCalidad(
+        anclaje_fuente_score=float(state.get("anclaje_fuente_score") or 0.0),
+        claridad_pedagogica="Alta",
+        observaciones=state.get("critica_observaciones"),
+        reintentos_realizados=max(0, state.get("contador_intentos", 1) - 1)
+    )
+    import re
+    sanitized_id = re.sub(r"[\\/]", "_", titulo_doc).strip()
+    almacenamiento = AlmacenamientoOCI(
+        objeto_id=f"{sanitized_id or 'documento'}.json",
+        status_upload="listo_para_subida"
     )
 
     respuesta = AdaptacionContenidoResponse(
         status="exito",
         metadatos=metadatos,
-        contenido_adaptado=paquete_contenido
+        contenido_adaptado=paquete_contenido,
+        evaluacion_calidad=evaluacion,
+        almacenamiento_oci=almacenamiento
     )
 
     return {

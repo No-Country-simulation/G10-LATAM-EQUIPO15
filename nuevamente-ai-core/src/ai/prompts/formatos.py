@@ -25,15 +25,6 @@ INSTRUCCIONES_FORMATOS = {
         "- explicacion_distractores: Análisis de por qué cada una de las otras 3 opciones es inválida.\n"
         "- pista_didactica: Pista orientadora sin revelar directamente la respuesta."
     ),
-    FormatoSalidaEnum.MAPA_MENTAL: (
-        "FORMATO SOLICITADO: MAPA MENTAL JERÁRQUICO (Estructura de Árbol + Mermaid.js).\n"
-        "Genera una estructura de árbol conceptual centrada en el tema principal.\n"
-        "Incluye:\n"
-        "- nodo_central: El núcleo temático.\n"
-        "- descripcion_general: Breve síntesis del alcance.\n"
-        "- arbol: Lista jerárquica de nodos y subnodos.\n"
-        "- codigo_mermaid: Bloque formal con sintaxis 'mindmap' de Mermaid.js válido."
-    ),
     FormatoSalidaEnum.GUIA_PASO_A_PASO: (
         "FORMATO SOLICITADO: GUÍA PASO A PASO (TUTORIAL PRÁCTICO).\n"
         "Incluye prerrequisitos, lista numerada de pasos con instrucciones detalladas, "
@@ -42,7 +33,8 @@ INSTRUCCIONES_FORMATOS = {
     FormatoSalidaEnum.RESUMEN_EJECUTIVO: (
         "FORMATO SOLICITADO: RESUMEN EJECUTIVO (TL;DR ESTRATÉGICO).\n"
         "Incluye un resumen en un párrafo, puntos clave de alto impacto, análisis de impacto en el negocio "
-        "y recomendaciones concretas de implementación."
+        "y recomendaciones concretas de implementación. Todo debe derivarse del documento: si la fuente no "
+        "describe impacto de negocio, indica en 'impacto_negocio' que el documento no lo especifica."
     )
 }
 

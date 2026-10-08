@@ -1,142 +1,336 @@
 """
 Suite de pruebas unitarias y de integración para NuevaMente AI Core.
-Valida extracción, segmentación, contratos Pydantic y el flujo LangGraph.
+Valida extracción, segmentación, contratos Pydantic y el flujo LangGraph
+(generación -> crítica -> reintento -> umbral 422) de forma offline y determinista:
+los LLMs y embeddings se sustituyen por dobles de prueba (sin red, sin claves reales).
 """
 
 import os
-os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY", "dummy_gemini_key")
-os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY", "dummy_groq_key")
-
 import sys
+import tempfile
+
+# Entorno aislado ANTES de importar módulos que leen variables al cargar.
+os.environ["GEMINI_API_KEY"] = "dummy_gemini_key"
+os.environ["GROQ_API_KEY"] = "dummy_groq_key"
+os.environ["CHROMADB_DIR"] = tempfile.mkdtemp(prefix="nuevamente_chroma_test_")
+os.environ["UMBRAL_ANCLAJE_MINIMO"] = "0.85"
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "ia", "src")))
+
+from unittest.mock import patch, MagicMock
+
 import pytest
+
 from src.ai.schemas import (
     PerfilDestinatarioEnum,
     FormatoSalidaEnum,
     AdaptacionContenidoResponse,
-    AdaptacionContenidoRequest
+    AdaptacionContenidoRequest,
+    FlashcardItem,
+    QuizItem,
+    ResumenEjecutivoItem,
+)
+from src.ai.graph import compilar_grafo_adaptacion
+from src.ai.pipeline import (
+    ejecutar_pipeline_adaptacion,
+    ejecutar_pipeline_adaptacion_async,
+    ContextoInsuficienteError,
+)
+from src.ai.agents.critico import EvaluacionFidelidad
+
+
+# ---------------------------------------------------------------------------
+# Dobles de prueba
+# ---------------------------------------------------------------------------
+
+_sin_red = MagicMock(side_effect=RuntimeError("sin red en tests"))
+
+for target in [
+    "src.dataia.vectorstore.client.GoogleGenerativeAIEmbeddings",
+    "dataia.vectorstore.client.GoogleGenerativeAIEmbeddings",
+]:
+    try:
+        p = patch(target, autospec=True)
+        m = p.start()
+        m.return_value.embed_documents.side_effect = lambda textos: [[0.1, 0.2, 0.3] for _ in textos]
+        m.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+    except Exception:
+        pass
+
+for target in [
+    "src.dataia.ingestion.enrichment.ChatGoogleGenerativeAI",
+    "dataia.ingestion.enrichment.ChatGoogleGenerativeAI",
+    "src.dataia.chunking.structural_splitter.ChatGoogleGenerativeAI",
+    "dataia.chunking.structural_splitter.ChatGoogleGenerativeAI",
+]:
+    try:
+        patch(target, _sin_red).start()
+    except Exception:
+        pass
+
+
+BORRADORES = {
+    "_PaqueteFlashcards": {
+        "titulo": "VCN en OCI",
+        "introduccion_contextualizada": "Una VCN es una red virtual privada en Oracle.",
+        "items": [
+            {"frente": "¿Qué es una VCN?", "dorso": "Una red virtual privada en los centros de datos de Oracle."},
+            {"frente": "¿Qué incluye una VCN?", "dorso": "Subredes públicas y privadas y tablas de enrutamiento."},
+        ],
+    },
+    "_PaqueteQuiz": {
+        "titulo": "JWT",
+        "introduccion_contextualizada": "Partes y uso de los JWT.",
+        "items": [{
+            "pregunta": "¿Cuántas partes tiene un JWT?",
+            "opciones": ["Dos", "Tres", "Cuatro", "Cinco"],
+            "indice_correcto": 1,
+            "justificacion_tecnica": "Header, Payload y Signature.",
+        }],
+    },
+    "_PaqueteResumen": {
+        "titulo": "Microservicios",
+        "introduccion_contextualizada": "Resumen ejecutivo de la arquitectura de microservicios.",
+        "items": {
+            "tldr": "Los microservicios dividen las aplicaciones en servicios independientes.",
+            "puntos_clave": ["Despliegue independiente", "Optimización de costos"],
+            "impacto_negocio": "Reduce tiempo de entrega al mercado.",
+            "recomendaciones": ["Adoptar contenedores"],
+        },
+    },
+}
+
+
+class _LLMFalso:
+    """Imita `llm.with_structured_output(schema).invoke(msgs)` registrando cada llamada."""
+
+    def __init__(self, responder):
+        self.responder = responder
+        self.llamadas = []
+
+    def with_structured_output(self, schema):
+        llm = self
+
+        class _Estructurado:
+            def invoke(self, mensajes):
+                llm.llamadas.append(mensajes)
+                return llm.responder(schema, mensajes)
+
+        return _Estructurado()
+
+
+@pytest.fixture
+def llms(monkeypatch):
+    """Parchea creador y crítico. `llms.score` controla el veredicto del juez."""
+    class Ctx:
+        score = 0.95
+        creador = None
+        critico = None
+
+    ctx = Ctx()
+    ctx.creador = _LLMFalso(lambda schema, _m: schema(**BORRADORES[schema.__name__]))
+    ctx.critico = _LLMFalso(lambda _s, _m: EvaluacionFidelidad(
+        anclaje_fuente_score=ctx.score,
+        afirmaciones_no_sustentadas=[] if ctx.score >= 0.85 else ["Afirmación inventada X"],
+        critica_observaciones="ok" if ctx.score >= 0.85 else "Contiene datos no presentes en la fuente.",
+    ))
+    monkeypatch.setattr("src.ai.agents.creador.obtener_llm_adaptacion", lambda **_: ctx.creador)
+    monkeypatch.setattr("src.ai.agents.critico.obtener_llm_critico", lambda: ctx.critico)
+    return ctx
+
+
+def _archivo_temporal(texto: str) -> str:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".md", mode="w", encoding="utf-8") as f:
+        f.write(texto)
+        return f.name
+
+
+TEXTO_VCN = (
+    "Una Virtual Cloud Network (VCN) en Oracle Cloud Infrastructure es una red virtual privada "
+    "en los centros de datos de Oracle. Incluye subredes públicas y privadas, así como tablas de enrutamiento."
 )
 
-from src.ai.graph import compilar_grafo_adaptacion
-from src.ai.pipeline import ejecutar_pipeline_adaptacion
-from unittest.mock import patch, MagicMock
 
-# Mockear GoogleGenerativeAIEmbeddings a nivel global para que las pruebas no fallen por API_KEY
-patcher = patch('src.dataia.vectorstore.client.GoogleGenerativeAIEmbeddings', autospec=True)
-mock_embeddings = patcher.start()
-mock_embeddings.return_value.embed_documents.return_value = [[0.1, 0.2, 0.3]]
-mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+# ---------------------------------------------------------------------------
+# Contratos y estructura
+# ---------------------------------------------------------------------------
 
 def test_contratos_perfiles_canónicos():
     """Verifica que existan exactamente los 3 perfiles oficiales."""
     perfiles = [p.value for p in PerfilDestinatarioEnum]
-    assert "Junior" in perfiles
-    assert "Senior" in perfiles
-    assert "Ejecutivo" in perfiles
-    assert len(perfiles) == 3
+    assert set(perfiles) == {"Junior", "Senior", "Ejecutivo"}
 
 
 def test_compilacion_grafo_langgraph():
     """Verifica que el StateGraph se compile sin errores estructurales."""
-    grafo = compilar_grafo_adaptacion()
-    assert grafo is not None
+    assert compilar_grafo_adaptacion() is not None
 
 
-def test_ejecucion_pipeline_adaptacion_junior_flashcards():
-    """Verifica la ejecución E2E del pipeline retornando el modelo AdaptacionContenidoResponse."""
-    texto_ejemplo = (
-        "Una Virtual Cloud Network (VCN) en Oracle Cloud Infrastructure es una red virtual privada "
-        "en los centros de datos de Oracle. Incluye subredes públicas y privadas, así como tablas de enrutamiento."
-    )
-    import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".md", mode="w", encoding="utf-8") as f:
-        f.write(texto_ejemplo)
-        test_file_path = f.name
+# ---------------------------------------------------------------------------
+# Flujo E2E (aprobado por el crítico)
+# ---------------------------------------------------------------------------
 
+def test_ejecucion_pipeline_adaptacion_junior_flashcards(llms):
+    """E2E: el texto fuente llega al creador y al juez, y la salida respeta el contrato."""
+    ruta = _archivo_temporal(TEXTO_VCN)
     try:
         respuesta = ejecutar_pipeline_adaptacion(
-            documento_titulo="Prueba VCN",
-            ruta_archivo=test_file_path,
-            perfil="Junior",
-            formato="Flashcards",
-            nicho="General"
+            documento_titulo="Prueba VCN", ruta_archivo=ruta,
+            perfil="Junior", formato="Flashcards", nicho="General"
         )
     finally:
-        os.remove(test_file_path)
+        os.remove(ruta)
 
     assert isinstance(respuesta, AdaptacionContenidoResponse)
     assert respuesta.status == "exito"
     assert respuesta.metadatos.perfil_aplicado == PerfilDestinatarioEnum.JUNIOR
     assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.FLASHCARDS
-    assert hasattr(respuesta.metadatos, "tiempo_estimado_estudio_minutos")
+    assert all(isinstance(i, FlashcardItem) for i in respuesta.contenido_adaptado.items)
+    # Tiempo calculado a partir de los items reales (2 tarjetas x 2 min).
+    assert respuesta.metadatos.tiempo_estimado_estudio_minutos == 4
+
+    # El contexto RAG realmente se inyecta en el prompt del creador y del juez.
+    prompt_creador = llms.creador.llamadas[0][1].content
+    prompt_juez = llms.critico.llamadas[0][1].content
+    assert "subredes públicas y privadas" in prompt_creador
+    assert "subredes públicas y privadas" in prompt_juez
+    # Una sola generación cuando el juez aprueba a la primera.
+    assert len(llms.creador.llamadas) == 1
 
 
 @pytest.mark.asyncio
-async def test_ejecucion_pipeline_adaptacion_async_senior_quiz():
-    """Verifica que la función asíncrona ejecute el pipeline y retorne Quizzes para perfil Senior."""
-    from src.ai.pipeline import ejecutar_pipeline_adaptacion_async
-
-    texto_ejemplo = (
+async def test_ejecucion_pipeline_adaptacion_async_senior_quiz(llms):
+    """La versión asíncrona retorna Quizzes y emite la telemetría completa en orden."""
+    ruta = _archivo_temporal(
         "Los tokens JWT (JSON Web Tokens) se componen de tres partes: Header, Payload y Signature. "
         "Se utilizan para autenticación sin estado en microservicios, requiriendo algoritmos como RS256 para alta seguridad."
     )
-    eventos_telemetria = []
+    eventos = []
 
-    async def mock_telemetria(etapa, paso, progreso, mensaje):
-        eventos_telemetria.append((etapa, paso, progreso))
-
-    import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".md", mode="w", encoding="utf-8") as f:
-        f.write(texto_ejemplo)
-        test_file_path = f.name
+    async def telemetria(etapa, paso, progreso, mensaje):
+        eventos.append(etapa)
 
     try:
         respuesta = await ejecutar_pipeline_adaptacion_async(
-            documento_titulo="Autenticacion JWT",
-            ruta_archivo=test_file_path,
-            perfil="Senior",
-            formato="Quiz Interactivo",
-            nicho="Fintech",
-            callback_telemetria=mock_telemetria
+            documento_titulo="Autenticacion JWT", ruta_archivo=ruta,
+            perfil="Senior", formato="Quiz Interactivo", nicho="Fintech",
+            callback_telemetria=telemetria
         )
     finally:
-        os.remove(test_file_path)
+        os.remove(ruta)
 
-    assert isinstance(respuesta, AdaptacionContenidoResponse)
-    assert respuesta.status == "exito"
-    assert respuesta.metadatos.perfil_aplicado == PerfilDestinatarioEnum.SENIOR
     assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.QUIZ_INTERACTIVO
-    assert len(eventos_telemetria) >= 4
-    assert any(e[0] == "COMPLETADO" for e in eventos_telemetria)
+    assert all(isinstance(i, QuizItem) for i in respuesta.contenido_adaptado.items)
+    assert eventos == ["EXTRACCION", "INDEXACION", "GENERACION", "AUDITORIA", "COMPLETADO"]
 
 
-def test_ejecucion_pipeline_ejecutivo_mapa_mental():
-    """Verifica la ejecución para perfil Ejecutivo con formato Mapa Mental."""
-    texto_ejemplo = (
+def test_ejecucion_pipeline_ejecutivo_resumen(llms):
+    """Resumen Ejecutivo: valida estructura estratégica para perfiles directivos."""
+    ruta = _archivo_temporal(
         "La arquitectura de microservicios divide las aplicaciones en servicios independientes "
         "desplegados en contenedores, optimizando el tiempo de entrega al mercado y reduciendo costos operativos."
     )
-    import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".md", mode="w", encoding="utf-8") as f:
-        f.write(texto_ejemplo)
-        test_file_path = f.name
-
     try:
         respuesta = ejecutar_pipeline_adaptacion(
-            documento_titulo="Arquitectura Microservicios",
-            ruta_archivo=test_file_path,
-            perfil="Ejecutivo",
-            formato="Mapa Mental",
-            nicho="E-commerce"
+            documento_titulo="Arquitectura Microservicios", ruta_archivo=ruta,
+            perfil="Ejecutivo", formato="Resumen Ejecutivo", nicho="E-commerce"
         )
     finally:
-        os.remove(test_file_path)
+        os.remove(ruta)
 
-    assert isinstance(respuesta, AdaptacionContenidoResponse)
+    items = respuesta.contenido_adaptado.items
+    assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.RESUMEN_EJECUTIVO
+    assert isinstance(items, ResumenEjecutivoItem)
+    assert items.tldr.startswith("Los microservicios")
+    assert "Despliegue independiente" in items.puntos_clave
+
+
+# ---------------------------------------------------------------------------
+# Métricas y evaluación anti-alucinaciones
+# ---------------------------------------------------------------------------
+
+def test_critico_reintenta_y_rechaza_422_si_score_bajo(llms):
+    """Score bajo -> el crítico pide reescritura (con feedback) y, agotados los intentos, 422."""
+    llms.score = 0.40
+    ruta = _archivo_temporal(TEXTO_VCN)
+    try:
+        with pytest.raises(ContextoInsuficienteError, match="422"):
+            ejecutar_pipeline_adaptacion(documento_titulo="Prueba VCN", ruta_archivo=ruta, formato="Flashcards")
+    finally:
+        os.remove(ruta)
+
+    assert len(llms.creador.llamadas) == 2  # generación inicial + 1 reintento
+    prompt_reintento = llms.creador.llamadas[1][1].content
+    assert "RETROALIMENTACIÓN DEL AGENTE CRÍTICO" in prompt_reintento
+    assert "Afirmación inventada X" in prompt_reintento
+
+
+def test_quiz_usa_umbral_075(llms):
+    """En Quiz el umbral es 0.75: un score de 0.80 se aprueba sin reintentos."""
+    llms.score = 0.80
+    ruta = _archivo_temporal(TEXTO_VCN)
+    try:
+        respuesta = ejecutar_pipeline_adaptacion(documento_titulo="Prueba VCN", ruta_archivo=ruta, formato="Quiz Interactivo")
+    finally:
+        os.remove(ruta)
     assert respuesta.status == "exito"
-    assert respuesta.metadatos.perfil_aplicado == PerfilDestinatarioEnum.EJECUTIVO
-    assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.MAPA_MENTAL
+    assert len(llms.creador.llamadas) == 1
 
+
+def test_critico_fail_closed_si_el_juez_falla(llms):
+    """Si el LLM-juez falla, el contenido NO se aprueba (score 0.0 -> 422)."""
+    def juez_roto(_s, _m):
+        raise RuntimeError("timeout")
+    llms.critico.responder = juez_roto
+    ruta = _archivo_temporal(TEXTO_VCN)
+    try:
+        with pytest.raises(ContextoInsuficienteError):
+            ejecutar_pipeline_adaptacion(documento_titulo="Prueba VCN", ruta_archivo=ruta, formato="Flashcards")
+    finally:
+        os.remove(ruta)
+
+
+def test_creador_no_inventa_contenido_si_el_llm_falla(llms):
+    """Si el LLM generador falla se propaga el error; nunca se devuelve contenido genérico."""
+    def creador_roto(_s, _m):
+        raise RuntimeError("429 quota")
+    llms.creador.responder = creador_roto
+    ruta = _archivo_temporal(TEXTO_VCN)
+    try:
+        with pytest.raises(RuntimeError, match="429"):
+            ejecutar_pipeline_adaptacion(documento_titulo="Prueba VCN", ruta_archivo=ruta, formato="Flashcards")
+    finally:
+        os.remove(ruta)
+
+
+@pytest.mark.asyncio
+async def test_fidelidad_rechazo_422_contexto_irrelevante(llms):
+    """Un documento no técnico se rechaza (ingesta) o el juez lo bloquea con 422."""
+    llms.score = 0.10
+    ruta = _archivo_temporal(
+        "Para hacer una tarta de manzana, necesitas manzanas, harina, azúcar y mantequilla. Hornea por 40 minutos."
+    )
+    try:
+        with pytest.raises(ValueError) as exc:
+            await ejecutar_pipeline_adaptacion_async(
+                documento_titulo="Receta de Tarta", ruta_archivo=ruta,
+                perfil="Senior", formato="Quiz Interactivo", nicho="General"
+            )
+    finally:
+        os.remove(ruta)
+    assert "422" in str(exc.value) or "no contiene contenido t" in str(exc.value)
+
+
+def test_formato_invalido_se_rechaza():
+    with pytest.raises(ValueError, match="no soportado"):
+        ejecutar_pipeline_adaptacion(documento_titulo="X", ruta_archivo="no_importa.md", formato="Podcast")
+
+
+# ---------------------------------------------------------------------------
+# Seguridad
+# ---------------------------------------------------------------------------
 
 def test_seguridad_bloqueo_xss():
     """Verifica que el schema rechace inyecciones XSS."""
@@ -156,19 +350,30 @@ def test_seguridad_bloqueo_prompt_injection():
         )
 
 
+@pytest.mark.asyncio
+async def test_auditor_acepta_payload_valido_y_rechaza_xss():
+    from src.ai.agents.auditor import AuditorAgent
+    auditor = AuditorAgent()
+    valido = {"status": "exito", "contenido_adaptado": {"titulo": "T", "items": [{"frente": "¿Qué es una VCN?", "dorso": "Una red virtual."}]}}
+    ok, vulns, _ = await auditor.auditar_seguridad_async(valido)
+    assert ok, vulns
+
+    malicioso = {"contenido_adaptado": {"items": [{"frente": "<script>alert(1)</script>", "dorso": "x" * 30}]}}
+    ok, _, _ = await auditor.auditar_seguridad_async(malicioso)
+    assert not ok
+
+
 def test_mermaid_sanitizer_local():
     """Verifica que el sanitizador de Mermaid repare diagramas malformados sin costo de tokens."""
     from src.ai.utils.mermaid import sanitizar_codigo_mermaid
 
-    # Caso 1: Código con fences de Markdown y paréntesis sin escapar
     codigo_sucio = "```mermaid\nmindmap\n  root((VCN (Virtual Cloud)))\n    Subred (Publica)\n    NAT Gateway\n```"
     resultado = sanitizar_codigo_mermaid(codigo_sucio, nodo_central="VCN")
     assert "mindmap" in resultado
-    assert "root((VCN Virtual Cloud))" in resultado or "root((" in resultado
+    assert "root((" in resultado
     assert "Subred Publica" in resultado
     assert "```" not in resultado
 
-    # Caso 2: Código nulo reconstruido desde árbol determinista
     arbol_dummy = [{"id": "1", "etiqueta": "Modulo Base", "subnodos": [{"id": "1.1", "etiqueta": "Detalle 1"}]}]
     resultado_fallback = sanitizar_codigo_mermaid(None, nodo_central="Sistema", arbol=arbol_dummy)
     assert resultado_fallback.startswith("mindmap")
@@ -176,47 +381,9 @@ def test_mermaid_sanitizer_local():
     assert "Modulo Base" in resultado_fallback
     assert "Detalle 1" in resultado_fallback
 
+
 def test_resiliencia_failover_groq():
-    """Verifica el mecanismo de resiliencia (Failover) de LangChain configurado en config.py."""
+    """Verifica que el LLM principal tenga configurado el failover a Groq."""
     from src.ai.config import obtener_llm_adaptacion
-    
-    # Pedimos el LLM principal
     llm = obtener_llm_adaptacion(temperatura=0.0)
-    # LangChain permite configurar LLMs con fallbacks (with_fallbacks)
-    # Verificamos que el objeto retornado tenga la propiedad fallbacks configurada
-    assert hasattr(llm, "fallbacks") or hasattr(llm, "with_fallbacks") or hasattr(llm, "default_fallbacks"), "El LLM no tiene configurado el failover a Groq."
-
-@pytest.mark.asyncio
-async def test_fidelidad_rechazo_422_contexto_irrelevante():
-    """Verifica que el Agente Crítico evite alucinaciones arrojando 422 si el documento es irrelevante."""
-    from src.ai.pipeline import ejecutar_pipeline_adaptacion_async
-    texto_irrelevante = "Para hacer una tarta de manzana, necesitas manzanas, harina, azúcar y mantequilla. Hornea por 40 minutos."
-    
-    # Intentamos sacar un Quiz de DevOps y Redes desde una receta de cocina
-    import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".md", mode="w", encoding="utf-8") as f:
-        f.write(texto_irrelevante)
-        test_file_path = f.name
-        
-    try:
-        resultado = await ejecutar_pipeline_adaptacion_async(
-            documento_titulo="Receta de Tarta",
-            ruta_archivo=test_file_path,
-            perfil="Senior",
-            formato="Quiz Interactivo",
-            nicho="Tecnología"
-        )
-        # Si llega aquí y dice exito, el agente alucinó.
-        if resultado.status == "exito":
-            pytest.fail("El pipeline alucinó contenido técnico desde una receta de cocina en lugar de rechazarlo.")
-    except Exception as e:
-        # Debería levantar una excepción con código 422
-        assert "422" in str(e) or "Contexto Insuficiente" in str(e) or "no contiene contenido t" in str(e), f"Se esperaba error 422 de Grounding o Ingestion, se obtuvo: {e}"
-    finally:
-        os.remove(test_file_path)
-
-
-
-
-
-
+    assert getattr(llm, "fallbacks", None), "El LLM no tiene configurado el failover a Groq."

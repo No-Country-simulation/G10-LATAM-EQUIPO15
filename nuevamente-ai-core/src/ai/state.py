@@ -19,6 +19,7 @@ class EstadoPipelineAdaptacion(TypedDict):
     # Contexto intermedio generado por agentes
     fragmentos_relevantes: List[Dict[str, Any]]
     conceptos_clave: List[str]
+    metadata_documento: Optional[Dict[str, Any]]
     prompt_sistema_calibrado: str
     tiempo_estimado_minutos: int
 
@@ -29,6 +30,7 @@ class EstadoPipelineAdaptacion(TypedDict):
     # Auditoría del Agente Crítico
     anclaje_fuente_score: float
     critica_observaciones: Optional[str]
+    veredictos_critico: Optional[List[Dict[str, Any]]]
     contador_intentos: int
 
     # Salida final empaquetada

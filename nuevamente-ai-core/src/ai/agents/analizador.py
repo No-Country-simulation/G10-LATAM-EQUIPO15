@@ -24,30 +24,23 @@ def nodo_analizador(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
 
     prompt_combinado = f"{prompt_sistema}\n\n{instrucciones_formato}"
 
-    # Extracción heurística rápida de conceptos clave preliminares
-    texto_total = " ".join([f.get("contenido", "") for f in fragmentos])
-    if not texto_total:
-        texto_total = state.get("documento_contenido", "")
+    # Conceptos clave: se priorizan los extraídos por DataIA (metadata pedagógica) si vienen en el estado.
+    conceptos_candidatos = state.get("conceptos_clave") or []
+    if not conceptos_candidatos and state.get("metadata_documento"):
+        conceptos_candidatos = (state.get("metadata_documento") or {}).get("conceptos_clave") or []
+    conceptos_unicos = [c for c in conceptos_candidatos if c and c.strip()][:8]
 
-    # Extraer conceptos clave de apoyo
-    palabras = [p.strip(".,;:()[]{}") for p in texto_total.split() if len(p) > 4 and p[0].isupper()]
-    conceptos_unicos = list(dict.fromkeys(palabras))[:6]
     if not conceptos_unicos:
-        conceptos_unicos = [titulo, "Fundamentos", "Buenas Prácticas"]
-
-    # Estimación de tiempo didáctico
-    tiempo_estimado = 5
-    if formato == "Quiz Interactivo":
-        tiempo_estimado = 8
-    elif formato == "Mapa Mental":
-        tiempo_estimado = 6
-    elif formato == "Guia Paso a Paso":
-        tiempo_estimado = 15
+        # Respaldo heurístico: términos que aparecen capitalizados en mitad de frase (siglas / nombres propios).
+        texto_total = " ".join([f.get("contenido", "") for f in fragmentos]) or state.get("documento_contenido", "")
+        import re
+        candidatos = re.findall(r"(?<=[a-záéíóúñ,;:]\s)([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚáéíóúñ\-]{2,})", texto_total)
+        candidatos += re.findall(r"\b[A-Z]{2,6}\b", texto_total)  # siglas: JWT, OCI, VCN...
+        conceptos_unicos = list(dict.fromkeys(candidatos))[:6] or [titulo]
 
     return {
         "prompt_sistema_calibrado": prompt_combinado,
         "conceptos_clave": conceptos_unicos,
-        "tiempo_estimado_minutos": tiempo_estimado,
         "contador_intentos": 0,
         "status": "analisis_completado"
     }

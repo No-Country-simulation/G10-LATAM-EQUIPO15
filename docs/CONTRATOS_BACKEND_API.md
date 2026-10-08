@@ -30,7 +30,7 @@ Para preservar la fidelidad estructural (tablas, títulos, jerarquía), el Backe
 | `document_mime_type`| String | Sí | Ej. `application/pdf`. |
 | `request_id` | String | Sí | Identificador de trazabilidad e idempotencia. |
 | `profile` | Enum | Sí | `"Junior"`, `"Senior"`, `"Ejecutivo"` |
-| `format` | Enum | Sí | `"Flashcards"`, `"Quiz Interactivo"`, `"Mapa Mental"`, `"Resumen Ejecutivo"` |
+| `format` | Enum | Sí | `"Flashcards"`, `"Quiz Interactivo"`, `"Resumen Ejecutivo"` |
 | `nicho_sector` | Enum | Sí | `"Fintech"`, `"Salud"`, `"E-commerce"`, `"General"` |
 | `nivel_detalle` | Enum | No | **Default:** `"Didactico"`. Opciones: `"Tecnico Intermedio"`, `"Exhaustivo"` |
 

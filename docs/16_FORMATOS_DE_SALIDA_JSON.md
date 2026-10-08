@@ -5,6 +5,8 @@
 Actualmente, el MVP soporta de manera robusta y tipada (vía Pydantic) los siguientes formatos estructurados:
 1.  **Quiz Interactivo** (Preguntas de opción múltiple).
 2.  **Flashcards** (Tarjetas de memorización activa).
+3.  **Guía Paso a Paso** (Tutorial práctico para laboratorios y desarrolladores).
+4.  **Resumen Ejecutivo** (TL;DR estratégico para tomadores de decisiones).
 
 A continuación se presentan ejemplos reales generados por `gemini-3.5-flash-lite` utilizando el manual técnico *"JWT en OCI"*.
 
@@ -101,36 +103,7 @@ Estructura diseñada para renderizar componentes de interfaz "Flip Cards" (Frent
 
 ---
 
-## 3. Formato: Mapa Mental
-Estructura diseñada para renderizar diagramas interactivos tipo Mindmap.
-
-```json
-{
-    // ... (metadatos compartidos)
-    "contenido_adaptado": {
-        "titulo": "...",
-        "introduccion_contextualizada": "...",
-        "items": {
-            "nodo_central": "Mecanismos de Autenticación OCI",
-            "descripcion_general": "Diagrama de flujo de seguridad.",
-            "arbol": [
-                {
-                    "id": "nodo-1",
-                    "etiqueta": "API Gateway",
-                    "subnodos": [
-                        { "id": "nodo-1-1", "etiqueta": "Validación JWT", "subnodos": [] }
-                    ]
-                }
-            ],
-            "codigo_mermaid": "mindmap \n root((OCI Security))"
-        }
-    }
-}
-```
-
----
-
-## 4. Formato: Guia Paso a Paso (Tutorial)
+## 3. Formato: Guia Paso a Paso (Tutorial)
 Estructura diseñada para documentaciones técnicas, laboratorios (Labs) y tutoriales iterativos.
 
 ```json
@@ -161,7 +134,7 @@ Estructura diseñada para documentaciones técnicas, laboratorios (Labs) y tutor
 
 ---
 
-## 5. Formato: Resumen Ejecutivo
+## 4. Formato: Resumen Ejecutivo
 Estructura diseñada para perfiles de alto nivel (CTOs, Ejecutivos) que necesitan entender el impacto del negocio rápidamente (TL;DR).
 
 ```json
