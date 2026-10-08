@@ -39,6 +39,44 @@ docker compose -f frontend/compose.yaml down
 `/health` devuelve `{"status":"healthy","service":"frontend"}` y comprueba
 el servidor web. Los archivos inexistentes devuelven `404`.
 
+## Pruebas reproducibles
+
+Desde la raíz, ejecutar las pruebas unitarias y de integración con Docker:
+
+```powershell
+docker compose -f frontend/compose.tests.yaml up --build --abort-on-container-exit --exit-code-from tests
+```
+
+El comando levanta un Frontend de prueba y ejecuta las 25 comprobaciones con
+el runner integrado de Node, sin instalar paquetes ni requerir claves. Devuelve
+un código distinto de cero si alguna prueba falla. Usa otro proyecto de Compose
+y no publica puertos, por lo que puede convivir con el Frontend, Backend e IA
+que ya estén ejecutándose. Al terminar, eliminar los contenedores de prueba:
+
+```powershell
+docker compose -f frontend/compose.tests.yaml down
+```
+
+Para ejecutar únicamente las 10 pruebas unitarias, sin arrancar Nginx:
+
+```powershell
+docker compose -f frontend/compose.tests.yaml run --rm --no-deps tests node --test tests/unit.test.cjs
+```
+
+También pueden ejecutarse con Node 24 instalado: `node --test frontend/tests/unit.test.cjs`.
+El uso de Node se limita al runner de pruebas; la aplicación sigue siendo estática.
+
+- `tests/unit.test.cjs`: estado inicial, eventos, conservación de datos, resultado,
+  reinicio y cliente mock, incluidos latencia y errores de respuesta, red y JSON.
+- `tests/http.test.cjs`: 15 comprobaciones sobre Nginx real: los siete recursos
+  completos y sus tipos de contenido, `/health`, estructura del mock y respuestas
+  `404` para archivos inexistentes o que no deben publicarse.
+
+Las pruebas unitarias sustituyen eventos, temporizadores y red por dobles
+controlados. No verifican la interacción visual en navegador, la conexión real
+con Backend, la generación con Gemini ni la calidad pedagógica del contenido.
+Los tests se versionan, pero quedan fuera de la imagen del Frontend.
+
 ## Estado del flujo
 
 El formulario muestra carga, procesamiento, resultado y error. La generación
@@ -57,3 +95,4 @@ se incorpora a la solicitud de `js/api.js`.
 - `nginx.conf`: configura el servidor y el endpoint de salud.
 - `compose.yaml`: configura imagen, puerto y ejecución local.
 - `.dockerignore`: limita el contexto de construcción a los recursos necesarios.
+- `compose.tests.yaml`: ejecuta las pruebas en contenedores independientes.
