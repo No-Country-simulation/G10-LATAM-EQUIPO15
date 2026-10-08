@@ -1,0 +1,16 @@
+name: nuevamente-frontend
+
+services:
+  frontend:
+    image: adaptive-content-frontend:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-18003}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

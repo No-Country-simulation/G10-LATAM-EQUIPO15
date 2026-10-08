@@ -1,0 +1,14 @@
+**
+!Dockerfile
+!nginx.conf
+!index.html
+!css/
+!css/**
+!js/
+!js/**
+!mocks/
+!mocks/**
+**/.env
+**/.env.*
+**/node_modules/
+**/__pycache__/
