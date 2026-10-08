@@ -12,6 +12,8 @@ from pydantic import BaseModel
 from dataia.common import providers
 from dataia.common.models import ChunkingResult, IngestionResult
 from dataia.chunking import service as chunking
+from dataia.chunking import structural_splitter
+from dataia.ingestion import enrichment
 from dataia.vectorstore import service as vectorstore
 from dataia.vectorstore.client import get_embeddings_model
 from src.ai.agents.critico import nodo_critico
@@ -19,6 +21,7 @@ from src.ai.agents.critico import nodo_critico
 
 @pytest.fixture(autouse=True)
 def configured(monkeypatch):
+    monkeypatch.delenv("DATAIA_GOOGLE_API_KEY", raising=False)
     monkeypatch.setenv("GOOGLE_API_KEY", "test_key_without_network")
     monkeypatch.setenv("GEMINI_API_KEY", "test_key_without_network")
     monkeypatch.setenv("IA_STRICT_PROVIDERS", "1")
@@ -55,6 +58,63 @@ def test_embedding_query_uses_bounded_sdk_client(monkeypatch):
     monkeypatch.setattr(embeddings.client.models, "embed_content", invoke)
     try:
         assert embeddings.embed_query("JWT") == [0.25, 0.75]
+        options = embeddings.client._api_client._http_options
+        assert options.timeout == 12500
+        assert options.retry_options.attempts == 2
+    finally:
+        embeddings.client.close()
+
+
+@pytest.mark.parametrize("operation,stage,payload", [
+    ("document", "ENRIQUECIMIENTO_DOCUMENTO", '{"document_id":"doc","conceptos_clave":["JWT"]}'),
+    ("chunk", "ENRIQUECIMIENTO_FRAGMENTO", '{"tipo_contenido":"definicion","nivel_dificultad":2,"concepto_principal":"JWT"}'),
+    ("batch", "ENRIQUECIMIENTO_LOTE", '{"fragmentos":[{"indice":0,"tipo_contenido":"definicion","nivel_dificultad":2,"concepto_principal":"JWT"}]}'),
+])
+def test_dataia_enrichment_keeps_limits_and_own_key(monkeypatch, tmp_path, caplog, operation, stage, payload):
+    monkeypatch.setenv("DATAIA_GOOGLE_API_KEY", "test_dataia_key_without_network")
+    monkeypatch.setattr(enrichment, "CACHE_DIR", str(tmp_path / "document"))
+    monkeypatch.setattr(structural_splitter, "CACHE_DIR", str(tmp_path / "chunks"))
+    models = []
+    calls = []
+
+    def bounded_factory(*args, **kwargs):
+        llm = providers.create_gemini_llm(*args, **kwargs)
+        models.append(llm)
+        response = types.GenerateContentResponse(candidates=[types.Candidate(
+            content=types.Content(role="model", parts=[types.Part(text=payload)]), finish_reason="STOP",
+        )])
+        invoke = Mock(return_value=response)
+        calls.append(invoke)
+        monkeypatch.setattr(llm.client.models, "generate_content", invoke)
+        return llm
+
+    monkeypatch.setattr(enrichment, "create_gemini_llm", bounded_factory)
+    monkeypatch.setattr(structural_splitter, "create_gemini_llm", bounded_factory)
+    try:
+        with caplog.at_level(logging.INFO):
+            if operation == "document":
+                enrichment.enrich_document_metadata("doc", "JWT técnico")
+            elif operation == "chunk":
+                structural_splitter.enrich_chunk_metadata("chunk", "JWT técnico")
+            else:
+                structural_splitter.enrich_chunks_metadata(["JWT técnico"])
+        assert len(models) == 1
+        assert models[0].google_api_key.get_secret_value() == "test_dataia_key_without_network"
+        options = calls[0].call_args.kwargs["config"].http_options
+        assert options.timeout == 12500
+        assert options.retry_options.attempts == 2
+        assert f"etapa={stage} estado=fin" in caplog.text
+        assert "test_dataia_key_without_network" not in caplog.text
+    finally:
+        for llm in models:
+            llm.client.close()
+
+
+def test_embedding_own_key_keeps_bounded_sdk_client(monkeypatch):
+    monkeypatch.setenv("DATAIA_GOOGLE_API_KEY", "test_dataia_key_without_network")
+    embeddings = get_embeddings_model()
+    try:
+        assert embeddings.google_api_key.get_secret_value() == "test_dataia_key_without_network"
         options = embeddings.client._api_client._http_options
         assert options.timeout == 12500
         assert options.retry_options.attempts == 2

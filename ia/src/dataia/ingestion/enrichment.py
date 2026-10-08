@@ -1,10 +1,12 @@
 import os
 import json
+from dataia.common.credentials import get_google_api_key
 from dataia.common.models import DocumentPedagogicalMetadata
 from dataia.common.providers import create_gemini_llm, provider_call
 from pydantic import ValidationError
 
-CACHE_DIR = ".dataia_cache/metadata"
+# El document_id deriva del contenido, por lo que la caché es reutilizable entre ingestiones
+CACHE_DIR = os.path.join(os.getenv("DATAIA_CACHE_DIR", ".dataia_cache"), "metadata")
 
 def enrich_document_metadata(document_id: str, full_text: str) -> DocumentPedagogicalMetadata:
     """
@@ -23,7 +25,7 @@ def enrich_document_metadata(document_id: str, full_text: str) -> DocumentPedago
             pass # Fallback to re-generating
 
     try:
-        llm = create_gemini_llm()
+        llm = create_gemini_llm(api_key=get_google_api_key())
         structured_llm = llm.with_structured_output(DocumentPedagogicalMetadata)
         
         prompt = (

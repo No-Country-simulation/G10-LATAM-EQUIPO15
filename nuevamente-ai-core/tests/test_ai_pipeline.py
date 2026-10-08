@@ -4,8 +4,6 @@ Valida extracción, segmentación, contratos Pydantic y el flujo LangGraph.
 """
 
 import os
-os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY", "dummy_gemini_key")
-os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY", "dummy_groq_key")
 
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -19,13 +17,67 @@ from src.ai.schemas import (
 
 from src.ai.graph import compilar_grafo_adaptacion
 from src.ai.pipeline import ejecutar_pipeline_adaptacion
-from unittest.mock import patch, MagicMock
+from unittest.mock import Mock
 
-# Mockear GoogleGenerativeAIEmbeddings a nivel global para que las pruebas no fallen por API_KEY
-patcher = patch('src.dataia.vectorstore.client.GoogleGenerativeAIEmbeddings', autospec=True)
-mock_embeddings = patcher.start()
-mock_embeddings.return_value.embed_documents.return_value = [[0.1, 0.2, 0.3]]
-mock_embeddings.return_value.embed_query.return_value = [0.1, 0.2, 0.3]
+
+@pytest.fixture(autouse=True)
+def test_credentials(monkeypatch):
+    # El alcance por prueba evita contaminar las suites de HTTP y Data/IA.
+    monkeypatch.setenv("GOOGLE_API_KEY", "offline_ai_core")
+    monkeypatch.setenv("GEMINI_API_KEY", "offline_ai_core")
+    monkeypatch.setenv("GROQ_API_KEY", "offline_groq")
+    monkeypatch.setenv("IA_STRICT_PROVIDERS", "1")
+
+
+@pytest.fixture
+def offline_pipeline(monkeypatch, tmp_path):
+    """Ejecuta ingesta, Chroma y grafo reales con proveedores explícitos simulados."""
+    import hashlib
+    from langchain_core.embeddings import Embeddings
+    from dataia.ingestion import enrichment
+    from dataia.chunking import structural_splitter
+    from dataia.vectorstore import client
+
+    class OfflineEmbeddings(Embeddings):
+        def embed_documents(self, texts):
+            return [self.embed_query(text) for text in texts]
+
+        def embed_query(self, text):
+            return [byte / 255 for byte in hashlib.sha256(text.encode()).digest()[:8]]
+
+    monkeypatch.setattr(client, "PERSIST_DIRECTORY", str(tmp_path / "chroma"))
+    monkeypatch.setattr(client, "DOCUMENTS_DIRECTORY", str(tmp_path / "documents"))
+    monkeypatch.setattr(client, "get_embeddings_model", lambda: OfflineEmbeddings())
+    monkeypatch.setattr(enrichment, "enrich_document_metadata", lambda doc_id, _text:
+        enrichment.DocumentPedagogicalMetadata(document_id=doc_id, conceptos_clave=["JWT"]))
+    monkeypatch.setattr(structural_splitter, "enrich_chunks_metadata", lambda texts: [
+        structural_splitter.ChunkPedagogicalInfo(
+            tipo_contenido="definicion", nivel_dificultad=2, concepto_principal="JWT",
+        ) for _ in texts
+    ])
+
+    class OfflineLLM:
+        def with_structured_output(self, schema):
+            def invoke(messages):
+                if schema.__name__ == "EvaluacionFidelidad":
+                    return schema(anclaje_fuente_score=0.95, critica_observaciones="Juez simulado para probar el flujo.")
+                prompt = messages[-1].content
+                if "FORMATO PEDAGÓGICO: Quiz Interactivo" in prompt:
+                    items = [{"pregunta":"¿Cuántas partes tiene un JWT?",
+                              "opciones":["Una", "Dos", "Tres", "Cuatro"], "indice_correcto":2,
+                              "justificacion_tecnica":"Header, Payload y Signature."}]
+                elif "FORMATO PEDAGÓGICO: Mapa Mental" in prompt:
+                    items = {"nodo_central":"Microservicios", "descripcion_general":"Servicios independientes.",
+                             "arbol":[{"id":"1", "etiqueta":"Contenedores", "subnodos":[]}]}
+                else:
+                    items = [{"frente":"VCN", "dorso":"Red virtual privada con subredes."}]
+                return schema(titulo="Material de prueba", introduccion_contextualizada="Salida simulada.", items=items)
+            return Mock(invoke=Mock(side_effect=invoke))
+
+    factory = Mock(return_value=OfflineLLM())
+    monkeypatch.setattr("src.ai.agents.creador.obtener_llm_adaptacion", factory)
+    monkeypatch.setattr("src.ai.config.obtener_llm_adaptacion", factory)
+    yield factory
 
 def test_contratos_perfiles_canónicos():
     """Verifica que existan exactamente los 3 perfiles oficiales."""
@@ -42,7 +94,7 @@ def test_compilacion_grafo_langgraph():
     assert grafo is not None
 
 
-def test_ejecucion_pipeline_adaptacion_junior_flashcards():
+def test_ejecucion_pipeline_adaptacion_junior_flashcards(offline_pipeline):
     """Verifica la ejecución E2E del pipeline retornando el modelo AdaptacionContenidoResponse."""
     texto_ejemplo = (
         "Una Virtual Cloud Network (VCN) en Oracle Cloud Infrastructure es una red virtual privada "
@@ -69,10 +121,11 @@ def test_ejecucion_pipeline_adaptacion_junior_flashcards():
     assert respuesta.metadatos.perfil_aplicado == PerfilDestinatarioEnum.JUNIOR
     assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.FLASHCARDS
     assert hasattr(respuesta.metadatos, "tiempo_estimado_estudio_minutos")
+    assert offline_pipeline.call_count == 2  # Generador y juez; sin atajo por clave dummy.
 
 
 @pytest.mark.asyncio
-async def test_ejecucion_pipeline_adaptacion_async_senior_quiz():
+async def test_ejecucion_pipeline_adaptacion_async_senior_quiz(offline_pipeline):
     """Verifica que la función asíncrona ejecute el pipeline y retorne Quizzes para perfil Senior."""
     from src.ai.pipeline import ejecutar_pipeline_adaptacion_async
 
@@ -108,9 +161,10 @@ async def test_ejecucion_pipeline_adaptacion_async_senior_quiz():
     assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.QUIZ_INTERACTIVO
     assert len(eventos_telemetria) >= 4
     assert any(e[0] == "COMPLETADO" for e in eventos_telemetria)
+    assert offline_pipeline.call_count == 2
 
 
-def test_ejecucion_pipeline_ejecutivo_mapa_mental():
+def test_ejecucion_pipeline_ejecutivo_mapa_mental(offline_pipeline):
     """Verifica la ejecución para perfil Ejecutivo con formato Mapa Mental."""
     texto_ejemplo = (
         "La arquitectura de microservicios divide las aplicaciones en servicios independientes "
@@ -136,6 +190,7 @@ def test_ejecucion_pipeline_ejecutivo_mapa_mental():
     assert respuesta.status == "exito"
     assert respuesta.metadatos.perfil_aplicado == PerfilDestinatarioEnum.EJECUTIVO
     assert respuesta.metadatos.formato_generado == FormatoSalidaEnum.MAPA_MENTAL
+    assert offline_pipeline.call_count == 2
 
 
 def test_seguridad_bloqueo_xss():
@@ -187,8 +242,8 @@ def test_resiliencia_failover_groq():
     assert hasattr(llm, "fallbacks") or hasattr(llm, "with_fallbacks") or hasattr(llm, "default_fallbacks"), "El LLM no tiene configurado el failover a Groq."
 
 @pytest.mark.asyncio
-async def test_fidelidad_rechazo_422_contexto_irrelevante():
-    """Verifica que el Agente Crítico evite alucinaciones arrojando 422 si el documento es irrelevante."""
+async def test_ingestion_rechaza_contexto_irrelevante_antes_del_proveedor(offline_pipeline):
+    """La ingesta rechaza una receta antes de invocar generación o evaluación."""
     from src.ai.pipeline import ejecutar_pipeline_adaptacion_async
     texto_irrelevante = "Para hacer una tarta de manzana, necesitas manzanas, harina, azúcar y mantequilla. Hornea por 40 minutos."
     
@@ -199,19 +254,12 @@ async def test_fidelidad_rechazo_422_contexto_irrelevante():
         test_file_path = f.name
         
     try:
-        resultado = await ejecutar_pipeline_adaptacion_async(
-            documento_titulo="Receta de Tarta",
-            ruta_archivo=test_file_path,
-            perfil="Senior",
-            formato="Quiz Interactivo",
-            nicho="Tecnología"
-        )
-        # Si llega aquí y dice exito, el agente alucinó.
-        if resultado.status == "exito":
-            pytest.fail("El pipeline alucinó contenido técnico desde una receta de cocina en lugar de rechazarlo.")
-    except Exception as e:
-        # Debería levantar una excepción con código 422
-        assert "422" in str(e) or "Contexto Insuficiente" in str(e) or "no contiene contenido t" in str(e), f"Se esperaba error 422 de Grounding o Ingestion, se obtuvo: {e}"
+        with pytest.raises(ValueError, match="Error de Ingestión:.*no contiene contenido técnico"):
+            await ejecutar_pipeline_adaptacion_async(
+                documento_titulo="Receta de Tarta", ruta_archivo=test_file_path,
+                perfil="Senior", formato="Quiz Interactivo", nicho="General",
+            )
+        offline_pipeline.assert_not_called()
     finally:
         os.remove(test_file_path)
 

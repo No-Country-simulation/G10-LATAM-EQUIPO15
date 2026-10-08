@@ -13,6 +13,9 @@ services:
     environment:
       GOOGLE_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
       GEMINI_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
+      # Opcional: clave propia para ingestión, chunking y embeddings (Data/IA); si está vacía se usa GOOGLE_API_KEY
+      DATAIA_GOOGLE_API_KEY: "${DATAIA_GOOGLE_API_KEY:-}"
+      DATAIA_ENRICH_BATCH_SIZE: "${DATAIA_ENRICH_BATCH_SIZE:-15}"
       LLM_PROVIDER: gemini
       GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.5-flash-lite}"
       IA_STRICT_PROVIDERS: "1"
@@ -21,6 +24,9 @@ services:
       IA_PROVIDER_MAX_RETRIES: "${IA_PROVIDER_MAX_RETRIES:-1}"
       IA_PIPELINE_TIMEOUT_SECONDS: "${IA_PIPELINE_TIMEOUT_SECONDS:-480}"
       IA_CALLER_TIMEOUT_SECONDS: "${IA_CALLER_TIMEOUT_SECONDS:-600}"
+    # ChromaDB, registro de documentos y cachés: un documento se ingiere una sola vez
+    volumes:
+      - ia-data:/workspace/data
 
   ia-http-tests:
     image: adaptive-content-ia-http-tests:dev
@@ -30,3 +36,6 @@ services:
       dockerfile: ia/docker/Dockerfile.http
       target: tests
     network_mode: none
+
+volumes:
+  ia-data:

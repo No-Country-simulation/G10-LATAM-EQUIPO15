@@ -32,7 +32,7 @@ def provider_http_options() -> types.HttpOptions:
     )
 
 
-def create_gemini_llm(temperature: float = 0.0):
+def create_gemini_llm(temperature: float = 0.0, *, api_key: str | None = None):
     timeout, retries = provider_limits()
     model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
     # Google recomienda el valor predeterminado para Gemini 3. LangChain
@@ -42,7 +42,7 @@ def create_gemini_llm(temperature: float = 0.0):
     # número de intentos totales. Convertimos los reintentos configurados.
     return ChatGoogleGenerativeAI(
         model=model,
-        google_api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
+        google_api_key=api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"),
         **temperature_options,
         timeout=timeout,
         max_retries=retries + 1,
