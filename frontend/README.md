@@ -1,98 +1,139 @@
 # Frontend de NuevaMente con Docker
 
-La interfaz utiliza HTML, CSS y JavaScript sin compilación. La imagen sirve
-los archivos con Nginx; no requiere instalar Node ni Python en el equipo.
-La base de la interfaz corresponde a `feature/fe-scaffolding-ui`, commit
+Interfaz HTML, CSS y JavaScript, servida por Nginx sin compilación. El formulario
+envía el documento al Backend real y muestra Flashcards, Quiz Interactivo o
+Resumen Ejecutivo. La base visual es `feature/fe-scaffolding-ui`, commit
 `edc02fc`, de Karen González.
 
-## Arranque
+## Arranque del sistema completo
 
-Requiere Docker Desktop o Docker Engine con Compose. Desde la raíz del repositorio:
+Requiere Docker con Compose y una clave propia en el archivo privado `ia/.env`:
 
-```powershell
-docker compose -f frontend/compose.yaml up --build -d --wait
+```dotenv
+GOOGLE_API_KEY=tu-clave
 ```
 
-Abrir <http://localhost:18003>. El servicio se publica en loopback; dentro del
-contenedor escucha en `8080` y corre como el usuario `nginx`, con el sistema de
-archivos de la imagen en modo de solo lectura y temporales en `/tmp`.
+Desde la raíz del repositorio:
 
-Para usar otro puerto en PowerShell:
+```powershell
+docker compose --env-file ia/.env -f compose.integration.yaml up --build -d --wait
+```
+
+Abrir <http://localhost:18003>. Backend ofrece Swagger en
+<http://localhost:18002/docs>. IA recibe las claves, usa la red interna y conserva
+Chroma, registro y cachés en su volumen. El navegador solo contacta al mismo
+origen del Frontend: Nginx dirige `/api/` a `backend:8000`, sin configurar CORS
+ni incluir direcciones internas o claves en JavaScript.
+
+Para evitar puertos ocupados, antes de levantar el proyecto:
 
 ```powershell
 $env:FRONTEND_PORT = "18004"
+$env:BACKEND_PORT = "18005"
+```
+
+En un worktree se puede usar `--env-file 'C:\ruta\privada\ia.env'`. Para ejecutar
+varias instancias, asignar también proyectos distintos con `-p nombre`; cada
+proyecto tendrá su propio volumen. No publicar el archivo de claves ni la
+configuración expandida de Compose.
+
+## Formulario y resultados
+
+Se envía `POST /api/v1/adaptar-contenido` con multipart y cuatro campos:
+
+| Campo | Valores |
+|---|---|
+| `documento_original` | Archivo PDF, Markdown (`.md`, `.markdown`) o TXT |
+| `perfil_destinatario` | `Junior`, `Senior`, `Ejecutivo` |
+| `formato_salida` | `Flashcards`, `Quiz Interactivo`, `Resumen Ejecutivo` |
+| `nicho_sector` | `General`, `Fintech`, `Salud`, `E-commerce` |
+
+Los bytes originales se conservan; el navegador configura el boundary multipart.
+La generación deshabilita el envío y muestra un estado de espera. Puede tardar
+varios minutos. No hay reenvíos automáticos ni seguimiento SSE.
+
+- Flashcards permite revelar el dorso y muestra pistas cuando están presentes.
+- Quiz permite elegir entre cuatro opciones, comprobar la respuesta y consultar
+  su justificación técnica.
+- Resumen muestra TL;DR, puntos clave, impacto en el negocio y recomendaciones.
+
+El contenido recibido se inserta como texto. Los errores de Backend aparecen
+con su mensaje; los fallos de red, timeout y proxy tienen mensajes propios.
+“Reintentar” conserva el archivo y la configuración. “Cambiar documento o
+configuración” vuelve al formulario sin borrarlos. “Generar otro contenido”
+reinicia el formulario. La evaluación de anclaje es una evaluación de IA y
+requiere revisión humana para verificar fidelidad pedagógica.
+
+## Límites y operación
+
+El límite predeterminado de archivo es 10 MiB en Backend/IA. Nginx acepta cuerpos
+de hasta 11 MiB para dejar espacio al multipart. Los presupuestos predeterminados
+son 480 segundos en IA, 600 en Backend, 650 en el proxy y 660 en el navegador.
+Al cambiar los límites de Backend/IA, revisar también `nginx.conf` y `js/api.js`.
+Nginx evita reenviar una solicitud a otro upstream automáticamente.
+
+```powershell
+docker compose --env-file ia/.env -f compose.integration.yaml ps
+curl.exe http://localhost:18003/health
+docker compose --env-file ia/.env -f compose.integration.yaml down
+```
+
+`/health` comprueba el servidor web, sin contactar a Backend ni Gemini. `down`
+conserva el volumen de IA. Los puertos de desarrollo se publican en loopback;
+el acceso público y HTTPS corresponden al despliegue de Cloud.
+
+Para servir únicamente los recursos estáticos:
+
+```powershell
 docker compose -f frontend/compose.yaml up --build -d --wait
 ```
 
-El puerto predeterminado es `18003`. `FRONTEND_PORT` cambia únicamente el puerto
-del equipo; no modifica la aplicación.
+La carga del sitio y `/health` funcionan sin Backend; generar contenido exige
+un servicio `backend:8000` en la misma red. Para el flujo completo, usar el
+Compose de integración. La imagen excluye los tests y el antiguo ejemplo mock.
 
-## Comprobaciones y cierre
+## Pruebas reproducibles sin claves
+
+Desde la raíz, ejecutar 46 comprobaciones:
 
 ```powershell
-docker compose -f frontend/compose.yaml ps
-curl.exe http://localhost:18003/health
-docker compose -f frontend/compose.yaml logs --tail 50 frontend
-docker compose -f frontend/compose.yaml down
+docker compose -f compose.frontend.tests.yaml up --build --abort-on-container-exit --exit-code-from tests
+docker compose -f compose.frontend.tests.yaml down
 ```
 
-`/health` devuelve `{"status":"healthy","service":"frontend"}` y comprueba
-el servidor web. Los archivos inexistentes devuelven `404`.
+Este proyecto separado no publica puertos ni utiliza claves o volúmenes de la
+aplicación. Ejecuta 24 pruebas unitarias y 15 HTTP, más 7 pruebas del recorrido
+Nginx → Backend real → IA simulada. Verifica los tres formatos, los bytes y campos
+multipart originales, los rechazos antes de contactar a IA, errores 422/503 y
+el límite de cuerpo del proxy. La red de ejecución es interna; construir las
+imágenes puede necesitar Internet. El primer comando devuelve un código distinto
+de cero si falla una prueba; no ejecutar el cierre antes de revisar ese código.
 
-## Pruebas reproducibles
-
-Desde la raíz, ejecutar las pruebas unitarias y de integración con Docker:
+También se pueden ejecutar solo las 39 comprobaciones del Frontend:
 
 ```powershell
 docker compose -f frontend/compose.tests.yaml up --build --abort-on-container-exit --exit-code-from tests
-```
-
-El comando levanta un Frontend de prueba y ejecuta las 25 comprobaciones con
-el runner integrado de Node, sin instalar paquetes ni requerir claves. Devuelve
-un código distinto de cero si alguna prueba falla. Usa otro proyecto de Compose
-y no publica puertos, por lo que puede convivir con el Frontend, Backend e IA
-que ya estén ejecutándose. Al terminar, eliminar los contenedores de prueba:
-
-```powershell
 docker compose -f frontend/compose.tests.yaml down
 ```
 
-Para ejecutar únicamente las 10 pruebas unitarias, sin arrancar Nginx:
+Con Node 24 instalado, las unitarias se ejecutan con
+`node --test frontend/tests/unit.test.cjs`. Node se usa únicamente para pruebas.
 
-```powershell
-docker compose -f frontend/compose.tests.yaml run --rm --no-deps tests node --test tests/unit.test.cjs
-```
+- `tests/unit.test.cjs`: estados, contrato del cliente, errores y visores con DOM
+  controlado, incluidos texto HTML literal y respuestas del Quiz.
+- `tests/http.test.cjs`: recursos estáticos, tipos de contenido, salud, opciones
+  del formulario y archivos privados/no publicados.
+- `tests/proxy.test.cjs`: transporte completo con Backend real.
+- `tests/ia_fixture.py`: IA explícitamente simulada, únicamente para estas pruebas.
 
-También pueden ejecutarse con Node 24 instalado: `node --test frontend/tests/unit.test.cjs`.
-El uso de Node se limita al runner de pruebas; la aplicación sigue siendo estática.
+Estas suites no verifican interacción visual en un navegador ni llaman a Gemini.
+El ensayo real Backend → IA está en [tests/README.md](../tests/README.md).
+Para comprobar manualmente el recorrido desde el navegador, levantar el sistema
+completo, cargar un documento de prueba público, generar, revisar el visor y
+volver a empezar. Repetir para los tres formatos; probar también archivo vacío,
+extensión inválida y reintento. Cada generación real consume cuota del proveedor.
 
-- `tests/unit.test.cjs`: estado inicial, eventos, conservación de datos, resultado,
-  reinicio y cliente mock, incluidos latencia y errores de respuesta, red y JSON.
-- `tests/http.test.cjs`: 15 comprobaciones sobre Nginx real: los siete recursos
-  completos y sus tipos de contenido, `/health`, estructura del mock y respuestas
-  `404` para archivos inexistentes o que no deben publicarse.
+## Pendientes
 
-Las pruebas unitarias sustituyen eventos, temporizadores y red por dobles
-controlados. No verifican la interacción visual en navegador, la conexión real
-con Backend, la generación con Gemini ni la calidad pedagógica del contenido.
-Los tests se versionan, pero quedan fuera de la imagen del Frontend.
-
-## Estado del flujo
-
-El formulario muestra carga, procesamiento, resultado y error. La generación
-actual espera una latencia simulada y carga `mocks/respuesta-ejemplo.json`;
-el resultado visual es una demostración local de flashcards. No requiere claves
-ni acceso a Gemini.
-
-La conexión real con Backend está pendiente: hay que enviar el archivo original
-como multipart a `/api/v1/adaptar-contenido` y alinear los valores de perfiles y
-formatos del formulario con el contrato HTTP. El campo de archivo todavía no
-se incorpora a la solicitud de `js/api.js`.
-
-## Archivos Docker
-
-- `Dockerfile`: copia los recursos estáticos y define el healthcheck.
-- `nginx.conf`: configura el servidor y el endpoint de salud.
-- `compose.yaml`: configura imagen, puerto y ejecución local.
-- `.dockerignore`: limita el contexto de construcción a los recursos necesarios.
-- `compose.tests.yaml`: ejecuta las pruebas en contenedores independientes.
+OCI Object Storage, despliegue público y SSE siguen pendientes. La integración
+actual no promete que el contenido esté guardado en OCI.

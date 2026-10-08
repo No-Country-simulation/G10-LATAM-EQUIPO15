@@ -21,38 +21,30 @@
       <form id="form-configuracion">
         <div class="campo">
           <label for="documento">Documento técnico (PDF, Markdown o texto)</label>
-          <input type="file" id="documento" name="documento" accept=".pdf,.md,.txt" required />
-        </div>
-
-        <div class="campo">
-          <label for="documento_titulo">Título del documento</label>
-          <input type="text" id="documento_titulo" name="documento_titulo" placeholder="Ej: Introducción a VCN en OCI" />
+          <input type="file" id="documento" name="documento_original" accept=".pdf,.md,.markdown,.txt" required />
         </div>
 
         <div class="campo">
           <label for="perfil_destinatario">Perfil del destinatario</label>
           <select id="perfil_destinatario" name="perfil_destinatario" required>
-            <option value="Principiante">Principiante / Transición de carrera</option>
-            <option value="Junior/SemiSenior">Desarrollador Junior / Semi Senior</option>
-            <option value="Lider Tecnico">Líder Técnico / Arquitecto</option>
-            <option value="Gestor">Gestor / Ejecutivo (no técnico)</option>
+            <option value="Junior">Junior / Principiante</option>
+            <option value="Senior">Líder Técnico / Arquitecto</option>
+            <option value="Ejecutivo">Ejecutivo</option>
           </select>
         </div>
 
         <div class="campo">
           <label for="formato_salida">Formato pedagógico de salida</label>
           <select id="formato_salida" name="formato_salida" required>
-            <option value="Tutorial">Guía práctica paso a paso (Tutorial)</option>
             <option value="Flashcards">Flashcards de memorización</option>
-            <option value="Quiz">Quiz interactivo con justificaciones</option>
-            <option value="TL;DR">Resumen ejecutivo (TL;DR)</option>
-            <option value="Guion">Guion de clase / video</option>
+            <option value="Quiz Interactivo">Quiz interactivo con justificaciones</option>
+            <option value="Resumen Ejecutivo">Resumen ejecutivo</option>
           </select>
         </div>
 
         <div class="campo">
           <label for="nicho_sector">Nicho / contexto de aplicación</label>
-          <select id="nicho_sector" name="nicho_sector">
+          <select id="nicho_sector" name="nicho_sector" required>
             <option value="General">General</option>
             <option value="Fintech">Fintech</option>
             <option value="Salud">Salud</option>
@@ -60,24 +52,23 @@
           </select>
         </div>
 
-        <button type="submit">Generar contenido educativo</button>
+        <button id="boton-generar" type="submit">Generar contenido educativo</button>
       </form>
     </section>
 
-    <!-- Estados SUBMITTED / PROCESSING (placeholder — el stepper real es de Semana 3) -->
-    <section id="seccion-procesando" class="oculto">
+    <section id="seccion-procesando" class="oculto" role="status" aria-live="polite">
       <h2>2. Procesando tu documento…</h2>
       <div class="spinner" aria-hidden="true"></div>
       <p>Estamos extrayendo el contenido y generando tu material educativo.</p>
-      <!-- TODO Semana 3: acá va el stepper de telemetría en vivo (FE-04) -->
+      <p class="meta">La adaptación puede tardar varios minutos. Esperá sin volver a enviar el documento.</p>
     </section>
 
-    <!-- Estado COMPLETED (placeholder de FE-03, formato Flashcards) -->
     <section id="seccion-resultado" class="oculto">
       <h2 id="resultado-titulo"></h2>
       <p id="resultado-intro"></p>
       <p id="resultado-tiempo" class="meta"></p>
       <p id="resultado-conceptos" class="meta"></p>
+      <p id="resultado-calidad" class="meta"></p>
 
       <div id="resultado-items" class="grid-flashcards"></div>
 
@@ -85,10 +76,11 @@
     </section>
 
     <!-- Estado ERROR -->
-    <section id="seccion-error" class="oculto">
+    <section id="seccion-error" class="oculto" role="alert">
       <h2>Ocurrió un problema</h2>
       <p id="mensaje-error"></p>
       <button id="boton-reintentar">Reintentar</button>
+      <button id="boton-volver" class="boton-secundario">Cambiar documento o configuración</button>
     </section>
 
   </main>

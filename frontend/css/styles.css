@@ -64,6 +64,9 @@ button {
 }
 
 button:hover { opacity: 0.9; }
+button:disabled { opacity: 0.6; cursor: wait; }
+.boton-secundario { background: white; color: var(--azul); border: 1px solid var(--azul); }
+:focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; }
 
 .spinner {
   width: 40px;
@@ -99,6 +102,15 @@ button:hover { opacity: 0.9; }
 .flashcard-frente { margin: 0 0 0.5rem; }
 .flashcard-dorso { margin: 0 0 0.5rem; }
 .flashcard-pista { margin: 0; color: var(--gris); font-size: 0.85rem; }
+summary { cursor: pointer; font-weight: 600; }
+.quiz-pregunta { margin: 0; padding: 1rem; border: 1px solid var(--borde); border-radius: 10px; }
+.quiz-pregunta legend { font-weight: 600; padding: 0 0.4rem; }
+.quiz-opcion { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem 0; font-weight: normal; }
+.quiz-opcion input { margin-top: 0.3rem; }
+.quiz-feedback { white-space: pre-wrap; }
+.respuesta-correcta { color: #196438; }
+.respuesta-incorrecta { color: var(--error); }
+.flashcard, .quiz-pregunta, #resultado-items { overflow-wrap: anywhere; }
 
 #seccion-error h2 { color: var(--error); }
 #mensaje-error { color: var(--error); }

@@ -51,4 +51,4 @@ El endpoint es síncrono. IA procesa una adaptación por vez y responde `503 IA_
 
 [Pruebas reproducibles](../../tests/README.md): suite offline sin red y ensayo real con Gemini desde Backend, incluyendo una segunda adaptación después de recrear IA con el mismo volumen. Los resultados no sustituyen una revisión general de calidad para todos los documentos y formatos.
 
-Pendientes: conectar Frontend al endpoint real, implementar OCI Object Storage y validar el despliegue cloud. El Frontend publicado mantiene su adaptador de ejemplo. Los documentos de planificación y ADR describen objetivos que pueden exceder esta implementación.
+Frontend conecta el formulario al endpoint real mediante el proxy de Nginx y representa los tres formatos públicos; consultar su [README](../../frontend/README.md) y las pruebas del proxy con Backend real e IA simulada en `compose.frontend.tests.yaml`. Pendientes: implementar OCI Object Storage, SSE y validar el despliegue cloud. Los documentos de planificación y ADR describen objetivos que pueden exceder esta implementación.

@@ -12,7 +12,6 @@ const tipos = {
   'js/api.js': 'application/javascript',
   'js/ui.js': 'application/javascript',
   'js/main.js': 'application/javascript',
-  'mocks/respuesta-ejemplo.json': 'application/json',
 };
 
 async function pedir(ruta) {
@@ -37,22 +36,19 @@ test('HTTP /health identifica al Frontend y confirma disponibilidad', async () =
   assert.deepEqual(await respuesta.json(), { status: 'healthy', service: 'frontend' });
 });
 
-test('HTTP entrega flashcards de ejemplo con contenido utilizable', async () => {
-  const respuesta = await pedir('/mocks/respuesta-ejemplo.json');
-  assert.equal(respuesta.status, 200);
-  const resultado = await respuesta.json();
-  assert.equal(resultado.status, 'exito');
-  assert.equal(resultado.metadatos.formato_generado, 'Flashcards');
-  assert.ok(resultado.contenido_adaptado.items.length > 0);
-  for (const item of resultado.contenido_adaptado.items) {
-    for (const campo of ['frente', 'dorso', 'pista_didactica']) {
-      assert.equal(typeof item[campo], 'string');
-      assert.ok(item[campo].trim().length > 0);
-    }
+test('HTTP expone solo los perfiles y formatos aceptados por Backend', async () => {
+  const html = await (await pedir('/')).text();
+  for (const [id, valores] of Object.entries({
+    perfil_destinatario: ['Junior', 'Senior', 'Ejecutivo'],
+    formato_salida: ['Flashcards', 'Quiz Interactivo', 'Resumen Ejecutivo'],
+  })) {
+    const select = html.match(new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)</select>`))[1];
+    assert.deepEqual([...select.matchAll(/<option value="([^"]+)"/g)].map(m => m[1]), valores);
   }
+  assert.match(html, /name="documento_original"/);
 });
 
-for (const ruta of ['/archivo-inexistente.js', '/README.md', '/.env', '/tests/unit.test.cjs', '/compose.yaml', '/nginx.conf']) {
+for (const ruta of ['/archivo-inexistente.js', '/README.md', '/.env', '/tests/unit.test.cjs', '/compose.yaml', '/nginx.conf', '/mocks/respuesta-ejemplo.json']) {
   test(`HTTP no publica ${ruta}`, async () => {
     const respuesta = await pedir(ruta);
     assert.equal(respuesta.status, 404);

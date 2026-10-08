@@ -1,6 +1,23 @@
 name: nuevamente-integration
 
 services:
+  frontend:
+    image: adaptive-content-frontend:dev
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    init: true
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-18003}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
   backend:
     image: adaptive-content-backend:dev
     build:

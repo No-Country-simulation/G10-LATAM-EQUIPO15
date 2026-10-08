@@ -11,8 +11,8 @@ const AppState = {
   current: "IDLE",
   data: {
     documento: null,       // archivo cargado por el usuario
-    configuracion: null,   // { perfil_destinatario, formato_salida, nicho_sector, nivel_detalle }
-    resultado: null,       // JSON de respuesta del backend (o mock)
+    configuracion: null,   // { perfil_destinatario, formato_salida, nicho_sector }
+    resultado: null,       // JSON de respuesta del Backend real
     error: null,
   },
 

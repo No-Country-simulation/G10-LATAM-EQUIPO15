@@ -10,7 +10,7 @@ La referencia operativa es el código consolidado, los README de ejecución y la
 - [Contrato Backend ↔ IA v2.3](CONTRATOS/CONTRATO_BACKEND_IA.md)
 - [Schema Response v2.3](CONTRATOS/SCHEMA_RESPONSE.md)
 
-La API pública acepta PDF, Markdown y TXT y devuelve Flashcards, Quiz Interactivo o Resumen Ejecutivo. Calidad y estado pendiente de almacenamiento acompañan la salida. El Frontend conserva su adaptador de ejemplo; OCI Object Storage y SSE continúan pendientes.
+La API pública acepta PDF, Markdown y TXT y devuelve Flashcards, Quiz Interactivo o Resumen Ejecutivo. Calidad y estado pendiente de almacenamiento acompañan la salida. El Frontend envía multipart al Backend mediante Nginx y representa los tres formatos. OCI Object Storage, despliegue cloud y SSE continúan pendientes.
 
 ## Arquitectura y seguimiento
 

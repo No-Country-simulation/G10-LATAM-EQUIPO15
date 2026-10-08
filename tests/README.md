@@ -1,4 +1,4 @@
-# Pruebas de Backend, Data/IA y AI Core
+# Pruebas de Frontend, Backend, Data/IA y AI Core
 
 Las pruebas existentes están versionadas en `backend/tests`, `ia/tests` y
 `nuevamente-ai-core/tests`. Estos comandos reúnen las suites de la integración
@@ -34,6 +34,28 @@ docker compose -f compose.tests.yaml build
 docker compose -f compose.tests.yaml run --rm backend-tests
 docker compose -f compose.tests.yaml run --rm ia-tests
 ```
+
+## Frontend y proxy con Backend real, sin claves
+
+Desde la raíz:
+
+```powershell
+docker compose -f compose.frontend.tests.yaml up --build --abort-on-container-exit --exit-code-from tests
+docker compose -f compose.frontend.tests.yaml down
+```
+
+Son 46 pruebas: 24 unitarias del estado, cliente multipart y visores; 15 HTTP
+del Frontend; y 7 del proxy Nginx → Backend real → IA simulada. Estas últimas
+verifican los tres formatos, bytes originales, parámetros, rechazos, errores
+422/503 y límite de cuerpo. No requieren claves, no publican puertos ni usan
+los volúmenes de trabajo. Los contenedores se comunican en una red interna sin
+acceso externo; construir imágenes puede necesitar Internet.
+
+Revisar el código de salida del primer comando antes de cerrar el proyecto.
+El fixture de IA vive únicamente en las pruebas; el Frontend de aplicación
+siempre utiliza el endpoint real. Las suites no incluyen Chromium ni llamadas
+a Gemini. Ver [Frontend](../frontend/README.md) para el arranque completo y la
+comprobación manual desde navegador.
 
 ## Ensayo real Backend -> IA -> Gemini
 

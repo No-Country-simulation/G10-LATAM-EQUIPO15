@@ -6,8 +6,6 @@
 !css/**
 !js/
 !js/**
-!mocks/
-!mocks/**
 **/.env
 **/.env.*
 **/node_modules/

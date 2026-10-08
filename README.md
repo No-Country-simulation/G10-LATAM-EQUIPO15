@@ -41,20 +41,14 @@ Este repositorio almacena la documentación arquitectónica, técnica y de gesti
 
 ## Ejecutar y verificar
 
-Backend y servicio IA (requiere `GOOGLE_API_KEY` en `ia/.env`):
+Frontend, Backend y servicio IA (requiere `GOOGLE_API_KEY` en `ia/.env`):
 
 ```powershell
-docker compose --env-file ia/.env -f compose.integration.yaml up --build -d
+docker compose --env-file ia/.env -f compose.integration.yaml up --build -d --wait
 ```
 
-Backend queda en <http://localhost:18002/docs>. IA usa la red interna y conserva Chroma y cachés en un volumen Docker.
+Frontend queda en <http://localhost:18003> y envía el documento al Backend mediante el proxy de Nginx. Muestra Flashcards, Quiz Interactivo y Resumen Ejecutivo, con errores y reintento explícito. Backend ofrece Swagger en <http://localhost:18002/docs>. IA usa la red interna y conserva Chroma y cachés en un volumen Docker.
 
-Frontend estático:
-
-```powershell
-docker compose -f frontend/compose.yaml up --build -d
-```
-
-Frontend queda en <http://localhost:18003>. Su adaptador usa una respuesta de ejemplo; la conexión al Backend real sigue pendiente. OCI Object Storage y despliegue cloud también siguen pendientes.
+Ver [arranque, límites y pruebas del Frontend](frontend/README.md). OCI Object Storage, SSE y despliegue cloud siguen pendientes.
 
 Para reproducir las suites offline y la prueba real con Gemini, ver [tests/README.md](tests/README.md). La API vigente está documentada en el [contrato Backend ↔ IA v2.3](docs/CONTRATOS/CONTRATO_BACKEND_IA.md). Los planes y reportes anteriores conservan antecedentes; consultar estos documentos operativos para el comportamiento actual.
