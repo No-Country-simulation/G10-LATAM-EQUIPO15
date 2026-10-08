@@ -1,0 +1,41 @@
+name: nuevamente-ia-real
+
+services:
+  ia-real:
+    image: nuevamente-ia-tests:dev
+    environment:
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
+      GEMINI_API_KEY: "${GOOGLE_API_KEY:?Completar GOOGLE_API_KEY en ia/.env y usar --env-file ia/.env}"
+      # Opcional: clave propia para ingestión, chunking y embeddings (Data/IA); si está vacía se usa GOOGLE_API_KEY
+      DATAIA_GOOGLE_API_KEY: "${DATAIA_GOOGLE_API_KEY:-}"
+      DATAIA_ENRICH_BATCH_SIZE: "${DATAIA_ENRICH_BATCH_SIZE:-15}"
+      LLM_PROVIDER: gemini
+      GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+      IA_STRICT_PROVIDERS: "1"
+      IA_PROVIDER_TIMEOUT_SECONDS: "${IA_PROVIDER_TIMEOUT_SECONDS:-60}"
+      IA_PROVIDER_MAX_RETRIES: "${IA_PROVIDER_MAX_RETRIES:-1}"
+    command:
+      - python
+      - -u
+      - -c
+      - |
+        from src.ai.pipeline import ejecutar_pipeline_adaptacion
+        from src.ai.agents import creador
+
+        def rechazar_generacion_simulada(*args, **kwargs):
+            raise RuntimeError("Gemini no produjo una salida valida; la prueba real no admite el borrador de contingencia.")
+
+        creador._generar_borrador_fallback = rechazar_generacion_simulada
+
+        def progreso(etapa, paso, porcentaje, mensaje):
+            print(f"{porcentaje}% [{etapa}] {mensaje}", flush=True)
+
+        respuesta = ejecutar_pipeline_adaptacion(
+            documento_titulo="JWT en OCI",
+            ruta_archivo="tests/JWT en OCI.pdf",
+            perfil="Junior",
+            formato="Flashcards",
+            nicho="General",
+            callback_telemetria=progreso,
+        )
+        print(respuesta.model_dump_json(indent=2))

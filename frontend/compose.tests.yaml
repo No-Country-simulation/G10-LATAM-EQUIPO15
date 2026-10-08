@@ -1,0 +1,29 @@
+name: nuevamente-frontend-tests
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  tests:
+    image: node:24-alpine
+    user: node
+    working_dir: /workspace
+    volumes:
+      - .:/workspace:ro
+    environment:
+      FRONTEND_TEST_URL: http://frontend:8080
+    command: [node, --test, tests/unit.test.cjs, tests/http.test.cjs]
+    depends_on:
+      frontend:
+        condition: service_healthy
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
