@@ -1321,3 +1321,47 @@ select:focus, input:focus {
     font-weight: 700;
   }
 }
+
+
+/* Final landing height tune — reduce vertical footprint while preserving readability */
+@media (min-width: 761px) {
+  .hero {
+    padding-top: 36px;
+    padding-bottom: 38px;
+    gap: clamp(26px, 3.2vw, 48px);
+  }
+  .hero .eyebrow { padding-top: 8px; padding-bottom: 8px; }
+  .hero h1 {
+    font-size: clamp(44px, 3.7vw, 54px);
+    line-height: 1.04;
+    margin-top: 17px;
+    margin-bottom: 15px;
+  }
+  .hero-copy > p {
+    margin-bottom: 16px;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .hero-points { gap: 8px; }
+  .hero-points span { padding: 9px 11px; font-size: 11px; }
+  .hero-visual { min-height: 260px; }
+  .hero-visual::before { width: 285px; height: 285px; }
+  .orbit-outer { width: 250px; height: 250px; }
+  .orbit-inner { width: 185px; height: 185px; }
+  .visual-glow { width: 210px; height: 210px; }
+  .visual-core { width: 126px; height: 126px; border-radius: 36px; }
+  .visual-core svg { width: 86px; height: 86px; }
+  .tag-top { top: 25px; }
+  .tag-bottom { bottom: 25px; }
+  .workspace { margin-top: -16px; }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .hero { padding-top: 32px; padding-bottom: 34px; }
+  .hero h1 { font-size: clamp(40px, 4.2vw, 48px); }
+  .hero-visual { min-height: 230px; }
+  .hero-visual::before { width: 250px; height: 250px; }
+  .orbit-outer { width: 220px; height: 220px; }
+  .orbit-inner { width: 164px; height: 164px; }
+  .visual-core { width: 112px; height: 112px; }
+  .visual-core svg { width: 76px; height: 76px; }
+}
