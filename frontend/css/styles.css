@@ -1093,3 +1093,69 @@ select:focus, input:focus {
 @media (prefers-reduced-motion: reduce) {
   .hero-visual::before { animation: none; }
 }
+
+
+/* Readability and desktop scale pass: prevent small text and narrow content */
+@media (min-width: 761px) {
+  .page-layout { width: min(1440px, calc(100% - 96px)); }
+  .hero {
+    min-height: 470px;
+    padding: 66px 24px 78px;
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, .85fr);
+    gap: clamp(36px, 5vw, 76px);
+  }
+  .hero-copy { max-width: 760px; }
+  .hero .eyebrow { font-size: 11px; padding: 10px 14px; }
+  .hero h1 {
+    max-width: 780px;
+    font-size: clamp(54px, 5vw, 72px);
+    line-height: 1.04;
+    margin: 27px 0 24px;
+  }
+  .hero-copy > p { max-width: 660px; font-size: 17px; line-height: 1.85; }
+  .hero-points { gap: 12px; flex-wrap: wrap; }
+  .hero-points span { padding: 12px 15px; font-size: 12px; }
+  .hero-visual { min-height: 360px; }
+  .orbit-outer { width: 330px; height: 330px; }
+  .orbit-inner { width: 238px; height: 238px; }
+  .hero-visual::before { width: 370px; height: 370px; }
+  .visual-glow { width: 280px; height: 280px; }
+  .visual-core { width: 164px; height: 164px; border-radius: 46px; }
+  .visual-core svg { width: 110px; height: 110px; }
+  .visual-tag { font-size: 12px; padding: 12px 15px; }
+  .workspace {
+    width: min(1180px, 100%);
+    margin: -18px auto 54px;
+    padding: 48px;
+    border-radius: 30px;
+  }
+  .workspace-heading { margin-bottom: 36px; }
+  .workspace-heading h2 { font-size: clamp(30px, 2.6vw, 38px); line-height: 1.2; }
+  .workspace-heading p { font-size: 16px; }
+  .secure-note { font-size: 12px; }
+  .form-panel { padding: 38px; }
+  .panel-step { font-size: 12px; }
+  .upload-area { min-height: 152px; padding: 26px; }
+  .upload-copy strong { font-size: 15px; }
+  .upload-copy span, .upload-help { font-size: 12px; }
+  .campo label { font-size: 14px; }
+  .campo small, .field-help { font-size: 12px; }
+  .select-wrap select { min-height: 56px; font-size: 14px; }
+  .form-footer { gap: 24px; }
+  .form-footer .button-primary { min-height: 58px; padding: 0 28px; font-size: 14px; }
+  .privacy-copy strong { font-size: 13px; }
+  .privacy-copy span { font-size: 12px; }
+}
+@media (max-width: 760px) {
+  .hero { padding-top: 40px; padding-bottom: 54px; }
+  .hero h1 { font-size: clamp(36px, 8vw, 50px); line-height: 1.06; }
+  .hero-copy > p { font-size: 15px; line-height: 1.75; }
+  .hero-points span { font-size: 11px; padding: 9px 10px; }
+  .workspace-heading h2 { font-size: 26px; line-height: 1.2; }
+  .workspace-heading p { font-size: 14px; }
+  .upload-copy strong { font-size: 13px; }
+  .upload-copy span, .upload-help { font-size: 11px; line-height: 1.5; }
+  .campo label { font-size: 13px; }
+  .campo small, .field-help { font-size: 11px; }
+  .select-wrap select { min-height: 50px; font-size: 13px; }
+}
