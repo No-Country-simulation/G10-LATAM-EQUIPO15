@@ -2,6 +2,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   UI.render(AppState.current, AppState.data);
   const formulario = document.getElementById("form-configuracion");
+  const inputDocumento = document.getElementById("documento");
+  const nombreArchivo = document.getElementById("nombre-archivo");
+
   formulario.addEventListener("submit", async evento => {
     evento.preventDefault();
     await enviarFormulario();
@@ -9,9 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("boton-reintentar").addEventListener("click", enviarFormulario);
   document.getElementById("boton-volver").addEventListener("click", () => AppState.reset());
   document.getElementById("boton-nuevo").addEventListener("click", () => {
-    formulario.reset();
+    // Limpiar el archivo y el resultado anterior sin reiniciar las preferencias.
+    inputDocumento.value = "";
+    nombreArchivo.textContent = "Ningún archivo seleccionado";
+    nombreArchivo.classList.remove("has-file");
     AppState.reset();
   });
+
   async function enviarFormulario() {
     if (AppState.current === "PROCESSING") return;
     if (!formulario.checkValidity()) {
