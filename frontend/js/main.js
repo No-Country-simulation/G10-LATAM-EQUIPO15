@@ -48,6 +48,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const resultado = await Api.generarContenido(documento, configuracion, stage => {
         document.dispatchEvent(new CustomEvent("app:processing-stage", { detail: { stage } }));
       });
+      // Deja que el navegador pinte la etapa de validación antes de mostrar el resultado.
+      // No es un porcentaje de progreso: es una pausa breve para que el cambio de estado sea perceptible.
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise(resolve => setTimeout(resolve, 900));
       AppState.setState("COMPLETED", { resultado });
     } catch (error) {
       AppState.setState("ERROR", { error: error.message || "No se pudo completar la adaptación." });
