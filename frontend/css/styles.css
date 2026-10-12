@@ -243,3 +243,26 @@ h1, h2, h3, p { margin-top: 0; }
   .quiz-final-actions > .button-primary { width: 100%; }
   .quiz-score { width: 100%; }
 }
+
+
+/* Stepper de procesamiento: estados respaldados por eventos del frontend */
+.processing-steps { max-width: 620px; margin: 28px auto 20px; padding: 8px 18px; border: 1px solid var(--line); border-radius: 14px; background: #fcfdff; text-align: left; }
+.processing-step { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid #edf0f6; color: #8791a4; }
+.processing-step:last-child { border-bottom: 0; }
+.processing-step-icon { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #dfe4ef; border-radius: 50%; background: #fff; color: #8a94a8; font-size: 12px; font-weight: 800; }
+.processing-step > div { display: flex; flex-direction: column; gap: 3px; }
+.processing-step strong { color: #536078; font-size: 12px; }
+.processing-step small { color: #8a94a8; font-size: 10px; }
+.processing-step-status { color: #8a94a8; font-size: 10px; white-space: nowrap; }
+.processing-step.is-active .processing-step-icon { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); box-shadow: 0 0 0 4px rgba(64,92,230,.08); }
+.processing-step.is-active strong, .processing-step.is-active .processing-step-status { color: var(--blue); }
+.processing-step.is-done .processing-step-icon { border-color: #bce9dd; background: #eaf8f4; color: #137a68; }
+.processing-step.is-done strong, .processing-step.is-done .processing-step-status { color: #137a68; }
+.processing-honesty { max-width: 620px !important; margin: 0 auto 16px !important; color: var(--muted-light) !important; font-size: 10px !important; }
+@media (max-width: 520px) {
+ .processing-steps { padding: 5px 12px; }
+ .processing-step { grid-template-columns: 30px minmax(0,1fr); gap: 9px; }
+ .processing-step-status { grid-column: 2; white-space: normal; }
+ .processing-step strong { font-size: 11px; }
+ .processing-step small { font-size: 9px; }
+}
