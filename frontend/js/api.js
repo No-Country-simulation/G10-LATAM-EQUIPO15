@@ -10,14 +10,15 @@ const Api = {
       datos.append(campo, configuracion[campo]);
     }
     let respuesta;
-    onStage("waiting");
     try {
-      respuesta = await fetch("/api/v1/adaptar-contenido", {
+      const solicitud = fetch("/api/v1/adaptar-contenido", {
         method: "POST",
         body: datos,
         // IA dispone de 480 s y Backend de 600 s en la configuración predeterminada.
         signal: AbortSignal.timeout(660000),
       });
+      onStage("waiting");
+      respuesta = await solicitud;
     } catch (error) {
       if (error.name === "TimeoutError" || error.name === "AbortError") {
         throw new Error("Se agotó el tiempo de espera. Podés reintentar la adaptación.");
