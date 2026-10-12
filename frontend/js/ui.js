@@ -11,11 +11,46 @@ const UI = {
     Object.values(this.secciones).forEach(elemento => elemento?.classList.add("oculto"));
     this.secciones[state]?.classList.remove("oculto");
     const ocupado = state === "PROCESSING";
+    if (state === "PROCESSING") this.setProcessingStage("sending");
     document.getElementById("boton-generar").disabled = ocupado;
     document.getElementById("boton-reintentar").disabled = ocupado;
     document.getElementById("form-configuracion").setAttribute("aria-busy", String(ocupado));
     if (state === "COMPLETED" && data.resultado) this.pintarResultado(data.resultado);
     if (state === "ERROR") document.getElementById("mensaje-error").textContent = data.error;
+  },
+  setProcessingStage(stage) {
+    const steps = [...document.querySelectorAll("[data-processing-step]")];
+    const order = ["sending", "waiting", "validating"];
+    const activeIndex = order.indexOf(stage);
+    const titles = {
+      sending: ["En curso", "Pendiente", "Pendiente"],
+      waiting: ["Completado", "En curso", "Pendiente"],
+      validating: ["Completado", "Completado", "En curso"],
+    };
+    steps.forEach((elemento, index) => {
+      elemento.classList.remove("is-active", "is-done");
+      const icono = elemento.querySelector(".processing-step-icon");
+      const estado = elemento.querySelector(".processing-step-status");
+      if (index < activeIndex) {
+        elemento.classList.add("is-done");
+        icono.textContent = "✓";
+      } else if (index === activeIndex) {
+        elemento.classList.add("is-active");
+        icono.textContent = String(index + 1);
+      } else {
+        icono.textContent = String(index + 1);
+      }
+      estado.textContent = titles[stage]?.[index] || "Pendiente";
+    });
+    const titulo = document.getElementById("processing-title");
+    const descripcion = document.getElementById("processing-description");
+    const textos = {
+      sending: ["Estamos enviando tu solicitud", "Estamos preparando el documento y tus preferencias para enviarlos de forma segura."],
+      waiting: ["Estamos procesando tu documento", "El servidor está trabajando en la adaptación. Este paso puede tardar varios minutos."],
+      validating: ["Estamos validando el material", "Recibimos una respuesta y estamos comprobando que tenga el formato solicitado."],
+    };
+    if (titulo && textos[stage]) titulo.textContent = textos[stage][0];
+    if (descripcion && textos[stage]) descripcion.textContent = textos[stage][1];
   },
   elemento(tag, texto, clase) {
     const elemento = document.createElement(tag);
@@ -143,3 +178,5 @@ const UI = {
   },
 };
 document.addEventListener("app:state-changed", evento => UI.render(evento.detail.state, evento.detail.data));
+
+document.addEventListener("app:processing-stage", evento => UI.setProcessingStage(evento.detail.stage));
