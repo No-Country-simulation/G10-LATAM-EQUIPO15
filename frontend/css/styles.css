@@ -590,3 +590,51 @@ select:focus, input:focus {
 @media (prefers-reduced-motion: reduce) {
   .button-primary, .upload-area, .flashcard { transition: none !important; }
 }
+
+
+/* Visual QA hotfix: preserve readable contrast inside the dark processing surface */
+.processing-panel,
+.processing-panel .section-kicker,
+.processing-panel h2,
+.processing-panel > p,
+.processing-panel .processing-honesty,
+.processing-panel .meta {
+  color: #f5f7ff;
+}
+.processing-panel h2 {
+  color: #ffffff !important;
+  text-shadow: 0 2px 24px rgba(123, 145, 255, .16);
+}
+.processing-panel > p:not(.processing-honesty):not(.meta) { color: #d2dcf2; }
+.processing-panel .processing-honesty { color: #aebcda !important; }
+.processing-panel .meta { color: #d1dcf3; }
+
+/* Make the visual refresh clearly visible without changing application behavior */
+.hero h1 { font-size: clamp(34px, 4.4vw, 54px); }
+.hero-copy > p { font-size: 15px; line-height: 1.75; }
+.workspace {
+  border-color: #cfd9f2;
+  box-shadow: 0 28px 90px rgba(31,48,91,.11), 0 3px 10px rgba(31,48,91,.035);
+}
+.workspace-heading h2 { font-size: clamp(25px, 3.2vw, 32px); }
+.form-panel {
+  border-color: #d8e1f7;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(106,124,255,.055), transparent 35%),
+    linear-gradient(145deg, #ffffff 0%, #f8faff 100%);
+}
+.panel-step { margin-bottom: 30px; }
+.upload-area { min-height: 120px; }
+.select-wrap select { min-height: 50px; }
+.result-panel h2 {
+  background: linear-gradient(100deg, #111d38 0%, #405ce6 76%, #168d89 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (max-width: 760px) {
+  .hero h1 { font-size: clamp(32px, 7vw, 44px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flashcard, .button-primary, .upload-area { transition: none !important; }
+}
