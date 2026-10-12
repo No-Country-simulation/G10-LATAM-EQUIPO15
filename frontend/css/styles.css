@@ -638,3 +638,147 @@ select:focus, input:focus {
 @media (prefers-reduced-motion: reduce) {
   .flashcard, .button-primary, .upload-area { transition: none !important; }
 }
+
+
+/* Landing page v3 — a distinct, high-impact first impression */
+.hero {
+  min-height: 390px;
+  grid-template-columns: minmax(0, 1.12fr) minmax(280px, .88fr);
+  gap: clamp(24px, 4vw, 54px);
+  padding-top: 62px;
+  padding-bottom: 58px;
+}
+.hero-copy { max-width: 690px; }
+.hero .eyebrow {
+  padding: 8px 12px;
+  border: 1px solid rgba(77,99,240,.16);
+  border-radius: 999px;
+  background: rgba(255,255,255,.68);
+  box-shadow: 0 5px 20px rgba(35,52,105,.04);
+  letter-spacing: .13em;
+}
+.hero h1 {
+  max-width: 690px;
+  margin-top: 22px;
+  margin-bottom: 20px;
+  font-size: clamp(36px, 4.1vw, 53px);
+  line-height: 1.075;
+  letter-spacing: -.06em;
+}
+.hero h1 span {
+  display: inline;
+  background: linear-gradient(100deg, #4d63f0 0%, #7180ff 55%, #159e9a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-copy > p {
+  max-width: 540px;
+  margin-bottom: 25px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.hero-points { gap: 10px; }
+.hero-points span {
+  padding: 8px 11px;
+  border: 1px solid rgba(216,225,244,.88);
+  border-radius: 999px;
+  background: rgba(255,255,255,.68);
+  color: #45516b;
+  box-shadow: 0 5px 16px rgba(33,50,100,.035);
+}
+.hero-visual { min-height: 285px; overflow: visible; }
+.orbit-outer {
+  width: 270px; height: 270px;
+  border-color: rgba(77,99,240,.22);
+  box-shadow: 0 0 0 18px rgba(255,255,255,.25), 0 0 70px rgba(77,99,240,.10);
+}
+.orbit-inner { width: 196px; height: 196px; border-color: rgba(77,99,240,.34); }
+.visual-glow {
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(102,126,255,.34), rgba(131,234,213,.18) 52%, transparent 72%);
+  filter: blur(18px);
+}
+.visual-core {
+  width: 132px; height: 132px;
+  border-radius: 38px;
+  background: linear-gradient(145deg, #fff 5%, #edf0ff 62%, #e2fbf5 100%);
+  box-shadow: 0 28px 70px rgba(52,75,184,.22), 0 0 0 12px rgba(255,255,255,.35), inset 0 1px 0 #fff;
+}
+.visual-core svg { width: 90px; height: 90px; }
+.visual-tag {
+  padding: 10px 13px;
+  border-radius: 12px;
+  font-size: 10px;
+  box-shadow: 0 12px 28px rgba(25,39,77,.1);
+}
+.tag-top { top: 24px; right: -4px; }
+.tag-bottom { bottom: 24px; left: -4px; }
+
+/* Form remains familiar and functional, but reads as a clear second step */
+.workspace {
+  margin-top: 0;
+  padding: clamp(26px, 4.3vw, 46px);
+  border-radius: 26px;
+}
+.workspace-heading { margin-bottom: 30px; }
+.workspace-heading h2 { font-size: clamp(25px, 2.7vw, 32px); }
+.workspace-heading p { max-width: 570px; font-size: 14px; line-height: 1.7; }
+.form-panel {
+  padding: clamp(20px, 3vw, 34px);
+  border-radius: 20px;
+}
+.panel-step { margin-bottom: 30px; }
+.upload-area {
+  min-height: 126px;
+  padding: 20px;
+  border-width: 1.5px;
+  border-radius: 15px;
+}
+.upload-icon { width: 48px; height: 48px; border-radius: 15px; }
+.upload-copy strong { font-size: 13px; }
+.upload-copy span { font-size: 10px; }
+.file-button { padding: 11px 15px; border-radius: 10px; }
+.form-grid { row-gap: 24px; }
+.campo label { margin-bottom: 10px; }
+.select-wrap select { min-height: 52px; border-radius: 11px; }
+.form-footer {
+  margin-top: 30px;
+  padding-top: 25px;
+}
+.form-footer .button-primary {
+  min-height: 52px;
+  padding: 0 23px;
+  border-radius: 12px;
+}
+@media (max-width: 900px) {
+  .hero { grid-template-columns: minmax(0,1fr) minmax(220px,.72fr); gap: 18px; }
+  .hero h1 { font-size: clamp(33px, 4.5vw, 44px); }
+  .orbit-outer { width: 220px; height: 220px; }
+  .orbit-inner { width: 160px; height: 160px; }
+  .visual-core { width: 105px; height: 105px; border-radius: 30px; }
+  .visual-core svg { width: 74px; height: 74px; }
+}
+@media (max-width: 760px) {
+  .hero { min-height: auto; grid-template-columns: 1fr; padding: 42px 0 34px; }
+  .hero-copy { max-width: 100%; }
+  .hero h1 { max-width: 640px; font-size: clamp(34px, 7vw, 46px); }
+  .hero-visual { min-height: 225px; }
+  .orbit-outer { width: 210px; height: 210px; }
+  .orbit-inner { width: 152px; height: 152px; }
+  .visual-core { width: 100px; height: 100px; }
+  .tag-top { right: max(0px, calc(50% - 160px)); }
+  .tag-bottom { left: max(0px, calc(50% - 160px)); }
+  .workspace { padding: 24px 18px; }
+}
+@media (max-width: 520px) {
+  .hero { padding-top: 32px; }
+  .hero h1 { font-size: clamp(32px, 9vw, 40px); }
+  .hero-points { flex-direction: row; }
+  .hero-points span { font-size: 10px; }
+  .hero-visual { min-height: 190px; }
+  .workspace { padding: 20px 13px; border-radius: 19px; }
+  .form-panel { padding: 17px 12px; }
+  .upload-area { min-height: 120px; padding: 13px; }
+  .form-footer .button-primary { min-height: 50px; }
+}
