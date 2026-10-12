@@ -39,7 +39,7 @@ const UI = {
     if (metadatos.formato_generado === "Flashcards") {
       contenido.items.forEach(item => this.flashcard(contenedor, item));
     } else if (metadatos.formato_generado === "Quiz Interactivo") {
-      contenido.items.forEach((item, indice) => this.pregunta(contenedor, item, indice));
+      this.quiz(contenedor, contenido.items);
     } else if (metadatos.formato_generado === "Resumen Ejecutivo") {
       this.resumen(contenedor, contenido.items);
     }
@@ -53,6 +53,42 @@ const UI = {
     if (item.pista_didactica) respuesta.append(this.elemento("p", item.pista_didactica, "flashcard-pista"));
     tarjeta.append(respuesta);
     contenedor.append(tarjeta);
+  },
+  quiz(contenedor, items) {
+    const preguntas = items.map((item, indice) => this.pregunta(contenedor, item, indice));
+    const acciones = this.elemento("div", null, "quiz-final-actions");
+    const finalizar = this.elemento("button", "Finalizar quiz y ver resultado", "button-primary");
+    finalizar.type = "button";
+    const resumen = this.elemento("section", null, "quiz-score oculto");
+    resumen.setAttribute("aria-live", "polite");
+    finalizar.addEventListener("click", () => {
+      const respondidas = preguntas.filter(p => p.seleccion() !== -1).length;
+      const correctas = preguntas.filter(p => p.seleccion() === p.correcta).length;
+      const total = preguntas.length;
+      const porcentaje = total ? Math.round((correctas / total) * 100) : 0;
+      resumen.replaceChildren();
+      resumen.append(
+        this.elemento("span", "RESULTADO DEL QUIZ", "section-kicker"),
+        this.elemento("h3", `${correctas} de ${total} respuestas correctas`, "quiz-score-title"),
+        this.elemento("p", `Puntuación: ${porcentaje} %`, "quiz-score-percent")
+      );
+      if (respondidas < total) {
+        resumen.append(this.elemento("p", `Respondiste ${respondidas} de ${total} preguntas. Las preguntas sin responder cuentan como incorrectas en la puntuación final.`, "quiz-score-note"));
+      } else {
+        resumen.append(this.elemento("p", "¡Terminaste todas las preguntas! Revisa las justificaciones para reforzar lo aprendido.", "quiz-score-note"));
+      }
+      const pista = this.elemento("div", null, "quiz-score-track");
+      const relleno = this.elemento("span");
+      relleno.style.width = `${porcentaje}%`;
+      pista.append(relleno);
+      resumen.append(pista);
+      resumen.classList.remove("oculto");
+      finalizar.disabled = true;
+      finalizar.textContent = "Quiz finalizado";
+      resumen.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    acciones.append(finalizar, resumen);
+    contenedor.append(acciones);
   },
   pregunta(contenedor, item, indice) {
     const pregunta = this.elemento("fieldset", null, "quiz-pregunta");
@@ -71,14 +107,15 @@ const UI = {
     comprobar.type = "button";
     const feedback = this.elemento("p", null, "quiz-feedback");
     feedback.setAttribute("aria-live", "polite");
+    const seleccion = () => opciones.findIndex(opcion => opcion.checked);
     comprobar.addEventListener("click", () => {
-      const seleccion = opciones.findIndex(opcion => opcion.checked);
+      const elegida = seleccion();
       feedback.className = "quiz-feedback";
-      if (seleccion === -1) {
+      if (elegida === -1) {
         feedback.textContent = "Elegí una opción antes de comprobar.";
         return;
       }
-      const correcta = seleccion === item.indice_correcto;
+      const correcta = elegida === item.indice_correcto;
       feedback.classList.add(correcta ? "respuesta-correcta" : "respuesta-incorrecta");
       feedback.textContent = (correcta ? "Respuesta correcta." : `Respuesta incorrecta. La correcta es: ${item.opciones[item.indice_correcto]}.`)
         + `\n${item.justificacion_tecnica}`
@@ -86,6 +123,7 @@ const UI = {
     });
     pregunta.append(comprobar, feedback);
     contenedor.append(pregunta);
+    return { seleccion, correcta: item.indice_correcto };
   },
   resumen(contenedor, item) {
     contenedor.append(this.elemento("h3", "Resumen"), this.elemento("p", item.tldr));
