@@ -45,7 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     AppState.setState("PROCESSING", { documento, configuracion, resultado: null, error: null });
     try {
-      const resultado = await Api.generarContenido(documento, configuracion);
+      const resultado = await Api.generarContenido(documento, configuracion, stage => {
+        document.dispatchEvent(new CustomEvent("app:processing-stage", { detail: { stage } }));
+      });
       AppState.setState("COMPLETED", { resultado });
     } catch (error) {
       AppState.setState("ERROR", { error: error.message || "No se pudo completar la adaptación." });
