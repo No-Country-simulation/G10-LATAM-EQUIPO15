@@ -3,91 +3,160 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NuevaMente</title>
+  <meta name="theme-color" content="#101828" />
+  <meta name="description" content="NuevaMente transforma documentación técnica en experiencias de aprendizaje adaptadas a cada perfil." />
+  <title>NuevaMente — Aprendizaje técnico inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="NuevaMente, inicio">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none"><path d="M20 4.5 23.8 15.7 35.5 20l-11.7 4.1L20 35.5l-4.1-11.4L4.5 20l11.4-4.3L20 4.5Z" fill="currentColor"/><circle cx="29.5" cy="9.5" r="3" fill="#8DE4D0"/></svg>
+        </span>
+        <span class="brand-copy"><strong>NuevaMente</strong><small>LEARNING INTELLIGENCE</small></span>
+      </a>
+      <div class="topbar-right">
+        <span class="status-pill"><span class="status-dot"></span> Plataforma disponible</span>
+        <span class="topbar-divider" aria-hidden="true"></span>
+        <span class="topbar-label">Tu espacio de aprendizaje</span>
+      </div>
+    </header>
 
-  <header class="encabezado">
-    <h1>NuevaMente</h1>
-    <p>Convierte conocimiento técnico en aprendizaje real</p>
-  </header>
+    <main class="page-layout">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="eyebrow-line"></span> CONOCIMIENTO QUE EVOLUCIONA</span>
+          <h1 id="hero-title">La documentación técnica.<br /><span>Convertida en conocimiento.</span></h1>
+          <p>Transforma documentos complejos en experiencias de aprendizaje claras, útiles y adaptadas a cada persona.</p>
+          <div class="hero-points">
+            <span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3.2 3.2L15.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Adaptado a tu perfil</span>
+            <span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3.2 3.2L15.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Aprendizaje práctico</span>
+            <span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3.2 3.2L15.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Basado en tu documento</span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div>
+          <div class="visual-glow"></div>
+          <div class="visual-core">
+            <svg viewBox="0 0 84 84" fill="none"><path d="M42 8 49.4 30.1 72 38 49.4 45.9 42 68 34.1 45.9 12 38 34.1 30.1 42 8Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M62 54 65.2 63.1 74 66 65.2 69.2 62 78 58.8 69.2 50 66 58.8 63.1 62 54Z" fill="#8DE4D0"/></svg>
+          </div>
+          <span class="visual-tag tag-top">IA aplicada al aprendizaje</span>
+          <span class="visual-tag tag-bottom">De leer a comprender</span>
+        </div>
+      </section>
 
-  <main class="contenedor-principal">
-
-    <!-- Estado IDLE: en esta sección hacemos la carga del documento + configuración (FE-01 / FE-02) -->
-    <section id="seccion-carga">
-      <h2>Cargar el documento y configurarlo</h2>
-      <form id="form-configuracion">
-        <div class="campo">
-          <label for="documento">Documento técnico (PDF, Markdown o texto)</label>
-          <input type="file" id="documento" name="documento_original" accept=".pdf,.md,.markdown,.txt" required />
+      <section class="workspace" id="workspace" aria-label="Espacio de trabajo">
+        <div class="workspace-heading">
+          <div>
+            <span class="section-kicker">TU ESPACIO DE TRABAJO</span>
+            <h2>Diseña tu experiencia de aprendizaje</h2>
+            <p>Sube un documento y personaliza cómo quieres aprender su contenido.</p>
+          </div>
+          <div class="secure-note"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4.5" y="8.5" width="11" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5V6a3 3 0 0 1 6 0v2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Procesamiento seguro</div>
         </div>
 
-        <div class="campo">
-          <label for="perfil_destinatario">Perfil del destinatario</label>
-          <select id="perfil_destinatario" name="perfil_destinatario" required>
-            <option value="Junior">Junior / Principiante</option>
-            <option value="Senior">Líder Técnico / Arquitecto</option>
-            <option value="Ejecutivo">Ejecutivo</option>
-          </select>
-        </div>
+        <!-- Estado IDLE: se conservan los IDs y nombres que utiliza el flujo actual y el contrato del backend. -->
+        <section id="seccion-carga" class="form-panel">
+          <div class="panel-step"><span class="step-number">01</span><span>DOCUMENTO Y PREFERENCIAS</span><span class="step-rule"></span><span class="step-caption">2 min para configurar</span></div>
+          <form id="form-configuracion">
+            <div class="campo campo-documento">
+              <label for="documento">Documento técnico <span class="label-optional">Obligatorio</span></label>
+              <div class="upload-area">
+                <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none"><path d="M14 18V4m0 0L8.5 9.5M14 4l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 17.5v4A2.5 2.5 0 0 0 7.5 24h13a2.5 2.5 0 0 0 2.5-2.5v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                <div class="upload-copy"><strong>Selecciona tu archivo</strong><span>PDF, Markdown o texto plano · Máximo según configuración del sistema</span></div>
+                <label class="file-button" for="documento">Explorar archivos</label>
+                <input type="file" id="documento" name="documento_original" accept=".pdf,.md,.markdown,.txt" required />
+                <span class="file-name" id="nombre-archivo" aria-live="polite">Ningún archivo seleccionado</span>
+              </div>
+              <span class="field-hint">Tu documento es la fuente para generar el material de estudio.</span>
+            </div>
 
-        <div class="campo">
-          <label for="formato_salida">Formato pedagógico de salida</label>
-          <select id="formato_salida" name="formato_salida" required>
-            <option value="Flashcards">Flashcards de memorización</option>
-            <option value="Quiz Interactivo">Quiz interactivo con justificaciones</option>
-            <option value="Resumen Ejecutivo">Resumen ejecutivo</option>
-          </select>
-        </div>
+            <div class="form-grid">
+              <div class="campo">
+                <label for="perfil_destinatario">¿Para quién es el contenido?</label>
+                <div class="select-wrap"><select id="perfil_destinatario" name="perfil_destinatario" required>
+                  <option value="Junior">Junior / Principiante</option>
+                  <option value="Senior">Líder técnico / Arquitecto</option>
+                  <option value="Ejecutivo">Ejecutivo</option>
+                </select><span class="select-chevron" aria-hidden="true"></span></div>
+                <span class="field-hint">Ajustamos la profundidad y el lenguaje.</span>
+              </div>
+              <div class="campo">
+                <label for="formato_salida">¿Cómo prefieres aprender?</label>
+                <div class="select-wrap"><select id="formato_salida" name="formato_salida" required>
+                  <option value="Flashcards">Flashcards de memorización</option>
+                  <option value="Quiz Interactivo">Quiz interactivo con justificaciones</option>
+                  <option value="Resumen Ejecutivo">Resumen ejecutivo</option>
+                </select><span class="select-chevron" aria-hidden="true"></span></div>
+                <span class="field-hint">Elige el formato que mejor te funciona.</span>
+              </div>
+              <div class="campo campo-full">
+                <label for="nicho_sector">Contexto de aplicación <span class="label-optional">Opcional en la práctica</span></label>
+                <div class="select-wrap"><select id="nicho_sector" name="nicho_sector" required>
+                  <option value="General">General — conceptos transversales</option>
+                  <option value="Fintech">Fintech — tecnología financiera</option>
+                  <option value="Salud">Salud — tecnología y servicios sanitarios</option>
+                  <option value="E-commerce">E-commerce — comercio digital</option>
+                </select><span class="select-chevron" aria-hidden="true"></span></div>
+                <span class="field-hint">Da contexto para conectar la documentación con casos de uso relevantes.</span>
+              </div>
+            </div>
+            <div class="form-footer">
+              <div class="privacy-note"><span class="privacy-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 6 2.4v4.8c0 3.7-2.5 6.8-6 8.8-3.5-2-6-5.1-6-8.8V4.4L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m7.2 9.8 1.8 1.8 3.8-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>Tu contenido, con propósito</strong><small>El material generado se adapta a las preferencias seleccionadas.</small></span></div>
+              <button id="boton-generar" type="submit" class="button-primary"><span>Generar material de estudio</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </form>
+        </section>
 
-        <div class="campo">
-          <label for="nicho_sector">Nicho / contexto de aplicación</label>
-          <select id="nicho_sector" name="nicho_sector" required>
-            <option value="General">General</option>
-            <option value="Fintech">Fintech</option>
-            <option value="Salud">Salud</option>
-            <option value="E-commerce">E-commerce</option>
-          </select>
-        </div>
+        <section id="seccion-procesando" class="state-panel processing-panel oculto" role="status" aria-live="polite">
+          <div class="processing-orb"><div class="spinner" aria-hidden="true"></div></div>
+          <span class="section-kicker">TU CONTENIDO ESTÁ EN PREPARACIÓN</span>
+          <h2>Estamos transformando tu documento</h2>
+          <p>Analizamos el contenido y preparamos un material de aprendizaje ajustado a tus preferencias.</p>
+          <div class="processing-track"><span></span></div>
+          <p class="meta">La adaptación puede tardar varios minutos. Mantén esta ventana abierta y evita enviar el documento de nuevo.</p>
+        </section>
 
-        <button id="boton-generar" type="submit">Generar contenido educativo</button>
-      </form>
-    </section>
+        <section id="seccion-resultado" class="state-panel result-panel oculto">
+          <div class="result-topline"><span class="result-badge"><span class="status-dot"></span> MATERIAL GENERADO</span><span class="section-kicker">TU EXPERIENCIA DE APRENDIZAJE</span></div>
+          <h2 id="resultado-titulo"></h2>
+          <p id="resultado-intro" class="result-intro"></p>
+          <div class="result-metadata"><p id="resultado-tiempo" class="meta"></p><p id="resultado-conceptos" class="meta"></p><p id="resultado-calidad" class="meta"></p></div>
+          <div id="resultado-items" class="grid-flashcards"></div>
+          <div class="result-actions"><button id="boton-nuevo" class="button-primary" type="button"><span>Crear otro material</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+        </section>
 
-    <section id="seccion-procesando" class="oculto" role="status" aria-live="polite">
-      <h2>2. Procesando tu documento…</h2>
-      <div class="spinner" aria-hidden="true"></div>
-      <p>Estamos extrayendo el contenido y generando tu material educativo.</p>
-      <p class="meta">La adaptación puede tardar varios minutos. Esperá sin volver a enviar el documento.</p>
-    </section>
-
-    <section id="seccion-resultado" class="oculto">
-      <h2 id="resultado-titulo"></h2>
-      <p id="resultado-intro"></p>
-      <p id="resultado-tiempo" class="meta"></p>
-      <p id="resultado-conceptos" class="meta"></p>
-      <p id="resultado-calidad" class="meta"></p>
-
-      <div id="resultado-items" class="grid-flashcards"></div>
-
-      <button id="boton-nuevo">Generar otro contenido</button>
-    </section>
-
-    <!-- Estado ERROR -->
-    <section id="seccion-error" class="oculto" role="alert">
-      <h2>Ocurrió un problema</h2>
-      <p id="mensaje-error"></p>
-      <button id="boton-reintentar">Reintentar</button>
-      <button id="boton-volver" class="boton-secundario">Cambiar documento o configuración</button>
-    </section>
-
-  </main>
+        <section id="seccion-error" class="state-panel error-panel oculto" role="alert">
+          <div class="error-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5m0 3h.01M10.2 3.8 2.8 17a2 2 0 0 0 1.8 3h14.8a2 2 0 0 0 1.8-3L13.8 3.8a2 2 0 0 0-3.6 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span class="section-kicker">NO PUDIMOS COMPLETAR LA SOLICITUD</span>
+          <h2>Vamos a intentarlo de nuevo</h2>
+          <p id="mensaje-error"></p>
+          <div class="error-actions"><button id="boton-reintentar" class="button-primary" type="button"><span>Reintentar</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 8a6 6 0 0 0-10.8-2L4 8m0-4v4h4M4 12a6 6 0 0 0 10.8 2L16 12m0 4v-4h-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="boton-volver" class="button-secondary" type="button">Cambiar documento o configuración</button></div>
+        </section>
+      </section>
+      <footer class="page-footer"><span>© NuevaMente · Aprendizaje técnico inteligente</span><span><span class="footer-dot"></span> Diseñado para aprender mejor</span></footer>
+    </main>
+  </div>
 
   <script src="js/state.js"></script>
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
+  <script>
+    // Mejora visual progresiva: informa el nombre del archivo sin interferir con el flujo existente.
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("documento");
+      const nombre = document.getElementById("nombre-archivo");
+      input.addEventListener("change", () => {
+        nombre.textContent = input.files && input.files.length ? input.files[0].name : "Ningún archivo seleccionado";
+        nombre.classList.toggle("has-file", Boolean(input.files && input.files.length));
+      });
+    });
+  </script>
 </body>
 </html>
