@@ -36,6 +36,8 @@ const UI = {
       typeof score === "number" ? `Anclaje a la fuente evaluado por IA: ${Math.round(score * 100)} %` : "";
     const contenedor = document.getElementById("resultado-items");
     contenedor.replaceChildren();
+    const resumenAnterior = document.querySelector(".result-actions .quiz-score");
+    resumenAnterior?.remove();
     if (metadatos.formato_generado === "Flashcards") {
       contenido.items.forEach(item => this.flashcard(contenedor, item));
     } else if (metadatos.formato_generado === "Quiz Interactivo") {
@@ -83,12 +85,14 @@ const UI = {
       pista.append(relleno);
       resumen.append(pista);
       resumen.classList.remove("oculto");
+      const accionesResultado = document.querySelector(".result-actions");
+      accionesResultado?.prepend(resumen);
       finalizar.disabled = true;
       finalizar.textContent = "Quiz finalizado";
       resumen.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
-    acciones.append(finalizar, resumen);
-    contenedor.append(acciones);
+    acciones.append(finalizar);
+    contenedor.append(acciones, resumen);
   },
   pregunta(contenedor, item, indice) {
     const pregunta = this.elemento("fieldset", null, "quiz-pregunta");
