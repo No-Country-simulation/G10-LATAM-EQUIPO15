@@ -1,4 +1,4 @@
-// El archivo permanece en el formulario para permitir un reintento explícito.
+// El archivo se conserva al reintentar, pero se limpia al iniciar una nueva configuración.
 document.addEventListener("DOMContentLoaded", () => {
   UI.render(AppState.current, AppState.data);
   const formulario = document.getElementById("form-configuracion");
@@ -10,14 +10,16 @@ document.addEventListener("DOMContentLoaded", () => {
     await enviarFormulario();
   });
   document.getElementById("boton-reintentar").addEventListener("click", enviarFormulario);
-  document.getElementById("boton-volver").addEventListener("click", () => AppState.reset());
-  document.getElementById("boton-nuevo").addEventListener("click", () => {
-    // Limpiar el archivo y el resultado anterior sin reiniciar las preferencias.
+  document.getElementById("boton-volver").addEventListener("click", volverAConfiguracion);
+  document.getElementById("boton-nuevo").addEventListener("click", volverAConfiguracion);
+
+  function volverAConfiguracion() {
+    // Eliminar el archivo anterior del input real y de su etiqueta visible.
     inputDocumento.value = "";
     nombreArchivo.textContent = "Ningún archivo seleccionado";
     nombreArchivo.classList.remove("has-file");
     AppState.reset();
-  });
+  }
 
   async function enviarFormulario() {
     if (AppState.current === "PROCESSING") return;
