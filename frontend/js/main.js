@@ -13,13 +13,22 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("boton-volver").addEventListener("click", volverAConfiguracion);
   document.getElementById("boton-nuevo").addEventListener("click", volverAConfiguracion);
 
-  function volverAConfiguracion() {
-    // Eliminar el archivo anterior del input real y de su etiqueta visible.
+  function limpiarDocumento() {
     inputDocumento.value = "";
     nombreArchivo.textContent = "Ningún archivo seleccionado";
     nombreArchivo.classList.remove("has-file");
+  }
+
+  function volverAConfiguracion() {
+    limpiarDocumento();
     AppState.reset();
   }
+
+  // Garantiza que la etiqueta visible se sincronice cada vez que el estado
+  // vuelve a IDLE, incluso si otra acción restablece el estado de la app.
+  document.addEventListener("app:state-changed", evento => {
+    if (evento.detail?.state === "IDLE") limpiarDocumento();
+  });
 
   async function enviarFormulario() {
     if (AppState.current === "PROCESSING") return;
