@@ -116,9 +116,26 @@
         <section id="seccion-procesando" class="state-panel processing-panel oculto" role="status" aria-live="polite">
           <div class="processing-orb"><div class="spinner" aria-hidden="true"></div></div>
           <span class="section-kicker">TU CONTENIDO ESTÁ EN PREPARACIÓN</span>
-          <h2>Estamos transformando tu documento</h2>
-          <p>Analizamos el contenido y preparamos un material de aprendizaje ajustado a tus preferencias.</p>
-          <div class="processing-track"><span></span></div>
+          <h2 id="processing-title">Estamos enviando tu solicitud</h2>
+          <p id="processing-description">Estamos preparando el documento y tus preferencias para enviarlos de forma segura.</p>
+          <div class="processing-steps" id="processing-steps" data-step="sending">
+            <div class="processing-step" data-processing-step="sending">
+              <span class="processing-step-icon">1</span>
+              <div><strong>Solicitud enviada</strong><small>Documento y preferencias de aprendizaje</small></div>
+              <span class="processing-step-status">En preparación</span>
+            </div>
+            <div class="processing-step" data-processing-step="waiting">
+              <span class="processing-step-icon">2</span>
+              <div><strong>Procesamiento del documento</strong><small>El servidor y la IA preparan el material</small></div>
+              <span class="processing-step-status">Pendiente</span>
+            </div>
+            <div class="processing-step" data-processing-step="validating">
+              <span class="processing-step-icon">3</span>
+              <div><strong>Validación de la respuesta</strong><small>Comprobamos la estructura del contenido recibido</small></div>
+              <span class="processing-step-status">Pendiente</span>
+            </div>
+          </div>
+          <p class="processing-honesty">Las etapas internas de la IA no se exponen todavía. Este indicador solo cambia cuando el frontend detecta un evento real.</p>
           <p class="meta">La adaptación puede tardar varios minutos. Mantén esta ventana abierta y evita enviar el documento de nuevo.</p>
         </section>
 
