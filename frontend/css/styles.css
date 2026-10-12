@@ -1195,3 +1195,48 @@ select:focus, input:focus {
   .visual-core { width: 124px; height: 124px; border-radius: 36px; }
   .visual-core svg { width: 84px; height: 84px; }
 }
+
+
+/* Contrast pass: make hero benefits and topbar navigation readable on dark surfaces */
+.topbar-right {
+  color: #e2eaff;
+  font-size: 14px;
+  gap: 20px;
+}
+.status-pill {
+  padding: 10px 15px;
+  border-color: rgba(141,228,208,.48);
+  background: rgba(141,228,208,.09);
+  color: #e7fff9;
+  font-size: 13px;
+  font-weight: 700;
+}
+.topbar-label {
+  color: #e2eaff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.hero-points {
+  gap: 12px;
+  color: #f0f5ff;
+  font-size: 13px;
+}
+.hero-points span {
+  padding: 12px 15px;
+  border: 1px solid rgba(151,177,255,.36);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(87,118,255,.12));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  color: #f4f7ff;
+}
+.hero-points svg {
+  color: #43f0d6;
+  flex: 0 0 auto;
+}
+@media (max-width: 760px) {
+  .topbar-right { gap: 8px; font-size: 11px; }
+  .status-pill { padding: 7px 9px; font-size: 10px; }
+  .topbar-label { font-size: 10px; }
+  .hero-points { gap: 8px; }
+  .hero-points span { padding: 9px 10px; font-size: 11px; }
+}
