@@ -782,3 +782,61 @@ select:focus, input:focus {
   .upload-area { min-height: 120px; padding: 13px; }
   .form-footer .button-primary { min-height: 50px; }
 }
+
+
+/* Landing impact pass — make the first viewport feel intentionally redesigned */
+@media (min-width: 761px) {
+  .page-layout { width: min(1240px, calc(100% - 88px)); }
+  .hero {
+    min-height: 405px;
+    grid-template-columns: minmax(0, 1.08fr) minmax(340px, .92fr);
+    gap: 46px;
+    padding: 68px 28px 58px;
+  }
+  .hero-copy { max-width: 700px; }
+  .hero h1 {
+    max-width: 700px;
+    font-size: clamp(48px, 4.4vw, 62px);
+    line-height: 1.02;
+    letter-spacing: -.065em;
+    margin: 24px 0 22px;
+  }
+  .hero h1 br { display: none; }
+  .hero h1 span { display: block; margin-top: 3px; }
+  .hero-copy > p { max-width: 590px; font-size: 16px; line-height: 1.8; }
+  .hero-points { gap: 9px; }
+  .hero-points span { padding: 9px 12px; font-size: 11px; }
+  .hero-visual { min-height: 320px; }
+  .orbit-outer { width: 300px; height: 300px; }
+  .orbit-inner { width: 220px; height: 220px; }
+  .visual-glow { width: 230px; height: 230px; }
+  .visual-core { width: 144px; height: 144px; border-radius: 42px; }
+  .visual-core svg { width: 100px; height: 100px; }
+  .tag-top { top: 34px; right: -2px; }
+  .tag-bottom { bottom: 34px; left: -2px; }
+  .workspace {
+    margin: 0 0 46px;
+    padding: 42px;
+    border-radius: 28px;
+    box-shadow: 0 32px 100px rgba(31,48,91,.13), 0 4px 12px rgba(31,48,91,.04);
+  }
+  .workspace-heading { margin-bottom: 32px; }
+  .workspace-heading h2 { font-size: 32px; }
+  .form-panel {
+    padding: 34px;
+    border-radius: 21px;
+    background:
+      radial-gradient(ellipse at 100% 0%, rgba(106,124,255,.085), transparent 38%),
+      linear-gradient(145deg,#fff 0%,#f7f9ff 100%);
+  }
+  .upload-area {
+    min-height: 140px;
+    padding: 24px;
+    border-style: dashed;
+    border-width: 1.5px;
+    background: linear-gradient(115deg,#f7f9ff 0%,#f5f7ff 68%,#eefbf8 100%);
+  }
+}
+@media (max-width: 760px) {
+  .hero h1 br { display: initial; }
+}
