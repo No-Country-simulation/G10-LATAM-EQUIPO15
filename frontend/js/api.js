@@ -1,6 +1,6 @@
 // El navegador usa la API del mismo origen, reenviada por Nginx a Backend.
 const Api = {
-  async generarContenido(documento, configuracion) {
+  async generarContenido(documento, configuracion, onStage = () => {}) {
     if (!documento || documento.size === 0) {
       throw new Error("Seleccioná un documento con contenido.");
     }
@@ -10,6 +10,7 @@ const Api = {
       datos.append(campo, configuracion[campo]);
     }
     let respuesta;
+    onStage("waiting");
     try {
       respuesta = await fetch("/api/v1/adaptar-contenido", {
         method: "POST",
@@ -29,6 +30,7 @@ const Api = {
     } catch {
       if (respuesta.ok) throw new Error("El servidor devolvió una respuesta inválida.");
     }
+    onStage("validating");
     if (!respuesta.ok) {
       const mensaje = resultado?.detail?.mensaje;
       throw new Error(typeof mensaje === "string" && mensaje.trim()
