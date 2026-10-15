@@ -37,3 +37,21 @@ remote-repo-temp/
 mock_salida.py
 test_salida.py
 .specify/
+
+# Credenciales OCI locales
+.oci/
+*.pem
+*.key
+
+# Paquetes privados generados por el configurador OCI
+.nuevamente-object-storage/
+nuevamente-oci-conexion.zip
+.gstack/
+
+# Estado y planes Terraform: guardar fuera del repositorio
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json

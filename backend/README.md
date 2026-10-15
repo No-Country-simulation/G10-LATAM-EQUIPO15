@@ -2,7 +2,7 @@
 
 API REST de adaptación de contenido educativo construida con FastAPI.
 
-> **Estado actual:** el endpoint principal recibe el documento original y llama al servicio HTTP de IA. La respuesta contiene `status`, `metadatos`, `contenido_adaptado`, `evaluacion_calidad`, `almacenamiento_oci` y `codigo_respuesta`. La persistencia en OCI sigue pendiente.
+> **Estado actual:** el endpoint principal recibe el documento original y llama al servicio HTTP de IA. La respuesta conserva sus seis campos públicos. La persistencia dual en OCI es opcional y está desactivada por defecto; su código tiene pruebas aisladas y falta validarlo contra el bucket real. Ver [configuración y comportamiento de OCI](../docs/OCI_OBJECT_STORAGE.md).
 
 ## Requisitos
 
@@ -53,7 +53,7 @@ curl.exe -X POST http://localhost:18002/api/v1/adaptar-contenido `
 
 La solicitud es síncrona y puede consumir cuota y tardar varios minutos. Backend valida que la respuesta corresponda al perfil, formato y nicho solicitados; conserva los campos adicionales, incluidos Mermaid, distractores, reintentos y evidencia cuando IA los devuelve. No calcula metadatos ni modifica el criterio de fidelidad. El éxito es `200`; un rechazo de calidad continúa siendo un rechazo.
 
-El contrato requiere los seis campos del [Schema Response v2.3](../docs/CONTRATOS/SCHEMA_RESPONSE.md). Backend valida el score entre 0 y 1 y `codigo_respuesta=200`; rechaza campos obligatorios ausentes o inválidos sin inventarlos. `listo_para_subida` no implica una subida real a OCI.
+El contrato requiere los seis campos del [Schema Response v2.3](../docs/CONTRATOS/SCHEMA_RESPONSE.md). Backend valida el score entre 0 y 1 y `codigo_respuesta=200`; rechaza campos obligatorios ausentes o inválidos sin inventarlos. `listo_para_subida` no implica una subida real a OCI. Al habilitar Object Storage, solo Backend puede indicar `subido` después de confirmar original y JSON; `parcial` o `error` conservan la adaptación y comunican que la persistencia no está completa.
 
 | HTTP | Comportamiento |
 |---|---|
@@ -126,7 +126,7 @@ docker compose --env-file ia/.env -f compose.integration.yaml down
 
 `compose.integration.yaml` usa `18002` para `BACKEND_PORT` y `18003` para `FRONTEND_PORT`; `backend/compose.yaml` usa `8000`. El proceso Backend recibe el límite como `MAX_DOCUMENT_BYTES`. `/health` verifica el proceso HTTP, sin consultar IA ni Gemini. El límite de documento se aplica después del parser multipart; Nginx limita el cuerpo a 11 MiB, con margen para el archivo de 10 MiB y los campos. Si cambia ese límite, ajustar también el proxy.
 
-IA supervisa cada adaptación en un proceso hijo y aplica un presupuesto total de 480 segundos, menor que los 600 segundos de espera de Backend. Al vencer, termina el proceso y devuelve `504 PROVEEDOR_TIMEOUT`; libera la ocupación y elimina el archivo temporal. Compose transmite `IA_HTTP_TIMEOUT_SECONDS` a IA como límite del cliente para verificar que su presupuesto deje margen. Los límites por llamada y reintentos se documentan en el [README de IA](../ia/README.md#límites-de-ejecución). El timeout de Backend por sí solo no envía una orden de cancelación a IA. El pipeline sigue siendo síncrono, con un documento por vez, sin SSE ni persistencia OCI. Compose conserva los índices Chroma, registros y cachés en el volumen Docker de IA, incluso al recrear el contenedor. Object Storage de OCI sigue pendiente.
+IA supervisa cada adaptación en un proceso hijo y aplica un presupuesto total de 480 segundos, menor que los 600 segundos de espera de Backend. Al vencer, termina el proceso y devuelve `504 PROVEEDOR_TIMEOUT`; libera la ocupación y elimina el archivo temporal. Compose transmite `IA_HTTP_TIMEOUT_SECONDS` a IA como límite del cliente para verificar que su presupuesto deje margen. Los límites por llamada y reintentos se documentan en el [README de IA](../ia/README.md#límites-de-ejecución). El timeout de Backend por sí solo no envía una orden de cancelación a IA. El pipeline sigue siendo síncrono, con un documento por vez y sin SSE. Compose conserva los índices Chroma, registros y cachés en el volumen Docker de IA, incluso al recrear el contenedor. El almacenamiento opcional añade dos subidas síncronas después de la respuesta de IA, con timeouts propios y sin reintentos automáticos. Su validación real y el despliegue cloud siguen pendientes.
 
 ## Pruebas sin consumir cuota
 

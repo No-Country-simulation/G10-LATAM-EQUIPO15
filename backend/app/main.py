@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.api.schemas import AdaptacionResponse, ErrorResponse, FormatoSalida, NichoSector, PerfilDestinatario
 from app.services.ia_client import IAClient, IAServiceError, get_ia_client
+from app.services.oci_service import OCIStorage, get_oci_storage
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -61,6 +62,7 @@ def adaptar_contenido(
     formato_salida: Annotated[FormatoSalida, Form()],
     nicho_sector: Annotated[NichoSector, Form()],
     ia_client: Annotated[IAClient, Depends(get_ia_client)],
+    oci_storage: Annotated[OCIStorage | None, Depends(get_oci_storage)],
 ):
     """Valida el transporte y delega extracción, generación y calidad a IA."""
     filename = (documento_original.filename or "").replace("\\", "/").rsplit("/", 1)[-1]
@@ -74,6 +76,9 @@ def adaptar_contenido(
     if size == 0:
         raise HTTPException(422, {"codigo": "DOCUMENTO_VACIO", "mensaje": "El documento está vacío."})
     try:
-        return ia_client.adaptar(documento_original, perfil_destinatario.value, formato_salida.value, nicho_sector.value)
+        resultado = ia_client.adaptar(documento_original, perfil_destinatario.value, formato_salida.value, nicho_sector.value)
     except IAServiceError as error:
         raise HTTPException(error.status_code, error.detail, headers=error.headers) from error
+    if oci_storage is not None:
+        resultado = oci_storage.guardar(documento_original, resultado)
+    return resultado

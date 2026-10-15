@@ -34,6 +34,16 @@ const UI = {
     const score = resultado.evaluacion_calidad?.anclaje_fuente_score;
     document.getElementById("resultado-calidad").textContent =
       typeof score === "number" ? `Anclaje a la fuente evaluado por IA: ${Math.round(score * 100)} %` : "";
+    const almacenamiento = resultado.almacenamiento_oci;
+    let mensajeAlmacenamiento = "Almacenamiento en OCI pendiente.";
+    if (almacenamiento?.status_upload === "subido" && almacenamiento.documento_original_subido === true) {
+      mensajeAlmacenamiento = "Documento original y contenido guardados en OCI.";
+    } else if (almacenamiento?.status_upload === "parcial") {
+      mensajeAlmacenamiento = "Se guardó el documento original, pero no se confirmó la subida del contenido a OCI. El resultado está disponible.";
+    } else if (almacenamiento?.status_upload === "error") {
+      mensajeAlmacenamiento = "No se pudo confirmar el almacenamiento en OCI. El contenido generado está disponible.";
+    }
+    document.getElementById("resultado-almacenamiento").textContent = mensajeAlmacenamiento;
     const contenedor = document.getElementById("resultado-items");
     contenedor.replaceChildren();
     if (metadatos.formato_generado === "Flashcards") {

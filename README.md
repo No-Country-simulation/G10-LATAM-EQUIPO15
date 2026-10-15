@@ -37,7 +37,7 @@ Este repositorio almacena la documentación arquitectónica, técnica y de gesti
 *   **LLM Engine:** Gemini configurable; ejecución HTTP estricta con límites y sin borrador simulado de contingencia.
 *   **Vector Store:** ChromaDB persistente, embeddings de Google y cachés reutilizables por hash del documento.
 *   **Validación:** Pydantic V2 (Esquemas estructurados y prevención de inyecciones prompt/XSS).
-*   **Despliegue Objetivo:** OCI Always Free (Oracle Cloud Infrastructure).
+*   **Ejecución y almacenamiento:** Docker local y VM Azure creada con Terraform, con originales y JSON en OCI Object Storage.
 
 ## Ejecutar y verificar
 
@@ -49,6 +49,12 @@ docker compose --env-file ia/.env -f compose.integration.yaml up --build -d --wa
 
 Frontend queda en <http://localhost:18003> y envía el documento al Backend mediante el proxy de Nginx. Muestra Flashcards, Quiz Interactivo y Resumen Ejecutivo, con errores y reintento explícito. Backend ofrece Swagger en <http://localhost:18002/docs>. IA usa la red interna y conserva Chroma y cachés en un volumen Docker.
 
-Ver [arranque, límites y pruebas del Frontend](frontend/README.md). OCI Object Storage, SSE y despliegue cloud siguen pendientes.
+Para usar la conexión OCI ya instalada en Windows, ejecutar:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/iniciar-local-oci.ps1
+```
+
+Ver [demostración local con OCI y tres ejemplos comprobados](docs/DEMO_LOCAL_OCI.md), [despliegue Azure por Terraform y pruebas públicas](docs/AZURE_TERRAFORM.md) y [arranque, límites y pruebas del Frontend](frontend/README.md). El Backend incorpora [Object Storage opcional](docs/OCI_OBJECT_STORAGE.md), desactivado por defecto y validado desde Docker local y Azure con el bucket real de `dgomenfran`. La demo pública está en <http://191.237.254.59>. SSE sigue pendiente.
 
 Para reproducir las suites offline y la prueba real con Gemini, ver [tests/README.md](tests/README.md). La API vigente está documentada en el [contrato Backend ↔ IA v2.3](docs/CONTRATOS/CONTRATO_BACKEND_IA.md). Los planes y reportes anteriores conservan antecedentes; consultar estos documentos operativos para el comportamiento actual.

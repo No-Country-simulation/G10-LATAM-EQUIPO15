@@ -7,10 +7,12 @@ La referencia operativa es el código consolidado, los README de ejecución y la
 - [README del proyecto](../README.md)
 - [Backend](../backend/README.md), [Data/IA y servicio HTTP](../ia/README.md), [Frontend](../frontend/README.md)
 - [Pruebas reproducibles offline y Gemini](../tests/README.md)
+- [Demostración local con OCI y comando de arranque](DEMO_LOCAL_OCI.md)
+- [VM Azure con Terraform y despliegue por script](AZURE_TERRAFORM.md)
 - [Contrato Backend ↔ IA v2.3](CONTRATOS/CONTRATO_BACKEND_IA.md)
 - [Schema Response v2.3](CONTRATOS/SCHEMA_RESPONSE.md)
 
-La API pública acepta PDF, Markdown y TXT y devuelve Flashcards, Quiz Interactivo o Resumen Ejecutivo. Calidad y estado pendiente de almacenamiento acompañan la salida. El Frontend envía multipart al Backend mediante Nginx y representa los tres formatos. OCI Object Storage, despliegue cloud y SSE continúan pendientes.
+La API pública acepta PDF, Markdown y TXT y devuelve Flashcards, Quiz Interactivo o Resumen Ejecutivo. Calidad y estado de almacenamiento acompañan la salida. El Frontend envía multipart al Backend mediante Nginx y representa los tres formatos. [Object Storage](OCI_OBJECT_STORAGE.md) está implementado como opción desactivada por defecto y fue validado desde Docker local y desde una [VM Azure creada con Terraform](AZURE_TERRAFORM.md), con Gemini y el bucket real de `dgomenfran` el 14 de octubre de 2026. Los tres formatos se comprobaron en la URL pública con descargas autenticadas del original y los JSON en OCI. SSE continúa pendiente.
 
 ## Arquitectura y seguimiento
 

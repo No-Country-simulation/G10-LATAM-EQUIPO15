@@ -81,6 +81,10 @@ class AlmacenamientoOCI(ContratoIA):
     objeto_id: str
     status_upload: str = "pendiente"
     ruta_publica_o_par: str | None = None
+    documento_original_objeto_id: str | None = None
+    documento_original_subido: bool | None = None
+    codigo_error: str | None = None
+    mensaje: str | None = None
 
 
 class AdaptacionResponse(ContratoIA):

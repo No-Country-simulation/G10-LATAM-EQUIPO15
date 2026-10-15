@@ -57,6 +57,9 @@ varios minutos. No hay reenvíos automáticos ni seguimiento SSE.
   su justificación técnica.
 - Resumen muestra TL;DR, puntos clave, impacto en el negocio y recomendaciones.
 
+El visor comunica también si el almacenamiento OCI está pendiente, confirmado,
+parcial o fallido. Un fallo de almacenamiento conserva el contenido generado.
+
 El contenido recibido se inserta como texto. Los errores de Backend aparecen
 con su mensaje; los fallos de red, timeout y proxy tienen mensajes propios.
 “Reintentar” conserva el archivo y la configuración. “Cambiar documento o
@@ -94,7 +97,7 @@ Compose de integración. La imagen excluye los tests y el antiguo ejemplo mock.
 
 ## Pruebas reproducibles sin claves
 
-Desde la raíz, ejecutar 46 comprobaciones:
+Desde la raíz, ejecutar 52 comprobaciones:
 
 ```powershell
 docker compose -f compose.frontend.tests.yaml up --build --abort-on-container-exit --exit-code-from tests
@@ -102,14 +105,14 @@ docker compose -f compose.frontend.tests.yaml down
 ```
 
 Este proyecto separado no publica puertos ni utiliza claves o volúmenes de la
-aplicación. Ejecuta 24 pruebas unitarias y 15 HTTP, más 7 pruebas del recorrido
+aplicación. Ejecuta 30 pruebas unitarias y 15 HTTP, más 7 pruebas del recorrido
 Nginx → Backend real → IA simulada. Verifica los tres formatos, los bytes y campos
 multipart originales, los rechazos antes de contactar a IA, errores 422/503 y
 el límite de cuerpo del proxy. La red de ejecución es interna; construir las
 imágenes puede necesitar Internet. El primer comando devuelve un código distinto
 de cero si falla una prueba; no ejecutar el cierre antes de revisar ese código.
 
-También se pueden ejecutar solo las 39 comprobaciones del Frontend:
+También se pueden ejecutar solo las 45 comprobaciones del Frontend:
 
 ```powershell
 docker compose -f frontend/compose.tests.yaml up --build --abort-on-container-exit --exit-code-from tests
@@ -135,5 +138,6 @@ extensión inválida y reintento. Cada generación real consume cuota del provee
 
 ## Pendientes
 
-OCI Object Storage, despliegue público y SSE siguen pendientes. La integración
-actual no promete que el contenido esté guardado en OCI.
+La integración [opcional de OCI Object Storage](../docs/OCI_OBJECT_STORAGE.md)
+está desactivada por defecto y pendiente de validación real. Despliegue público y
+SSE siguen pendientes. Una intención de almacenamiento no implica una subida.
