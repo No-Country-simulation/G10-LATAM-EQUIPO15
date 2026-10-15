@@ -1,6 +1,6 @@
 // El navegador usa la API del mismo origen, reenviada por Nginx a Backend.
 const Api = {
-  async generarContenido(documento, configuracion) {
+  async generarContenido(documento, configuracion, onStage = () => {}) {
     if (!documento || documento.size === 0) {
       throw new Error("Seleccioná un documento con contenido.");
     }
@@ -11,12 +11,14 @@ const Api = {
     }
     let respuesta;
     try {
-      respuesta = await fetch("/api/v1/adaptar-contenido", {
+      const solicitud = fetch("/api/v1/adaptar-contenido", {
         method: "POST",
         body: datos,
         // IA dispone de 480 s y Backend de 600 s en la configuración predeterminada.
         signal: AbortSignal.timeout(660000),
       });
+      onStage("waiting");
+      respuesta = await solicitud;
     } catch (error) {
       if (error.name === "TimeoutError" || error.name === "AbortError") {
         throw new Error("Se agotó el tiempo de espera. Podés reintentar la adaptación.");
@@ -29,6 +31,7 @@ const Api = {
     } catch {
       if (respuesta.ok) throw new Error("El servidor devolvió una respuesta inválida.");
     }
+    onStage("validating");
     if (!respuesta.ok) {
       const mensaje = resultado?.detail?.mensaje;
       throw new Error(typeof mensaje === "string" && mensaje.trim()

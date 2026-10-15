@@ -11,11 +11,46 @@ const UI = {
     Object.values(this.secciones).forEach(elemento => elemento?.classList.add("oculto"));
     this.secciones[state]?.classList.remove("oculto");
     const ocupado = state === "PROCESSING";
+    if (state === "PROCESSING") this.setProcessingStage("sending");
     document.getElementById("boton-generar").disabled = ocupado;
     document.getElementById("boton-reintentar").disabled = ocupado;
     document.getElementById("form-configuracion").setAttribute("aria-busy", String(ocupado));
     if (state === "COMPLETED" && data.resultado) this.pintarResultado(data.resultado);
     if (state === "ERROR") document.getElementById("mensaje-error").textContent = data.error;
+  },
+  setProcessingStage(stage) {
+    const steps = [...document.querySelectorAll("[data-processing-step]")];
+    const order = ["sending", "waiting", "validating"];
+    const activeIndex = order.indexOf(stage);
+    const titles = {
+      sending: ["En curso", "Pendiente", "Pendiente"],
+      waiting: ["Completado", "En curso", "Pendiente"],
+      validating: ["Completado", "Completado", "En curso"],
+    };
+    steps.forEach((elemento, index) => {
+      elemento.classList.remove("is-active", "is-done");
+      const icono = elemento.querySelector(".processing-step-icon");
+      const estado = elemento.querySelector(".processing-step-status");
+      if (index < activeIndex) {
+        elemento.classList.add("is-done");
+        icono.textContent = "✓";
+      } else if (index === activeIndex) {
+        elemento.classList.add("is-active");
+        icono.textContent = String(index + 1);
+      } else {
+        icono.textContent = String(index + 1);
+      }
+      estado.textContent = titles[stage]?.[index] || "Pendiente";
+    });
+    const titulo = document.getElementById("processing-title");
+    const descripcion = document.getElementById("processing-description");
+    const textos = {
+      sending: ["Estamos enviando tu solicitud", "Estamos preparando el documento y tus preferencias para enviarlos de forma segura."],
+      waiting: ["Estamos procesando tu documento", "El servidor está trabajando en la adaptación. Este paso puede tardar varios minutos."],
+      validating: ["Estamos validando el material", "Recibimos una respuesta y estamos comprobando que tenga el formato solicitado."],
+    };
+    if (titulo && textos[stage]) titulo.textContent = textos[stage][0];
+    if (descripcion && textos[stage]) descripcion.textContent = textos[stage][1];
   },
   elemento(tag, texto, clase) {
     const elemento = document.createElement(tag);
@@ -46,10 +81,12 @@ const UI = {
     document.getElementById("resultado-almacenamiento").textContent = mensajeAlmacenamiento;
     const contenedor = document.getElementById("resultado-items");
     contenedor.replaceChildren();
+    const resumenAnterior = document.querySelector(".result-actions .quiz-score");
+    resumenAnterior?.remove();
     if (metadatos.formato_generado === "Flashcards") {
       contenido.items.forEach(item => this.flashcard(contenedor, item));
     } else if (metadatos.formato_generado === "Quiz Interactivo") {
-      contenido.items.forEach((item, indice) => this.pregunta(contenedor, item, indice));
+      this.quiz(contenedor, contenido.items);
     } else if (metadatos.formato_generado === "Resumen Ejecutivo") {
       this.resumen(contenedor, contenido.items);
     }
@@ -63,6 +100,45 @@ const UI = {
     if (item.pista_didactica) respuesta.append(this.elemento("p", item.pista_didactica, "flashcard-pista"));
     tarjeta.append(respuesta);
     contenedor.append(tarjeta);
+  },
+  quiz(contenedor, items) {
+    const preguntas = items.map((item, indice) => this.pregunta(contenedor, item, indice));
+    const acciones = this.elemento("div", null, "quiz-final-actions");
+    const finalizar = this.elemento("button", "Finalizar quiz y ver resultado", "button-primary");
+    finalizar.type = "button";
+    const resumen = this.elemento("section", null, "quiz-score oculto");
+    resumen.setAttribute("aria-live", "polite");
+    finalizar.addEventListener("click", () => {
+      const respondidas = preguntas.filter(p => p.seleccion() !== -1).length;
+      const correctas = preguntas.filter(p => p.seleccion() === p.correcta).length;
+      const total = preguntas.length;
+      const porcentaje = total ? Math.round((correctas / total) * 100) : 0;
+      resumen.replaceChildren();
+      resumen.append(
+        this.elemento("span", "RESULTADO DEL QUIZ", "section-kicker"),
+        this.elemento("h3", `${correctas} de ${total} respuestas correctas`, "quiz-score-title"),
+        this.elemento("p", `Puntuación: ${porcentaje} %`, "quiz-score-percent")
+      );
+      if (respondidas < total) {
+        resumen.append(this.elemento("p", `Respondiste ${respondidas} de ${total} preguntas. Las preguntas sin responder cuentan como incorrectas en la puntuación final.`, "quiz-score-note"));
+      } else {
+        resumen.append(this.elemento("p", "¡Terminaste todas las preguntas! Revisa las justificaciones para reforzar lo aprendido.", "quiz-score-note"));
+      }
+      const pista = this.elemento("div", null, "quiz-score-track");
+      const relleno = this.elemento("span");
+      relleno.style.width = `${porcentaje}%`;
+      pista.append(relleno);
+      resumen.append(pista);
+      resumen.classList.remove("oculto");
+      const accionesResultado = document.querySelector(".result-actions");
+      accionesResultado?.prepend(resumen);
+      preguntas.forEach(pregunta => pregunta.bloquear());
+      finalizar.disabled = true;
+      finalizar.textContent = "Quiz finalizado";
+      resumen.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    acciones.append(finalizar);
+    contenedor.append(acciones, resumen);
   },
   pregunta(contenedor, item, indice) {
     const pregunta = this.elemento("fieldset", null, "quiz-pregunta");
@@ -81,14 +157,15 @@ const UI = {
     comprobar.type = "button";
     const feedback = this.elemento("p", null, "quiz-feedback");
     feedback.setAttribute("aria-live", "polite");
+    const seleccion = () => opciones.findIndex(opcion => opcion.checked);
     comprobar.addEventListener("click", () => {
-      const seleccion = opciones.findIndex(opcion => opcion.checked);
+      const elegida = seleccion();
       feedback.className = "quiz-feedback";
-      if (seleccion === -1) {
+      if (elegida === -1) {
         feedback.textContent = "Elegí una opción antes de comprobar.";
         return;
       }
-      const correcta = seleccion === item.indice_correcto;
+      const correcta = elegida === item.indice_correcto;
       feedback.classList.add(correcta ? "respuesta-correcta" : "respuesta-incorrecta");
       feedback.textContent = (correcta ? "Respuesta correcta." : `Respuesta incorrecta. La correcta es: ${item.opciones[item.indice_correcto]}.`)
         + `\n${item.justificacion_tecnica}`
@@ -96,6 +173,13 @@ const UI = {
     });
     pregunta.append(comprobar, feedback);
     contenedor.append(pregunta);
+    return {
+      seleccion,
+      correcta: item.indice_correcto,
+      bloquear() {
+        opciones.forEach(opcion => { opcion.disabled = true; });
+      },
+    };
   },
   resumen(contenedor, item) {
     contenedor.append(this.elemento("h3", "Resumen"), this.elemento("p", item.tldr));
@@ -111,3 +195,5 @@ const UI = {
   },
 };
 document.addEventListener("app:state-changed", evento => UI.render(evento.detail.state, evento.detail.data));
+
+document.addEventListener("app:processing-stage", evento => UI.setProcessingStage(evento.detail.stage));
