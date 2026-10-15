@@ -158,29 +158,62 @@ test('API rechaza una respuesta de éxito que no contiene JSON', async () => {
 
 // DOM mínimo sin parser HTML: permite comprobar que el texto generado no se ejecuta.
 function crearUI() {
+  const nodos = raiz => [raiz, ...raiz.children.flatMap(nodos)];
   class Elemento {
     constructor(tag) {
       this.tagName = tag; this.children = []; this.texto = ''; this.atributos = {}; this.listeners = {};
-      this.classes = new Set();
-      this.classList = { add: (...valores) => valores.forEach(v => this.classes.add(v)), remove: v => this.classes.delete(v) };
+      this.classes = new Set(); this.style = {}; this.disabled = false; this.parentElement = null;
+      this.classList = {
+        add: (...valores) => valores.forEach(v => this.classes.add(v)),
+        remove: (...valores) => valores.forEach(v => this.classes.delete(v)),
+      };
     }
     set className(valor) { this.classes = new Set(valor.split(' ').filter(Boolean)); }
     get className() { return [...this.classes].join(' '); }
-    set textContent(valor) { this.texto = String(valor); this.children = []; }
+    set textContent(valor) { this.replaceChildren(); this.texto = String(valor); }
     get textContent() { return this.texto + this.children.map(hijo => hijo.textContent).join(''); }
     set innerHTML(_valor) { assert.fail('El contenido generado no debe interpretarse como HTML'); }
-    append(...hijos) { this.children.push(...hijos); }
-    replaceChildren(...hijos) { this.children = hijos; this.texto = ''; }
+    append(...hijos) { hijos.forEach(hijo => { hijo.remove(); hijo.parentElement = this; this.children.push(hijo); }); }
+    prepend(...hijos) { hijos.forEach(hijo => hijo.remove()); hijos.forEach(hijo => { hijo.parentElement = this; }); this.children.unshift(...hijos); }
+    remove() {
+      if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(hijo => hijo !== this);
+      this.parentElement = null;
+    }
+    replaceChildren(...hijos) { this.children.forEach(hijo => { hijo.parentElement = null; }); this.children = []; this.texto = ''; this.append(...hijos); }
     setAttribute(nombre, valor) { this.atributos[nombre] = valor; }
     addEventListener(nombre, funcion) { this.listeners[nombre] = funcion; }
+    querySelectorAll(selector) {
+      const [primero, ...resto] = selector.split(' ');
+      const encontrados = nodos(this).slice(1).filter(nodo => primero.startsWith('.')
+        ? nodo.classes.has(primero.slice(1)) : Object.hasOwn(nodo.atributos, primero.slice(1, -1)));
+      return resto.length ? encontrados.flatMap(nodo => nodo.querySelectorAll(resto.join(' '))) : encontrados;
+    }
+    querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+    scrollIntoView() {}
   }
+  const raiz = new Elemento('main');
   const elementos = new Map();
   const document = {
-    getElementById: id => { if (!elementos.has(id)) elementos.set(id, new Elemento('div')); return elementos.get(id); },
+    getElementById: id => {
+      if (!elementos.has(id)) { const elemento = new Elemento('div'); elementos.set(id, elemento); raiz.append(elemento); }
+      return elementos.get(id);
+    },
     createElement: tag => new Elemento(tag), addEventListener: () => {},
+    querySelector: selector => raiz.querySelector(selector),
+    querySelectorAll: selector => raiz.querySelectorAll(selector),
   };
+  const acciones = new Elemento('div');
+  acciones.className = 'result-actions';
+  raiz.append(acciones);
+  for (const etapa of ['sending', 'waiting', 'validating']) {
+    const paso = new Elemento('div');
+    paso.setAttribute('data-processing-step', etapa);
+    for (const clase of ['processing-step-icon', 'processing-step-status']) {
+      const detalle = new Elemento('span'); detalle.className = clase; paso.append(detalle);
+    }
+    document.getElementById('processing-steps').append(paso);
+  }
   const ui = cargar('ui.js', 'UI', { document });
-  const nodos = raiz => [raiz, ...raiz.children.flatMap(nodos)];
   return { ui, document, nodos };
 }
 
@@ -245,6 +278,50 @@ test('UI muestra el Resumen como objeto y limpia las tarjetas de una adaptación
   assert.match(contenedor.textContent, /transportar claims firmados/);
   assert.match(contenedor.textContent, /Validar firmas/);
   assert.equal(nodos(contenedor).filter(n => n.tagName === 'article').length, 0);
+});
+
+test('UI finaliza el Quiz con puntuación fija y bloquea todas las respuestas', () => {
+  const { ui, document, nodos } = crearUI();
+  const resultado = respuesta('Quiz Interactivo');
+  resultado.contenido_adaptado.items.push({ ...resultado.contenido_adaptado.items[0] });
+  ui.pintarResultado(resultado);
+  const elementos = nodos(document.getElementById('resultado-items'));
+  const radios = elementos.filter(n => n.tagName === 'input');
+  radios[0].checked = true;
+  const finalizar = document.querySelector('.quiz-final-actions').children[0];
+  finalizar.listeners.click();
+  assert.equal(document.querySelector('.quiz-score-percent').textContent, 'Puntuación: 50 %');
+  assert.match(document.querySelector('.quiz-score-note').textContent, /Respondiste 1 de 2/);
+  assert.ok(radios.every(radio => radio.disabled));
+  assert.ok(finalizar.disabled);
+  const comprobar = elementos.find(n => n.tagName === 'button');
+  assert.ok(!comprobar.disabled, 'Las justificaciones deben seguir disponibles al finalizar');
+  comprobar.listeners.click();
+  assert.match(document.querySelector('.quiz-feedback').textContent, /Respuesta correcta/);
+  assert.equal(document.querySelectorAll('.result-actions .quiz-score').length, 1);
+
+  ui.pintarResultado(respuesta('Quiz Interactivo'));
+  assert.equal(document.querySelectorAll('.result-actions .quiz-score').length, 0);
+  assert.ok(nodos(document.getElementById('resultado-items')).filter(n => n.tagName === 'input').every(radio => !radio.disabled));
+  ui.pintarResultado(respuesta('Resumen Ejecutivo'));
+  assert.equal(document.querySelectorAll('.quiz-score').length, 0);
+});
+
+test('UI refleja envío, espera y validación sin inventar un porcentaje de progreso', () => {
+  const { ui, document } = crearUI();
+  const pasos = document.querySelectorAll('[data-processing-step]');
+  ui.render('PROCESSING', {});
+  assert.ok(pasos[0].classes.has('is-active'));
+  ui.setProcessingStage('waiting');
+  assert.ok(pasos[0].classes.has('is-done'));
+  assert.ok(!pasos[0].classes.has('is-active'));
+  assert.ok(pasos[1].classes.has('is-active'));
+  assert.equal(pasos[2].querySelector('.processing-step-status').textContent, 'Pendiente');
+  ui.setProcessingStage('validating');
+  assert.ok(pasos[1].classes.has('is-done'));
+  assert.ok(!pasos[1].classes.has('is-active'));
+  assert.ok(pasos[2].classes.has('is-active'));
+  assert.match(document.getElementById('processing-title').textContent, /validando/);
 });
 
 test('UI deshabilita el envío durante el procesamiento y presenta errores como texto', () => {

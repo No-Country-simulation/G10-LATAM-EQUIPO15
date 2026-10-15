@@ -48,6 +48,17 @@ test('HTTP expone solo los perfiles y formatos aceptados por Backend', async () 
   assert.match(html, /name="documento_original"/);
 });
 
+test('HTTP conserva una sola vista de cada estado y el indicador de guardado en OCI', async () => {
+  const html = await (await pedir('/')).text();
+  const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(ids).size, ids.length, 'La integración no debe duplicar controles ni vistas');
+  for (const id of ['seccion-carga', 'seccion-procesando', 'seccion-resultado', 'seccion-error', 'resultado-almacenamiento']) {
+    assert.ok(ids.includes(id), `Debe conservarse ${id}`);
+  }
+  assert.match(html, /id="resultado-almacenamiento"[^>]*role="status"/);
+  assert.equal((html.match(/<body\b/g) || []).length, 1);
+});
+
 for (const ruta of ['/archivo-inexistente.js', '/README.md', '/.env', '/tests/unit.test.cjs', '/compose.yaml', '/nginx.conf', '/mocks/respuesta-ejemplo.json']) {
   test(`HTTP no publica ${ruta}`, async () => {
     const respuesta = await pedir(ruta);
