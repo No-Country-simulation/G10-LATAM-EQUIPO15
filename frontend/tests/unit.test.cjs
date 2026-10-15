@@ -198,6 +198,26 @@ test('UI muestra Flashcards sin interpretar HTML ni exigir pistas opcionales', (
   assert.ok(!tarjetas.some(n => n.tagName === 'img'));
 });
 
+for (const [storage, expected] of [
+  [{ status_upload: 'pendiente' }, 'Almacenamiento en OCI pendiente.'],
+  [{ status_upload: 'listo_para_subida' }, 'Almacenamiento en OCI pendiente.'],
+  [{ status_upload: 'subido', documento_original_subido: true }, 'Documento original y contenido guardados en OCI.'],
+  [{ status_upload: 'parcial', documento_original_subido: true }, 'Se guardó el documento original, pero no se confirmó la subida del contenido a OCI. El resultado está disponible.'],
+  [{ status_upload: 'error' }, 'No se pudo confirmar el almacenamiento en OCI. El contenido generado está disponible.'],
+  [{ status_upload: 'subido', documento_original_subido: false }, 'Almacenamiento en OCI pendiente.'],
+]) {
+  test(`UI distingue almacenamiento ${storage.status_upload} con original=${storage.documento_original_subido}`, () => {
+    const { ui, document } = crearUI();
+    const resultado = respuesta();
+    resultado.almacenamiento_oci = { ...storage, mensaje: '<img src=x onerror="alert(1)">' };
+    ui.pintarResultado(resultado);
+    assert.equal(document.getElementById('resultado-almacenamiento').textContent, expected);
+    resultado.almacenamiento_oci.status_upload = 'pendiente';
+    ui.pintarResultado(resultado);
+    assert.equal(document.getElementById('resultado-almacenamiento').textContent, 'Almacenamiento en OCI pendiente.');
+  });
+}
+
 test('UI permite responder el Quiz y muestra justificación para acierto y error', () => {
   const { ui, document, nodos } = crearUI();
   ui.pintarResultado(respuesta('Quiz Interactivo'));

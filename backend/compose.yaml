@@ -11,6 +11,13 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
       OCI_BUCKET_NAME: "${OCI_BUCKET_NAME:-nuevamente-contenidos-educativos}"
+      OCI_STORAGE_ENABLED: "${OCI_STORAGE_ENABLED:-false}"
+      OCI_NAMESPACE: "${OCI_NAMESPACE:-}"
+      OCI_REGION: "${OCI_REGION:-}"
+      OCI_AUTH_MODE: "${OCI_AUTH_MODE:-api_key}"
+      OCI_CONFIG_FILE: "${OCI_CONFIG_FILE:-/run/secrets/oci/config}"
+      OCI_CONFIG_PROFILE: "${OCI_CONFIG_PROFILE:-DEFAULT}"
+      OCI_HTTP_TIMEOUT_SECONDS: "${OCI_HTTP_TIMEOUT_SECONDS:-10}"
       IA_BASE_URL: "${IA_BASE_URL:-http://ia-http:8001}"
       IA_HTTP_TIMEOUT_SECONDS: "${IA_HTTP_TIMEOUT_SECONDS:-600}"
       MAX_DOCUMENT_BYTES: "${IA_MAX_DOCUMENT_BYTES:-10485760}"

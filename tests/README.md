@@ -44,7 +44,7 @@ docker compose -f compose.frontend.tests.yaml up --build --abort-on-container-ex
 docker compose -f compose.frontend.tests.yaml down
 ```
 
-Son 46 pruebas: 24 unitarias del estado, cliente multipart y visores; 15 HTTP
+Son 52 pruebas: 30 unitarias del estado, cliente multipart, visores y estados de almacenamiento; 15 HTTP
 del Frontend; y 7 del proxy Nginx → Backend real → IA simulada. Estas últimas
 verifican los tres formatos, bytes originales, parámetros, rechazos, errores
 422/503 y límite de cuerpo. No requieren claves, no publican puertos ni usan
@@ -56,6 +56,10 @@ El fixture de IA vive únicamente en las pruebas; el Frontend de aplicación
 siempre utiliza el endpoint real. Las suites no incluyen Chromium ni llamadas
 a Gemini. Ver [Frontend](../frontend/README.md) para el arranque completo y la
 comprobación manual desde navegador.
+
+La suite Backend incluye `test_oci_storage.py`: SDK y firmas OCI reales con
+transporte HTTP simulado y claves efímeras, sin red ni cuenta OCI. Estas pruebas
+no confirman un bucket operativo. Ver [validación real y configuración de OCI](../docs/OCI_OBJECT_STORAGE.md).
 
 ## Ensayo real Backend -> IA -> Gemini
 

@@ -12,10 +12,19 @@ HTTP 200 devuelve seis campos obligatorios:
 | `metadatos` | Perfil, formato, nicho, conceptos clave y tiempo de estudio |
 | `contenido_adaptado` | Título, introducción contextualizada e items tipados por formato |
 | `evaluacion_calidad` | Score entre 0 y 1, observaciones, claridad, reintentos y evidencia opcional |
-| `almacenamiento_oci` | Bucket, objeto propuesto, estado pendiente de subida y ruta opcional |
+| `almacenamiento_oci` | Bucket, clave del JSON, estado de persistencia y ruta opcional; Backend puede añadir clave/confirmación del original y error de almacenamiento |
 | `codigo_respuesta` | Número `200`, no cadena `OK` |
 
 `metadatos` requiere `perfil_aplicado`, `formato_generado`, `tiempo_estimado_estudio_minutos` (1–180) y `conceptos_clave` (lista no vacía). `nicho_contexto` tiene valor predeterminado `General`. Backend exige que perfil, formato y nicho coincidan con la solicitud.
+
+IA solo entrega almacenamiento `pendiente` o `listo_para_subida`. Con OCI habilitado,
+Backend puede indicar `subido` (ambos objetos confirmados), `parcial` (solo original
+confirmado) o `error` (original no confirmado/configuración fallida). Añade
+`documento_original_objeto_id`, `documento_original_subido` y, ante un fallo,
+`codigo_error` y `mensaje`. No se modifica la evaluación pedagógica ni se generan
+URLs públicas. La adaptación puede tener HTTP 200 y almacenamiento incompleto:
+consultar [Object Storage](../OCI_OBJECT_STORAGE.md). Su prueba contra OCI real
+sigue pendiente.
 
 ## Items por formato público
 

@@ -16,3 +16,6 @@ venv/
 
 .vscode/
 .idea/
+.oci/
+*.pem
+*.key

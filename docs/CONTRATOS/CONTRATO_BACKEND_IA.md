@@ -29,7 +29,7 @@ HTTP 200 devuelve seis campos: `status`, `metadatos`, `contenido_adaptado`, `eva
 
 El umbral predeterminado es 0.85 para Flashcards y Resumen, y como máximo 0.75 para Quiz. Un borrador insuficiente se corrige hasta el máximo configurado; si no alcanza el umbral, se rechaza con 422 `CONTEXTO_INSUFICIENTE`. En modo estricto los fallos de proveedor se propagan, sin contenido ni score simulados.
 
-`almacenamiento_oci.status_upload` es `listo_para_subida` o `pendiente`; describe una intención de almacenamiento. No certifica una subida. Chroma, registros y cachés sobreviven a recrear el contenedor mediante el volumen Docker `ia-data`. OCI Object Storage no está implementado.
+IA solo puede entregar `almacenamiento_oci.status_upload` como `listo_para_subida` o `pendiente`: describe una intención, no certifica una subida. La opción `OCI_STORAGE_ENABLED` del Backend está desactivada por defecto. Al habilitarla, Backend guarda original y JSON y reemplaza el estado por `subido`, `parcial` o `error`, según las confirmaciones del SDK. Añade la clave del original y su confirmación dentro del mismo campo de almacenamiento; los seis campos públicos se conservan. Un fallo OCI conserva HTTP 200 y la adaptación, con un error de almacenamiento explícito. Consultar [Object Storage](../OCI_OBJECT_STORAGE.md) para su política y validación real pendiente. Chroma, registros y cachés sobreviven a recrear el contenedor mediante el volumen Docker `ia-data`.
 
 ## Errores y ejecución
 
@@ -51,4 +51,4 @@ El endpoint es síncrono. IA procesa una adaptación por vez y responde `503 IA_
 
 [Pruebas reproducibles](../../tests/README.md): suite offline sin red y ensayo real con Gemini desde Backend, incluyendo una segunda adaptación después de recrear IA con el mismo volumen. Los resultados no sustituyen una revisión general de calidad para todos los documentos y formatos.
 
-Frontend conecta el formulario al endpoint real mediante el proxy de Nginx y representa los tres formatos públicos; consultar su [README](../../frontend/README.md) y las pruebas del proxy con Backend real e IA simulada en `compose.frontend.tests.yaml`. Pendientes: implementar OCI Object Storage, SSE y validar el despliegue cloud. Los documentos de planificación y ADR describen objetivos que pueden exceder esta implementación.
+Frontend conecta el formulario al endpoint real mediante el proxy de Nginx y representa los tres formatos públicos y el estado de almacenamiento; consultar su [README](../../frontend/README.md) y las pruebas del proxy con Backend real e IA simulada en `compose.frontend.tests.yaml`. Pendientes: validar Object Storage contra OCI real, implementar SSE y validar el despliegue cloud. Los documentos de planificación y ADR describen objetivos que pueden exceder esta implementación.
