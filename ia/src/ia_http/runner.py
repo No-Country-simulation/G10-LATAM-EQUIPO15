@@ -41,8 +41,10 @@ def _traducir_error(error: Exception) -> PipelineServiceError:
             status = current.code
             if status == 504:
                 return PipelineServiceError(504, "PROVEEDOR_TIMEOUT", "El proveedor de IA no respondió a tiempo.")
-            if status in (429, 503):
-                return PipelineServiceError(503, "PROVEEDOR_NO_DISPONIBLE", "El proveedor de IA no está disponible o agotó su cuota.")
+            if status == 429:
+                return PipelineServiceError(503, "PROVEEDOR_CUOTA_AGOTADA", "El proveedor de IA alcanzó su límite de uso.")
+            if status == 503:
+                return PipelineServiceError(503, "PROVEEDOR_NO_DISPONIBLE", "El proveedor de IA no está disponible.")
             return PipelineServiceError(502, "ERROR_PROVEEDOR", "El proveedor de IA no pudo completar la solicitud.")
         if isinstance(current, httpx.RequestError):
             return PipelineServiceError(503, "PROVEEDOR_NO_DISPONIBLE", "No se pudo contactar al proveedor de IA.")

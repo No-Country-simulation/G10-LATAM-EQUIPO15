@@ -142,7 +142,8 @@ def test_file_validation_never_contacts_ia(client_factory, monkeypatch, filename
 
 @pytest.mark.parametrize("status,code", [
     (422, "CONTEXTO_INSUFICIENTE"), (422, "DOCUMENTO_RECHAZADO"),
-    (503, "IA_OCUPADA"), (503, "PROVEEDOR_NO_DISPONIBLE"), (500, "ERROR_INTERNO_IA"),
+    (503, "IA_OCUPADA"), (503, "PROVEEDOR_NO_DISPONIBLE"), (503, "PROVEEDOR_CUOTA_AGOTADA"),
+    (500, "ERROR_INTERNO_IA"),
     (502, "ERROR_PROCESAMIENTO_IA"), (504, "PROVEEDOR_TIMEOUT"),
 ])
 def test_ia_errors_keep_status_and_code_without_leaking_body(client_factory, status, code):
@@ -159,6 +160,26 @@ def test_ia_errors_keep_status_and_code_without_leaking_body(client_factory, sta
         assert response.headers["retry-after"] == "5"
     else:
         assert "retry-after" not in response.headers
+
+
+def test_quota_message_explains_next_step_without_blame_or_automatic_retry(client_factory):
+    calls = []
+
+    def quota(request):
+        calls.append(request)
+        return httpx.Response(503, json={"detail": {
+            "codigo": "PROVEEDOR_CUOTA_AGOTADA", "mensaje": "private-key private-document",
+        }})
+
+    response = post_document(client_factory(quota))
+    assert response.status_code == 503
+    assert response.json()["detail"] == {
+        "codigo": "PROVEEDOR_CUOTA_AGOTADA",
+        "mensaje": "El servicio de IA alcanzó su límite de uso. Intenta nuevamente más tarde. "
+                   "Si el problema continúa, contacta al equipo de soporte.",
+    }
+    assert len(calls) == 1
+    assert "Retry-After" not in response.headers
 
 
 @pytest.mark.parametrize("failure,status,code", [

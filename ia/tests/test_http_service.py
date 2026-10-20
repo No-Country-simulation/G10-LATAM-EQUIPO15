@@ -1,5 +1,6 @@
 """Pruebas HTTP y del adaptador, sin red ni credenciales reales."""
 
+import logging
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import ANY, Mock
@@ -10,6 +11,7 @@ from fastapi import HTTPException, UploadFile
 from fastapi.testclient import TestClient
 from google.genai.errors import ClientError, ServerError
 
+from dataia.common.providers import provider_call
 from ia_http import main, runner
 from src.ai.agents import creador
 from src.ai.schemas import AdaptacionContenidoResponse, NichoSectorEnum, PerfilDestinatarioEnum
@@ -233,7 +235,7 @@ def test_service_requires_credentials_and_strict_mode(configured, monkeypatch, m
     (ValueError("private-key"), 500, "ERROR_INTERNO_IA"),
     (httpx.ConnectError("private-key"), 503, "PROVEEDOR_NO_DISPONIBLE"),
     (httpx.ReadTimeout("private-key"), 504, "PROVEEDOR_TIMEOUT"),
-    (ClientError(429, {"error": {"code": 429, "message": "private-key"}}), 503, "PROVEEDOR_NO_DISPONIBLE"),
+    (ClientError(429, {"error": {"code": 429, "message": "private-key"}}), 503, "PROVEEDOR_CUOTA_AGOTADA"),
     (ClientError(404, {"error": {"code": 404, "message": "private-key"}}), 502, "ERROR_PROVEEDOR"),
     (ServerError(503, {"error": {"code": 503, "message": "private-key"}}), 503, "PROVEEDOR_NO_DISPONIBLE"),
 ])
@@ -254,6 +256,32 @@ def test_wrapped_provider_failure_is_recognized(configured, monkeypatch):
     with pytest.raises(runner.PipelineServiceError) as error:
         runner.run_pipeline()
     assert error.value.status_code == 503
+    assert error.value.codigo == "PROVEEDOR_CUOTA_AGOTADA"
+
+
+def test_embedding_quota_reaches_http_without_losing_safe_logs(configured, http_client, monkeypatch, caplog):
+    paths = []
+
+    def exhausted_embeddings(**kwargs):
+        paths.append(Path(kwargs["ruta_archivo"]))
+        kwargs["callback_telemetria"]("INDEXACION", 2, 40, "private-document")
+        with provider_call("EMBEDDINGS_DOCUMENTO"):
+            raise ClientError(429, {"error": {"message": "private-key private-document"}})
+
+    monkeypatch.setattr(runner, "ejecutar_pipeline_adaptacion", exhausted_embeddings)
+    main.app.dependency_overrides[runner.get_pipeline_runner] = lambda: runner.run_pipeline
+    client, _ = http_client
+    with caplog.at_level(logging.INFO):
+        response = client.post("/api/v1/adaptar-contenido", data=FORM,
+                               files={"documento_original": ("prueba.txt", b"documento sintetico")})
+    assert response.status_code == 503
+    assert response.json()["detail"]["codigo"] == "PROVEEDOR_CUOTA_AGOTADA"
+    assert "private-" not in response.text
+    assert "private-" not in caplog.text
+    assert "etapa=EMBEDDINGS_DOCUMENTO" in caplog.text
+    assert "etapa=INDEXACION" in caplog.text
+    assert "codigo=429 categoria=cuota" in caplog.text
+    assert paths and all(not path.exists() for path in paths)
 
 
 def test_adapter_rejects_invalid_output(configured, monkeypatch):

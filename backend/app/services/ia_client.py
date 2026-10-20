@@ -22,7 +22,10 @@ IA_ERRORS = {
     "CONTEXTO_INSUFICIENTE": (422, "IA rechazó el contenido por no alcanzar su criterio de fidelidad."),
     "DOCUMENTO_RECHAZADO": (422, "IA no pudo extraer contenido técnico suficiente del documento."),
     "PROVEEDOR_TIMEOUT": (504, "El proveedor de IA no respondió a tiempo."),
-    "PROVEEDOR_NO_DISPONIBLE": (503, "El proveedor de IA no está disponible o agotó su cuota."),
+    "PROVEEDOR_CUOTA_AGOTADA": (503, "El servicio de IA alcanzó su límite de uso. Intenta nuevamente más tarde. "
+                                    "Si el problema continúa, contacta al equipo de soporte."),
+    "PROVEEDOR_NO_DISPONIBLE": (503, "El servicio de IA no está disponible en este momento. Intenta nuevamente más tarde. "
+                                    "Si el problema continúa, contacta al equipo de soporte."),
     "ERROR_PROVEEDOR": (502, "El proveedor de IA no pudo completar la solicitud."),
     "RESPUESTA_IA_INVALIDA": (502, "IA produjo una respuesta que no cumple su esquema."),
     "ERROR_PROCESAMIENTO_IA": (502, "IA no pudo segmentar o indexar el documento."),

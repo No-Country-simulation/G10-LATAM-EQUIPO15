@@ -39,13 +39,21 @@ test('Proxy conserva el rechazo de parámetros de Backend y no contacta IA', asy
 
 for (const [filename, status, codigo] of [
   ['rechazado.txt', 422, 'CONTEXTO_INSUFICIENTE'], ['ocupado.txt', 503, 'IA_OCUPADA'],
+  ['cuota.txt', 503, 'PROVEEDOR_CUOTA_AGOTADA'], ['indisponible.txt', 503, 'PROVEEDOR_NO_DISPONIBLE'],
 ]) {
-  test(`Proxy conserva HTTP ${status} sin reemplazar el fallo con contenido`, async () => {
+  test(`Proxy conserva HTTP ${status} ${codigo} sin reemplazar el fallo con contenido`, async () => {
     const response = await post('Flashcards', filename);
     assert.equal(response.status, status);
     const payload = await response.json();
     assert.equal(payload.detail.codigo, codigo);
     assert.equal(payload.contenido_adaptado, undefined);
+    assert.ok(!payload.detail.mensaje.includes('private-'));
+    if (codigo === 'PROVEEDOR_CUOTA_AGOTADA') {
+      assert.match(payload.detail.mensaje, /límite de uso/);
+      assert.match(payload.detail.mensaje, /más tarde/);
+    } else if (codigo === 'PROVEEDOR_NO_DISPONIBLE') {
+      assert.ok(!payload.detail.mensaje.includes('cuota'));
+    }
   });
 }
 
