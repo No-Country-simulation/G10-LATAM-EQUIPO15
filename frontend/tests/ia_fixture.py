@@ -46,6 +46,10 @@ class Fixture(BaseHTTPRequestHandler):
         if filename == "ocupado.txt":
             self.send_json(503, {"detail": {"codigo": "IA_OCUPADA", "mensaje": "Fallo controlado del fixture."}})
             return
+        provider_failures = {"cuota.txt": "PROVEEDOR_CUOTA_AGOTADA", "indisponible.txt": "PROVEEDOR_NO_DISPONIBLE"}
+        if filename in provider_failures:
+            self.send_json(503, {"detail": {"codigo": provider_failures[filename], "mensaje": "private-provider-detail"}})
+            return
         items = {
             "Flashcards": [{"frente": "¿Qué verifica una firma JWT?", "dorso": "La integridad del token."}],
             "Quiz Interactivo": [{"pregunta": "¿Qué verifica la firma?", "opciones": ["Integridad", "Cifrado", "Compresión", "Anonimato"],

@@ -45,6 +45,16 @@ Los errores tienen forma `{"detail":{"codigo":"...","mensaje":"..."}}`; nunca se
 | 503 | IA ocupada, no configurada, no disponible o proveedor/cuota sin disponibilidad |
 | 504 | Timeout del proveedor, pipeline o cliente Backend |
 
+El error `429` del proveedor se publica como `503 PROVEEDOR_CUOTA_AGOTADA`.
+`503 PROVEEDOR_NO_DISPONIBLE` se reserva para indisponibilidad o problemas de
+comunicación con el proveedor; no confirma un agotamiento de cuota. Backend
+conserva HTTP y código, y publica mensajes propios, sin copiar el texto del SDK.
+El Frontend muestra ese mensaje y mantiene las acciones para reintentar o
+cambiar documento/configuración. No se atribuye el fallo de cuota al documento
+ni se promete un tiempo de restablecimiento. No se añaden reintentos automáticos.
+Actualizar IA y Backend conjuntamente: un Backend anterior no reconoce el
+nuevo código y lo trataría como una respuesta IA inválida.
+
 El endpoint es síncrono. IA procesa una adaptación por vez y responde `503 IA_OCUPADA` a solicitudes concurrentes. Un proceso hijo supervisado aplica el plazo total y libera recursos al agotarlo. Se conservan límites por proveedor y reintentos acotados. `/health` solo comprueba disponibilidad HTTP. No se expone SSE ni un sistema de trabajos persistentes.
 
 ## Verificación y pendientes

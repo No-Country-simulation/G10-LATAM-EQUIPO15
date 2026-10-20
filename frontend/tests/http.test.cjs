@@ -66,3 +66,12 @@ for (const ruta of ['/archivo-inexistente.js', '/README.md', '/.env', '/tests/un
     await respuesta.arrayBuffer();
   });
 }
+
+test('HTTP muestra un error neutral y mantiene las dos acciones de recuperación', async () => {
+  const html = await (await pedir('/')).text();
+  const error = html.match(/<section id="seccion-error"[\s\S]*?<\/section>/)[0];
+  assert.match(error, /role="alert"/);
+  assert.match(error, /<h2>No pudimos procesar tu documento<\/h2>/);
+  assert.match(error, /id="boton-reintentar"/);
+  assert.match(error, /id="boton-volver"/);
+});
