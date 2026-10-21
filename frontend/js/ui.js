@@ -119,8 +119,11 @@ const UI = {
     contenedor.append(acciones, resumen, dialogo);
 
     const pendientes = () => preguntas.filter(p => p.seleccion() === -1);
+    let quizFinalizado = false;
 
     const mostrarResultado = () => {
+      if (quizFinalizado) return;
+      quizFinalizado = true;
       const respondidas = preguntas.filter(p => p.seleccion() !== -1).length;
       const correctas = preguntas.filter(p => p.seleccion() === p.correcta).length;
       const total = preguntas.length;
@@ -147,9 +150,14 @@ const UI = {
       // Al confirmar el resultado, bloquear toda interacción con las preguntas.
       // Evita comprobar respuestas o cambiar selecciones después de cerrar el quiz.
       preguntas.forEach(({ elemento }) => {
+        // Deshabilitar el fieldset completo es más robusto que bloquear solo
+        // los controles descendientes por separado.
+        elemento.disabled = true;
+        elemento.setAttribute("aria-disabled", "true");
         elemento.classList.add("quiz-pregunta-finalizada");
         elemento.querySelectorAll("input, button").forEach(control => {
           control.disabled = true;
+          control.setAttribute("aria-disabled", "true");
         });
       });
       finalizar.disabled = true;
@@ -163,6 +171,7 @@ const UI = {
     };
 
     finalizar.addEventListener("click", () => {
+      if (quizFinalizado) return;
       const faltantes = pendientes();
       if (faltantes.length === 0) {
         completar();
@@ -215,6 +224,9 @@ const UI = {
     feedback.setAttribute("aria-live", "polite");
     const seleccion = () => opciones.findIndex(opcion => opcion.checked);
     comprobar.addEventListener("click", () => {
+      // Defensa adicional: no procesar eventos si el quiz ya fue cerrado,
+      // incluso si algún control se reactivara por error.
+      if (pregunta.disabled || pregunta.classList.contains("quiz-pregunta-finalizada")) return;
       const elegida = seleccion();
       feedback.className = "quiz-feedback";
       if (elegida === -1) {
