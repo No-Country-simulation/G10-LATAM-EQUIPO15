@@ -19,7 +19,7 @@ Backend recibe y reenvía el documento original sin extraer ni normalizar su tex
 
 Backend valida parámetros, extensión, tamaño y archivo vacío; envía los bytes a IA, valida la respuesta y su correspondencia con los parámetros solicitados, y conserva campos adicionales. No genera metadatos ni calcula calidad.
 
-Data/IA valida el documento, extrae PDF a Markdown, conserva estructura y páginas, realiza chunking y enriquecimiento en lotes, genera embeddings y persiste Chroma, registros y cachés. El identificador es el hash SHA-256 del contenido: repetir un documento reutiliza sus registros y vectores. Existe un único paquete compartido `ia/src/dataia`, importado como `dataia.*`.
+Data/IA valida el documento, extrae PDF a Markdown, conserva estructura y páginas, realiza chunking y enriquecimiento en lotes paralelos, y persiste fragmentos, registros y cachés. Los embeddings en Chroma son opcionales (`DATAIA_EMBEDDINGS_ENABLED`, desactivado por defecto): la generación lee los fragmentos en orden y no usa búsqueda vectorial. El identificador es el hash SHA-256 del contenido: repetir un documento reutiliza sus registros y cachés. Existe un único paquete compartido `ia/src/dataia`, importado como `dataia.*`.
 
 AI Core selecciona contexto entre los fragmentos ordenados del documento según formato y presupuesto, incorpora metadata pedagógica, genera con schemas por formato y cita fragmentos. El crítico revisa afirmaciones y distingue hechos de analogías y distractores. El score se calcula a partir de los veredictos; se mantiene un respaldo de score escalar por compatibilidad. El ensamblador calcula tiempo de estudio y devuelve la evaluación.
 
@@ -37,9 +37,9 @@ Los errores tienen forma `{"detail":{"codigo":"...","mensaje":"..."}}`; nunca se
 
 | HTTP | Situación |
 |---|---|
-| 413 | Documento demasiado grande |
+| 413 | Documento demasiado grande en bytes (`DOCUMENTO_DEMASIADO_GRANDE`) o demasiado extenso en páginas/texto (`DOCUMENTO_DEMASIADO_EXTENSO`) |
 | 415 | Extensión no soportada |
-| 422 | Parámetros, documento o contexto rechazado |
+| 422 | Parámetros, documento o contexto rechazado; contenido rechazado por la auditoría de seguridad (`CONTENIDO_RECHAZADO`) |
 | 500 | Error interno |
 | 502 | Proveedor/procesamiento o respuesta IA inválida |
 | 503 | IA ocupada, no configurada, no disponible o proveedor/cuota sin disponibilidad |

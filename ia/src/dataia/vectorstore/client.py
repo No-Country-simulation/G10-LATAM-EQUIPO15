@@ -15,6 +15,23 @@ COLLECTION_NAME = os.getenv("CHROMADB_COLLECTION", "nuevamente_docs")
 # Registro por documento (metadata pedagógica y resumen de la indexación)
 DOCUMENTS_DIRECTORY = os.getenv("DATAIA_DOCUMENTS_DIR", os.path.join(os.getcwd(), ".dataia_documents"))
 
+def embeddings_enabled() -> bool:
+    """
+    La generación lee los fragmentos del documento en orden, sin búsqueda
+    vectorial: los embeddings no intervienen en la calidad ni en la fidelidad.
+    Se calculan solo con DATAIA_EMBEDDINGS_ENABLED=true (p. ej. para una futura
+    búsqueda por tema o entre documentos).
+    """
+    return os.getenv("DATAIA_EMBEDDINGS_ENABLED", "false").strip().lower() in {"true", "1"}
+
+def _metadata_dict(chunk: Chunk) -> dict:
+    # ChromaDB no soporta valores None en metadatos; el registro usa la misma forma.
+    return {k: v for k, v in chunk.metadata.model_dump().items() if v is not None}
+
+def chunk_records(chunks: List[Chunk]) -> List[dict]:
+    """Fragmentos tal como se persisten en el registro del documento."""
+    return [{"text": chunk.text, "metadata": _metadata_dict(chunk)} for chunk in chunks]
+
 def get_embeddings_model():
     """Inicializa el modelo de Embeddings de Gemini (requiere DATAIA_GOOGLE_API_KEY o GOOGLE_API_KEY)."""
     model_name = os.getenv("GOOGLE_EMBEDDING_MODEL", "models/gemini-embedding-001")
@@ -52,13 +69,9 @@ def insert_chunks(chunks: List[Chunk]) -> bool:
     documents = []
     ids = []
     for chunk in chunks:
-        # ChromaDB no soporta valores "None" en metadatos, por lo que filtramos los nulos
-        # pero garantizamos que document_id, chunk_id, etc. estén siempre presentes.
-        meta_dict = {k: v for k, v in chunk.metadata.model_dump().items() if v is not None}
-
         doc = Document(
             page_content=chunk.text,
-            metadata=meta_dict
+            metadata=_metadata_dict(chunk)
         )
         documents.append(doc)
         ids.append(chunk.metadata.chunk_id)
@@ -79,12 +92,18 @@ def get_document_chunks(document_id: str) -> List[Document]:
     """
     Lectura para la etapa de generación: todos los chunks del documento, en el
     orden del documento original (no una búsqueda por similitud).
+    Se leen del registro del documento; los registros anteriores a este cambio
+    no guardaban los fragmentos y se leen de Chroma.
     """
-    result = get_vector_store().get(where={"document_id": document_id}, include=["documents", "metadatas"])
-    documents = [
-        Document(page_content=text, metadata=metadata or {})
-        for text, metadata in zip(result["documents"], result["metadatas"])
-    ]
+    record = load_document_record(document_id)
+    if record and record.get("chunk_records"):
+        documents = [Document(page_content=r["text"], metadata=r["metadata"]) for r in record["chunk_records"]]
+    else:
+        result = get_vector_store().get(where={"document_id": document_id}, include=["documents", "metadatas"])
+        documents = [
+            Document(page_content=text, metadata=metadata or {})
+            for text, metadata in zip(result["documents"], result["metadatas"])
+        ]
     return sorted(documents, key=lambda d: d.metadata.get("chunk_id", ""))
 
 def _document_record_path(document_id: str) -> str:
@@ -107,6 +126,7 @@ def save_document_record(
         "chunks": len(chunks),
         "sections": sections,
         "pedagogical_metadata": pedagogical_metadata.model_dump() if pedagogical_metadata else None,
+        "chunk_records": chunk_records(chunks),
     }
     with open(_document_record_path(document_id), "w", encoding="utf-8") as f:
         json.dump(record, f, ensure_ascii=False, indent=2)

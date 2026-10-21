@@ -122,11 +122,13 @@ La búsqueda por similitud vectorial tradicional (`vectorstore.similarity_search
 La solución implementada utiliza `get_document_chunks(document_id)`, la cual extrae la totalidad de los fragmentos indexados respetando el orden secuencial del autor.
 
 #### B. Algoritmo de Selección Presupuestaria con Cobertura de Secciones
-Cuando un documento supera el presupuesto de tokens establecido (por defecto, 4.000 tokens), `seleccionar_fragmentos` aplica un algoritmo estratégico de dos fases:
+Cuando un documento supera el presupuesto de tokens establecido (por defecto 24.000 tokens estimados, configurable con `IA_CONTEXTO_PRESUPUESTO_TOKENS`), `seleccionar_fragmentos` aplica un algoritmo en tres fases:
 
 1. **Fase A (Garantía de Cobertura Horizontal):** Agrupa todos los fragmentos por sección (`section`). De cada sección, selecciona el fragmento más relevante según la prioridad del formato (p. ej., definiciones para Flashcards, afirmaciones para Quiz, procedimientos para Tutoriales). Esto asegura que ninguna sección del material original quede sin representación.
-2. **Fase B (Llenado Vertical por Prioridad):** Con el presupuesto restante, selecciona los fragmentos complementarios con mayor densidad técnica hasta agotar la cuota disponible.
-3. **Preservación Secuencial:** Antes de entregar la lista final, los fragmentos seleccionados se reordenan según su posición original en el documento.
+   Esta fase tiene prioridad sobre el presupuesto: con muchas secciones, el contexto puede superar el límite antes que omitir una sección.
+2. **Fase B (Cuota Proporcional):** Cada sección recibe una parte del presupuesto proporcional a su tamaño en el documento y la llena con sus fragmentos de mayor prioridad para el formato.
+3. **Fase C (Sobrante por Turnos):** El presupuesto que quede se reparte por turnos entre secciones. Así ninguna parte del documento acapara el contexto por aparecer primero.
+4. **Preservación Secuencial:** Antes de entregar la lista final, los fragmentos seleccionados se reordenan según su posición original en el documento.
 
 #### C. Etiquetado Formal de Fragmentos para Trazabilidad
 Los fragmentos se formatean bajo un protocolo textual estricto:

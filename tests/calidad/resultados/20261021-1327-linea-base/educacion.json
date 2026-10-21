@@ -1,0 +1,61 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Junior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 6,
+    "conceptos_clave": [
+      "Repaso espaciado",
+      "Efecto de espaciamiento",
+      "Tarjetas de memoria"
+    ],
+    "nicho_contexto": "General"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de Repaso Espaciado",
+    "introduccion_contextualizada": "¡Hola! Como tu mentor técnico, hoy vamos a revisar los conceptos clave sobre el repaso espaciado basándonos estrictamente en la documentación provista, utilizando tarjetas de memoria para facilitar tu aprendizaje paso a paso.",
+    "items": [
+      {
+        "frente": "¿Qué es el repaso espaciado?",
+        "dorso": "El repaso espaciado consiste en estudiar un mismo contenido varias veces, dejando intervalos cada vez más largos entre cada repaso.",
+        "pista_didactica": "Imagina que estás regando una planta: en lugar de echarle toda el agua de golpe el primer día, le das un poco hoy, un poco más adelante y vas espaciando el tiempo para que crezca fuerte a largo plazo.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué es el efecto de espaciamiento?",
+        "dorso": "Es el fenómeno por el cual la información repasada en sesiones separadas se recuerda mejor a largo plazo que la estudiada en una única sesión intensiva.",
+        "pista_didactica": "Piensa en cocinar a fuego lento en lugar de quemar la comida con fuego alto en un segundo; los sabores se absorben mejor con el tiempo adecuado.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cómo se aplican las tarjetas de memoria en el repaso espaciado?",
+        "dorso": "Cuando el estudiante responde bien una tarjeta, la vuelve a ver más adelante; cuando se equivoca, la repasa pronto.",
+        "pista_didactica": "Es como organizar tus tareas pendientes en casilleros: lo que ya dominas lo guardas para revisar más tarde, y lo que te cuesta lo pones al frente para atenderlo enseguida.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado está completamente respaldado por los fragmentos fuente provistos. Las pistas didácticas cumplen adecuadamente con la función de analogías sin introducir datos técnicos no verificados.",
+    "reintentos_realizados": 1,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "educacion_repaso_espaciado.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

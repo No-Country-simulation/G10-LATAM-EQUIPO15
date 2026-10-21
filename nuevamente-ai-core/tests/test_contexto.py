@@ -3,6 +3,7 @@ Pruebas unitarias offline y deterministas para el módulo de contexto pedagógic
 Valida selección por formato, presupuesto de tokens, preservación de secciones y formateo etiquetado.
 """
 
+import pytest
 from unittest.mock import MagicMock
 from langchain_core.documents import Document
 
@@ -66,6 +67,56 @@ def test_seleccionar_fragmentos_garantiza_cobertura_de_secciones():
     assert secciones == {"Arquitectura", "Seguridad", "Despliegue"}
 
 
+def _documento(secciones):
+    """Chunks de 10 palabras (13 tokens estimados) en orden de documento: {sección: cantidad}."""
+    chunks, n = [], 0
+    for seccion, cantidad in secciones.items():
+        for _ in range(cantidad):
+            n += 1
+            chunks.append(_crear_doc(f"doc-test-chk-{n:04d}", "palabra " * 10, section=seccion))
+    return chunks
+
+
+def _por_seccion(res):
+    conteo = {}
+    for r in res:
+        conteo[r["section"]] = conteo.get(r["section"], 0) + 1
+    return conteo
+
+
+def test_seleccion_no_favorece_el_inicio_del_documento():
+    # Antes: la primera sección llenaba el presupuesto y la última quedaba con un solo fragmento.
+    chunks = _documento({"Inicio": 10, "Medio": 10, "Final": 10})
+    res = seleccionar_fragmentos(chunks, formato="Resumen Ejecutivo", presupuesto_tokens=13 * 15)
+    assert _por_seccion(res) == {"Inicio": 5, "Medio": 5, "Final": 5}
+
+
+def test_seleccion_proporcional_al_tamano_de_cada_seccion():
+    chunks = _documento({"Extensa": 20, "Breve": 5})
+    res = seleccionar_fragmentos(chunks, formato="Quiz Interactivo", presupuesto_tokens=13 * 10)
+    assert _por_seccion(res) == {"Extensa": 8, "Breve": 2}
+
+
+def test_seleccion_respeta_presupuesto_y_orden_del_documento():
+    chunks = _documento({"A": 7, "B": 3, "C": 9})
+    res = seleccionar_fragmentos(chunks, formato="Flashcards", presupuesto_tokens=13 * 11)
+    assert len(res) == 11
+    ids = [r["chunk_id"] for r in res]
+    assert ids == sorted(ids)
+
+
+def test_seleccion_prioriza_tipo_dentro_de_cada_seccion():
+    chunks = [
+        _crear_doc("doc-test-chk-0001", "palabra " * 10, section="S1", tipo="ejemplo"),
+        _crear_doc("doc-test-chk-0002", "palabra " * 10, section="S1", tipo="ejemplo"),
+        _crear_doc("doc-test-chk-0003", "palabra " * 10, section="S1", tipo="definicion"),
+        _crear_doc("doc-test-chk-0004", "palabra " * 10, section="S2", tipo="ejemplo"),
+        _crear_doc("doc-test-chk-0005", "palabra " * 10, section="S2", tipo="definicion"),
+    ]
+    res = seleccionar_fragmentos(chunks, formato="Flashcards", presupuesto_tokens=13 * 2)
+    assert [r["chunk_id"] for r in res] == ["doc-test-chk-0003", "doc-test-chk-0005"]
+
+
 def test_formatear_texto_fuente_etiquetado():
     frags = [
         {
@@ -114,3 +165,53 @@ def test_obtener_registro_documento_lee_disco_o_fallback(monkeypatch):
     mock_ingesta.pedagogical_metadata.conceptos_clave = ["TerminoFallback"]
     meta_fb = obtener_registro_documento("doc-inexistente", ingestion_res=mock_ingesta)
     assert meta_fb["conceptos_clave"] == ["TerminoFallback"]
+
+
+def test_prerrequisitos_se_leen_del_registro_real(monkeypatch, tmp_path):
+    # Data/IA guarda el campo como 'prerequisitos'; antes AI Core solo leía 'prerrequisitos'
+    # y la lista llegaba siempre vacía.
+    from dataia.common.models import Chunk, ChunkMetadata, DocumentPedagogicalMetadata
+    from dataia.vectorstore import client
+    monkeypatch.setattr(client, "DOCUMENTS_DIRECTORY", str(tmp_path))
+    chunks = [Chunk(text="t", metadata=ChunkMetadata(document_id="doc-p", chunk_id="doc-p-chk-0001", name="a", doc_type="md"))]
+    meta = DocumentPedagogicalMetadata(document_id="doc-p", prerequisitos=["Cuenta OCI"])
+    client.save_document_record("doc-p", chunks, meta)
+    assert obtener_registro_documento("doc-p")["prerrequisitos"] == ["Cuenta OCI"]
+    # También cuando no hay registro en disco y se usa el resultado en memoria
+    ingesta = MagicMock(pedagogical_metadata=meta)
+    assert obtener_registro_documento("doc-sin-registro", ingestion_res=ingesta)["prerrequisitos"] == ["Cuenta OCI"]
+
+
+def test_documento_que_cabe_no_se_clasifica():
+    chunks = _documento({"A": 3, "B": 2})
+    res = seleccionar_fragmentos(chunks, formato="Flashcards", presupuesto_tokens=1000,
+                                 clasificar=lambda _t: pytest.fail("No hace falta clasificar"))
+    assert len(res) == 5
+
+
+def test_documento_grande_clasifica_solo_candidatos():
+    # Antes se clasificaban todos los fragmentos (unos 560 en un libro) para usar unos 30.
+    chunks = _documento({"A": 100, "B": 100, "C": 100})
+    clasificados = []
+
+    def clasificar(textos):
+        clasificados.extend(textos)
+        return ["definicion"] * len(textos)
+
+    res = seleccionar_fragmentos(chunks, formato="Flashcards", presupuesto_tokens=13 * 15, clasificar=clasificar)
+    assert len(clasificados) <= 33  # doble de lo que cabe, redondeando por sección
+    assert len(res) == 15
+    assert _por_seccion(res) == {"A": 5, "B": 5, "C": 5}
+    assert all(r["tipo_contenido"] == "definicion" for r in res)
+    ids = [r["chunk_id"] for r in res]
+    assert ids == sorted(ids)
+
+
+def test_candidatos_cubren_cada_seccion_de_principio_a_fin():
+    chunks = _documento({"A": 50})
+    for c in chunks:
+        c.page_content = f"{c.metadata['chunk_id']} " + "palabra " * 9
+    elegidos = []
+    seleccionar_fragmentos(chunks, formato="Quiz Interactivo", presupuesto_tokens=13 * 5,
+                           clasificar=lambda textos: elegidos.extend(t.split()[0] for t in textos) or ["afirmacion"] * len(textos))
+    assert elegidos[0] == "doc-test-chk-0001" and elegidos[-1] == "doc-test-chk-0050"

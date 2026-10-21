@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import asyncio
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -30,28 +30,37 @@ class AuditorAgent:
             r"forget everything"
         ]
 
-    async def auditar_seguridad_async(self, payload_generado: Dict[str, Any]) -> Tuple[bool, list, list]:
+    async def auditar_seguridad_async(
+        self, payload_generado: Dict[str, Any], texto_fuente: Optional[str] = None
+    ) -> Tuple[bool, list, list]:
         """
         Escanea el paquete generado usando heurísticas rápidas de Python.
+        Con `texto_fuente`, un patrón que también aparece en el documento no se
+        rechaza: un material sobre XSS o LLMs puede citarlo. Solo se rechaza lo
+        que introdujo el modelo. El frontend muestra el contenido como texto.
         Retorna: (is_secure, vulnerabilidades, recomendaciones)
         """
         vulnerabilidades = []
         recomendaciones = []
         is_secure = True
-        
+
         # 1. Serializar a string para escaneo global rápido (sin importar anidación)
         payload_str = json.dumps(payload_generado, ensure_ascii=False).lower()
-        
+        fuente_str = (texto_fuente or "").lower()
+
+        def introducido_por_modelo(pat: str) -> bool:
+            return bool(re.search(pat, payload_str)) and not re.search(pat, fuente_str)
+
         # 2. Escaneo XSS
         for pat in self.xss_patterns:
-            if re.search(pat, payload_str):
+            if introducido_por_modelo(pat):
                 is_secure = False
                 vulnerabilidades.append(f"Posible inyección XSS detectada (patrón: {pat})")
                 recomendaciones.append("Sanitizar fuertemente en Backend y rechazar payload.")
-                
+
         # 3. Escaneo de Fugas de Contexto (Prompt Injection leaks)
         for pat in self.injection_patterns:
-            if re.search(pat, payload_str):
+            if introducido_por_modelo(pat):
                 is_secure = False
                 vulnerabilidades.append(f"Fuga de contexto o Prompt Injection detectado (patrón: {pat})")
                 recomendaciones.append("Revisar las barreras semánticas del Agente Crítico.")

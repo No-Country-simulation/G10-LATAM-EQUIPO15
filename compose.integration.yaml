@@ -30,7 +30,7 @@ services:
     environment:
       IA_BASE_URL: http://ia-http:8001
       IA_HTTP_TIMEOUT_SECONDS: "${IA_HTTP_TIMEOUT_SECONDS:-600}"
-      MAX_DOCUMENT_BYTES: "${IA_MAX_DOCUMENT_BYTES:-10485760}"
+      MAX_DOCUMENT_BYTES: "${IA_MAX_DOCUMENT_BYTES:-26214400}"
       OCI_BUCKET_NAME: "${OCI_BUCKET_NAME:-nuevamente-contenidos-educativos}"
       OCI_STORAGE_ENABLED: "${OCI_STORAGE_ENABLED:-false}"
       OCI_NAMESPACE: "${OCI_NAMESPACE:-}"
@@ -63,13 +63,25 @@ services:
       # Opcional: clave propia para ingestión, chunking y embeddings (Data/IA); si está vacía se usa GOOGLE_API_KEY
       DATAIA_GOOGLE_API_KEY: "${DATAIA_GOOGLE_API_KEY:-}"
       DATAIA_ENRICH_BATCH_SIZE: "${DATAIA_ENRICH_BATCH_SIZE:-15}"
+      DATAIA_ENRICH_CONCURRENCY: "${DATAIA_ENRICH_CONCURRENCY:-4}"
+      DATAIA_ENRICH_MAX_CHARS: "${DATAIA_ENRICH_MAX_CHARS:-120000}"
+      # Opcional: la generación no usa búsqueda vectorial; activar solo para indexar en Chroma
+      DATAIA_EMBEDDINGS_ENABLED: "${DATAIA_EMBEDDINGS_ENABLED:-false}"
       LLM_PROVIDER: gemini
       GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+      # Respaldo ante 503/429: otros modelos Gemini (cuota propia) y luego Groq si hay clave
+      GEMINI_FALLBACK_MODELS: "${GEMINI_FALLBACK_MODELS:-gemini-3.1-flash-lite}"
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      GROQ_MODEL: "${GROQ_MODEL:-openai/gpt-oss-20b,openai/gpt-oss-120b}"
+      GROQ_CRITIC_MODEL: "${GROQ_CRITIC_MODEL:-openai/gpt-oss-120b,openai/gpt-oss-20b}"
       IA_STRICT_PROVIDERS: "1"
-      IA_MAX_DOCUMENT_BYTES: "${IA_MAX_DOCUMENT_BYTES:-10485760}"
+      IA_MAX_DOCUMENT_BYTES: "${IA_MAX_DOCUMENT_BYTES:-26214400}"
+      IA_MAX_PAGINAS: "${IA_MAX_PAGINAS:-50}"
+      IA_MAX_TOKENS_DOCUMENTO: "${IA_MAX_TOKENS_DOCUMENTO:-24000}"
       IA_PROVIDER_TIMEOUT_SECONDS: "${IA_PROVIDER_TIMEOUT_SECONDS:-60}"
       IA_PROVIDER_MAX_RETRIES: "${IA_PROVIDER_MAX_RETRIES:-1}"
       IA_PIPELINE_TIMEOUT_SECONDS: "${IA_PIPELINE_TIMEOUT_SECONDS:-480}"
+      IA_CONTEXTO_PRESUPUESTO_TOKENS: "${IA_CONTEXTO_PRESUPUESTO_TOKENS:-24000}"
       IA_CALLER_TIMEOUT_SECONDS: "${IA_HTTP_TIMEOUT_SECONDS:-600}"
     # ChromaDB, registro de documentos y cachés: un documento se ingiere una sola vez
     volumes:

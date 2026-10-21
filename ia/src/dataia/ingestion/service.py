@@ -1,14 +1,15 @@
 import hashlib
+import json
 import logging
 import os
 import re
-from typing import List, Optional, Union
+from typing import List, Optional
 import pymupdf
 
 from dataia.common.models import (
     DocumentMetadata, ExtractedContent, IngestionResult, IngestionError, IngestionResponse
 )
-from dataia.ingestion.validators import validate_content_not_empty, validate_technical_relevance
+from dataia.ingestion.validators import validate_content_not_empty
 from dataia.ingestion.normalizer import normalize_text
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,27 @@ REPEATED_LINE_RATIO = 0.6
 # Líneas con contenido que se revisan al inicio y al final de cada página
 EDGE_LINES = 3
 _PAGE_COUNTER = re.compile(r"^(.*?)(?:p[aá]g(?:ina)?\.?|page)?\s*\d+\s*(?:/|de|of)\s*\d+$", re.IGNORECASE)
+# La extracción de un PDF grande tarda minutos; se reutiliza por hash del archivo.
+# Cambiar la versión al modificar la extracción invalida las cachés anteriores.
+EXTRACTION_CACHE_VERSION = 1
+EXTRACTION_CACHE_DIR = os.path.join(os.getenv("DATAIA_CACHE_DIR", ".dataia_cache"), "extraction")
+
+def _limite(nombre: str, predeterminado: int) -> int:
+    valor = int(os.getenv(nombre, str(predeterminado)))
+    if valor <= 0:
+        raise ValueError(f"{nombre} debe ser positivo.")
+    return valor
+
+def max_paginas() -> int:
+    """Páginas de PDF admitidas. Se comprueba antes de extraer: contar páginas es inmediato."""
+    return _limite("IA_MAX_PAGINAS", 50)
+
+def max_tokens_documento() -> int:
+    """
+    Texto extraído admitido (tokens estimados), para cualquier formato. Es lo que determina
+    tiempo y costo; los bytes no, porque un PDF con imágenes pesa mucho con poco texto.
+    """
+    return _limite("IA_MAX_TOKENS_DOCUMENTO", 24000)
 
 def generate_document_id(file_path: str) -> str:
     """
@@ -133,6 +155,30 @@ def _extract_pdf(file_path: str, doc_id: str, name: str) -> List[ExtractedConten
         for page_num, text in enumerate(_remove_repeated_lines(texts))
     ]
 
+def _extraction_cache_file(doc_id: str) -> str:
+    return os.path.join(EXTRACTION_CACHE_DIR, f"{doc_id}-v{EXTRACTION_CACHE_VERSION}.json")
+
+def _extract_pdf_cached(file_path: str, doc_id: str, name: str) -> List[ExtractedContent]:
+    """Extracción con caché por hash del archivo; el nombre y la ruta se toman de la solicitud actual."""
+    cache_file = _extraction_cache_file(doc_id)
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                paginas = json.load(f)
+            return [
+                ExtractedContent(text=p["text"], metadata=DocumentMetadata(
+                    document_id=doc_id, name=name, doc_type="pdf", source=file_path, page=p["page"],
+                ))
+                for p in paginas
+            ]
+        except Exception:
+            logger.warning("Caché de extracción ilegible; se vuelve a extraer el documento.")
+    extracted = _extract_pdf(file_path, doc_id, name)
+    os.makedirs(EXTRACTION_CACHE_DIR, exist_ok=True)
+    with open(cache_file, "w", encoding="utf-8") as f:
+        json.dump([{"page": c.metadata.page, "text": c.text} for c in extracted], f, ensure_ascii=False)
+    return extracted
+
 def _extract_txt_md(file_path: str, doc_id: str, name: str, doc_type: str) -> List[ExtractedContent]:
     """Lectura directa para archivos TXT y Markdown."""
     with open(file_path, "r", encoding="utf-8") as f:
@@ -162,7 +208,14 @@ def ingest_document(file_path: str, document_name: Optional[str] = None) -> Inge
     # 1. Extracción según el formato
     try:
         if ext == "pdf":
-            extracted_pages = _extract_pdf(file_path, doc_id, name)
+            with pymupdf.open(file_path) as pdf_document:
+                paginas = len(pdf_document)
+            if paginas > max_paginas():
+                return IngestionError(
+                    codigo="DOCUMENTO_DEMASIADO_EXTENSO",
+                    mensaje=f"El documento tiene {paginas} páginas; el máximo es {max_paginas()}."
+                )
+            extracted_pages = _extract_pdf_cached(file_path, doc_id, name)
         elif ext in ["txt", "md", "markdown"]:
             doc_type = "md" if ext.startswith("md") else "txt"
             extracted_pages = _extract_txt_md(file_path, doc_id, name, doc_type)
@@ -187,14 +240,15 @@ def ingest_document(file_path: str, document_name: Optional[str] = None) -> Inge
             mensaje="El documento no contiene texto suficiente, está vacío o la extracción falló."
         )
 
-    # 3. Validación: Pertinencia Técnica
-    if not validate_technical_relevance(full_text):
+    # 2.1 Validación: extensión del texto, para cualquier formato
+    tokens = int(len(full_text.split()) * 1.3)
+    if tokens > max_tokens_documento():
         return IngestionError(
-            codigo="DOCUMENTO_NO_TECNICO",
-            mensaje="El documento no contiene contenido técnico suficiente para ser procesado por NuevaMente."
+            codigo="DOCUMENTO_DEMASIADO_EXTENSO",
+            mensaje=f"El documento tiene unos {tokens} tokens de texto; el máximo es {max_tokens_documento()}."
         )
 
-    # 4. Normalización final y preparación del resultado
+    # 3. Normalización final y preparación del resultado
     normalized_content = []
     for content in extracted_pages:
         norm_text = normalize_text(content.text)
@@ -202,9 +256,15 @@ def ingest_document(file_path: str, document_name: Optional[str] = None) -> Inge
             content.text = norm_text
             normalized_content.append(content)
 
-    # 4.1 Enriquecimiento pedagógico (IA-02 reapertura)
+    # 4. Enriquecimiento pedagógico (IA-02 reapertura). El mismo análisis decide la
+    # pertinencia: cualquier sector o idioma es válido si contiene conocimiento enseñable.
     from dataia.ingestion.enrichment import enrich_document_metadata
     pedagogical_meta = enrich_document_metadata(doc_id, full_text)
+    if not pedagogical_meta.apto_para_aprendizaje:
+        return IngestionError(
+            codigo="DOCUMENTO_NO_APTO",
+            mensaje="El documento no contiene conocimiento técnico o profesional del que generar material de estudio."
+        )
 
     # 5. Salida Exitosa
     return IngestionResult(

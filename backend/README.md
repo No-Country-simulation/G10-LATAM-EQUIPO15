@@ -58,7 +58,7 @@ El contrato requiere los seis campos del [Schema Response v2.3](../docs/CONTRATO
 | HTTP | Comportamiento |
 |---|---|
 | `413` / `415` | Documento demasiado grande / extensión no soportada |
-| `422` | Parámetros inválidos, archivo vacío o rechazo de ingesta/calidad por IA |
+| `422` | Parámetros inválidos, archivo vacío o rechazo de ingesta/calidad/auditoría de seguridad por IA |
 | `500` | Error interno clasificado por IA |
 | `502` | Error de proveedor/procesamiento, respuesta inválida o incompatible |
 | `503` | IA no disponible, ocupada, no configurada o proveedor sin disponibilidad/cuota |
@@ -121,10 +121,10 @@ docker compose --env-file ia/.env -f compose.integration.yaml down
 | `BACKEND_PORT` | `8000` | Puerto publicado en la máquina local. |
 | `IA_BASE_URL` | `http://ia-http:8001` | URL del servicio IA en la red Docker. |
 | `IA_HTTP_TIMEOUT_SECONDS` | `600` | Tiempo de espera de lectura/escritura de la llamada a IA. Conexión: 5 segundos. |
-| `IA_MAX_DOCUMENT_BYTES` | `10485760` | Límite de documento (10 MiB), aplicado en ambos servicios al usar Compose. |
+| `IA_MAX_DOCUMENT_BYTES` | `26214400` | Límite de transporte (25 MiB), aplicado en ambos servicios al usar Compose. El límite de contenido (páginas y texto) lo aplica IA. |
 | `OCI_BUCKET_NAME` | `nuevamente-contenidos-educativos` | Nombre previsto para el bucket de OCI. |
 
-`compose.integration.yaml` usa `18002` para `BACKEND_PORT` y `18003` para `FRONTEND_PORT`; `backend/compose.yaml` usa `8000`. El proceso Backend recibe el límite como `MAX_DOCUMENT_BYTES`. `/health` verifica el proceso HTTP, sin consultar IA ni Gemini. El límite de documento se aplica después del parser multipart; Nginx limita el cuerpo a 11 MiB, con margen para el archivo de 10 MiB y los campos. Si cambia ese límite, ajustar también el proxy.
+`compose.integration.yaml` usa `18002` para `BACKEND_PORT` y `18003` para `FRONTEND_PORT`; `backend/compose.yaml` usa `8000`. El proceso Backend recibe el límite como `MAX_DOCUMENT_BYTES`. `/health` verifica el proceso HTTP, sin consultar IA ni Gemini. El límite de documento se aplica después del parser multipart; Nginx limita el cuerpo a 26 MiB, con margen para el archivo de 25 MiB y los campos. Si cambia ese límite, ajustar también el proxy.
 
 IA supervisa cada adaptación en un proceso hijo y aplica un presupuesto total de 480 segundos, menor que los 600 segundos de espera de Backend. Al vencer, termina el proceso y devuelve `504 PROVEEDOR_TIMEOUT`; libera la ocupación y elimina el archivo temporal. Compose transmite `IA_HTTP_TIMEOUT_SECONDS` a IA como límite del cliente para verificar que su presupuesto deje margen. Los límites por llamada y reintentos se documentan en el [README de IA](../ia/README.md#límites-de-ejecución). El timeout de Backend por sí solo no envía una orden de cancelación a IA. El pipeline sigue siendo síncrono, con un documento por vez y sin SSE. Compose conserva los índices Chroma, registros y cachés en el volumen Docker de IA, incluso al recrear el contenedor. El almacenamiento opcional añade dos subidas síncronas después de la respuesta de IA, con timeouts propios y sin reintentos automáticos. Su validación real y el despliegue cloud siguen pendientes.
 

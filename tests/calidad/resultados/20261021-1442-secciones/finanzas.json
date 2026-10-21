@@ -1,0 +1,56 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Ejecutivo",
+    "formato_generado": "Resumen Ejecutivo",
+    "tiempo_estimado_estudio_minutos": 5,
+    "conceptos_clave": [
+      "Flujo de caja",
+      "Flujo operativo",
+      "Flujo de inversión",
+      "Flujo de financiamiento",
+      "Ciclo de conversión de efectivo",
+      "Proyección financiera"
+    ],
+    "nicho_contexto": "Fintech"
+  },
+  "contenido_adaptado": {
+    "titulo": "Resumen Ejecutivo: Gestión Estratégica del Flujo de Caja en Fintech",
+    "introduccion_contextualizada": "Para los líderes y tomadores de decisiones en el sector fintech, comprender y gestionar la liquidez es fundamental para la viabilidad operativa. A continuación, se presenta un análisis estratégico del flujo de caja basado en los registros financieros de la empresa.",
+    "items": {
+      "tldr": "El flujo de caja registra el dinero efectivo que entra y sale de la empresa, permitiendo identificar la liquidez real independientemente de las ganancias contables y facilitando la anticipación de faltantes financieros.",
+      "puntos_clave": [
+        "El flujo operativo se deriva de la actividad principal como cobros a clientes y pagos a proveedores y empleados, mientras que el de inversión abarca compra o venta de activos y el de financiamiento refleja préstamos y aportes de socios.",
+        "El ciclo de conversión de efectivo mide los días transcurridos desde que se paga a proveedores hasta que se cobra a clientes, sumando días de inventario y cobro y restando días de pago.",
+        "La proyección del flujo de caja para los próximos meses permite anticipar faltantes de efectivo y negociar financiamiento con tiempo para evitar mayores costos por urgencias."
+      ],
+      "impacto_negocio": "Una empresa puede tener ganancias contables y aun así quedarse sin efectivo si los clientes pagan tarde, por lo que un ciclo de conversión de efectivo más corto reduce la necesidad de financiamiento. Asimismo, proyectar el flujo de caja evita negociar financiamiento con urgencia y a mayor costo.",
+      "recomendaciones": [
+        "Monitorear los tipos de flujo operativo, de inversión y de financiamiento para mantener visibilidad sobre el efectivo entrante y saliente.",
+        "Optimizar el ciclo de conversión de efectivo para disminuir la necesidad de financiamiento externo.",
+        "Implementar proyecciones de flujo de caja a futuro para anticipar requerimientos de liquidez y negociar con anticipación."
+      ],
+      "fuentes": [
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5"
+      ]
+    }
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado presenta una alta fidelidad factual respecto a los fragmentos fuente, estructurando correctamente los conceptos de flujo de caja, tipos de flujo, ciclo de efectivo y proyecciones. El contexto de fintech se introduce de manera didáctica.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "finanzas_flujo_caja.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

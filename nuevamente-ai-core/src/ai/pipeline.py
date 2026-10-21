@@ -15,29 +15,23 @@ from dataia.common.providers import provider_call
 
 logger = logging.getLogger(__name__)
 
-TOP_K_FRAGMENTOS = 15
-
 
 class ContextoInsuficienteError(ValueError):
     """El contenido generado no supera el umbral de fidelidad (mapear a HTTP 422 en Backend)."""
+
+
+class DocumentoDemasiadoExtensoError(ValueError):
+    """El documento supera el máximo de páginas o de texto procesable (mapear a HTTP 413)."""
 
 
 class ContenidoInseguroError(ValueError):
     """La auditoría determinista detectó contenido inseguro o estructura rota (mapear a HTTP 422/500)."""
 
 
-def _construir_query_pedagogica(titulo: str, formato: str) -> str:
-    """Traduce el formato pedagógico solicitado en un vector de búsqueda optimizado para RAG."""
-    fmt = formato.lower()
-    if "flashcards" in fmt:
-        return f"Definiciones, conceptos clave, glosario y terminología de {titulo}"
-    elif "quiz" in fmt:
-        return f"Afirmaciones verificables, datos técnicos, buenas prácticas y reglas de {titulo}"
-    elif "guia" in fmt or "tutorial" in fmt:
-        return f"Ejemplos prácticos, instrucciones paso a paso, fundamentos y aplicación de {titulo}"
-    elif "resumen" in fmt or "tldr" in fmt:
-        return f"Resumen ejecutivo, impacto de negocio, ventajas y visión general de {titulo}"
-    return f"Conceptos principales, arquitectura y reglas de {titulo}"
+def _clasificar_tipos(textos):
+    """Tipo pedagógico de cada fragmento candidato (Data/IA, con caché por texto)."""
+    from dataia.chunking import structural_splitter
+    return [info.tipo_contenido for info in structural_splitter.enrich_chunks_metadata(textos)]
 
 
 def _preparar_estado_inicial(
@@ -76,10 +70,12 @@ def _preparar_estado_inicial(
         ingestion_res = ingest_document(ruta_archivo)
 
     if getattr(ingestion_res, "status", None) != "aprobado":
+        if getattr(ingestion_res, "codigo", None) == "DOCUMENTO_DEMASIADO_EXTENSO":
+            raise DocumentoDemasiadoExtensoError(getattr(ingestion_res, "mensaje", "Documento demasiado extenso."))
         raise ValueError(f"Error de Ingestión: {getattr(ingestion_res, 'mensaje', 'Desconocido')}")
 
     # 2. Chunking e indexación vectorial
-    emitir("INDEXACION", 2, 40, "Segmentando fragmentos jerárquicos y calculando embeddings...")
+    emitir("INDEXACION", 2, 40, "Segmentando y clasificando fragmentos jerárquicos...")
     from dataia.chunking.service import process_chunks
     from dataia.vectorstore.service import process_vectorstore
 
@@ -92,6 +88,7 @@ def _preparar_estado_inicial(
         raise ValueError(f"Error de VectorStore: {getattr(vs_res, 'mensaje', 'Desconocido')}")
 
     # 3. Selección del contexto completo (Fase B)
+    from src.ai import contexto
     from src.ai.contexto import (
         obtener_chunks_documento,
         obtener_registro_documento,
@@ -105,7 +102,9 @@ def _preparar_estado_inicial(
     if not todos_chunks:
         raise ContextoInsuficienteError("Contexto Insuficiente (Error 422): no se recuperaron fragmentos del documento.")
 
-    fragmentos_relevantes = seleccionar_fragmentos(todos_chunks, formato)
+    fragmentos_relevantes = seleccionar_fragmentos(
+        todos_chunks, formato, contexto.PRESUPUESTO_TOKENS_DEFAULT, clasificar=_clasificar_tipos
+    )
     if not fragmentos_relevantes:
         raise ContextoInsuficienteError("Contexto Insuficiente (Error 422): no se seleccionaron fragmentos válidos para el formato.")
 
@@ -193,7 +192,9 @@ def ejecutar_pipeline_adaptacion(
     emitir("AUDITORIA", 4, 80, f"Agente Crítico: Fidelidad evaluada ({score}). Iniciando auditoría heurística...")
 
     from src.ai.agents.auditor import AuditorAgent
-    _aplicar_auditoria(asyncio.run(AuditorAgent().auditar_seguridad_async(paquete_json)))
+    _aplicar_auditoria(asyncio.run(AuditorAgent().auditar_seguridad_async(
+        paquete_json, texto_fuente=estado_inicial["documento_contenido"]
+    )))
 
     emitir("COMPLETADO", 5, 100, "Contenido generado y auditado.")
     return AdaptacionContenidoResponse(**paquete_json)
@@ -251,7 +252,9 @@ async def ejecutar_pipeline_adaptacion_async(
     await _invocar_callback_async(callback_telemetria, "AUDITORIA", 4, 80, f"Agente Crítico: Fidelidad evaluada ({score}). Iniciando auditoría heurística...")
 
     from src.ai.agents.auditor import AuditorAgent
-    _aplicar_auditoria(await AuditorAgent().auditar_seguridad_async(paquete_json))
+    _aplicar_auditoria(await AuditorAgent().auditar_seguridad_async(
+        paquete_json, texto_fuente=estado_inicial["documento_contenido"]
+    ))
 
     await _invocar_callback_async(callback_telemetria, "COMPLETADO", 5, 100, "Contenido generado y auditado.")
     return AdaptacionContenidoResponse(**paquete_json)

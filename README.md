@@ -35,13 +35,13 @@ Este repositorio almacena la documentación arquitectónica, técnica y de gesti
 ## 🛠️ Stack Tecnológico de IA
 *   **Orquestación:** LangGraph (StateGraph, Multi-Agente asíncrono).
 *   **LLM Engine:** Gemini configurable; ejecución HTTP estricta con límites y sin borrador simulado de contingencia.
-*   **Vector Store:** ChromaDB persistente, embeddings de Google y cachés reutilizables por hash del documento.
+*   **Contexto y Vector Store:** fragmentos y metadata en un registro por documento, cachés reutilizables por hash del documento; embeddings de Google en ChromaDB opcionales (`DATAIA_EMBEDDINGS_ENABLED`), ya que la generación no usa búsqueda vectorial.
 *   **Validación:** Pydantic V2 (Esquemas estructurados y prevención de inyecciones prompt/XSS).
 *   **Ejecución y almacenamiento:** Docker local y VM Azure creada con Terraform, con originales y JSON en OCI Object Storage.
 
 ## Ejecutar y verificar
 
-Frontend, Backend y servicio IA (requiere `GOOGLE_API_KEY` en `ia/.env`):
+Frontend, Backend y servicio IA. Copiar `ia/.env.example` como `ia/.env` y completar `GOOGLE_API_KEY`:
 
 ```powershell
 docker compose --env-file ia/.env -f compose.integration.yaml up --build -d --wait

@@ -31,7 +31,8 @@ class VeredictoItem(BaseModel):
             "'respaldada': la afirmación fáctica está sustentada en la fuente. "
             "'no_respaldada': la afirmación no aparece en la fuente (alucinación). "
             "'contradicha': contradice explícitamente lo indicado en la fuente. "
-            "'didactica': recurso pedagógico (analogía, pista, ejemplo de contexto) que ilustra el concepto sin introducir hechos técnicos nuevos."
+            "'didactica': recurso pedagógico (analogía, pista, ejemplo de contexto) que ilustra el concepto sin introducir hechos técnicos nuevos. "
+            "Un ejemplo con cifras, normativas, productos o datos que no están en la fuente es 'no_respaldada'."
         )
     )
     observacion: Optional[str] = Field(None, description="Detalle del hallazgo o corrección sugerida")
@@ -114,7 +115,9 @@ def nodo_critico(state: EstadoPipelineAdaptacion) -> Dict[str, Any]:
         "1. 'respaldada': Toda afirmación fáctica, dato técnico, configuración, servicio o regla que aparezca en la fuente citada o en los fragmentos.\n"
         "2. 'no_respaldada': Afirmación fáctica que NO figura en la fuente (alucinación o invención).\n"
         "3. 'contradicha': Afirmación que dice lo contrario de lo que especifica la fuente.\n"
-        "4. 'didactica': Analogías cotidianas, pistas mnemotécnicas o encuadres de contexto/nicho que ilustran conceptos sin inventar hechos técnicos.\n"
+        "4. 'didactica': Analogías cotidianas, pistas mnemotécnicas o encuadres de contexto/nicho que ilustran conceptos sin inventar hechos técnicos. "
+        "Si una analogía, pista o ejemplo de nicho incluye una cifra, porcentaje, normativa, producto, empresa, dato técnico "
+        "o afirmación verificable que no está en la fuente, clasifícalo como 'no_respaldada', nunca como 'didactica'.\n"
         f"{regla_quiz}"
         "Si el contenido trata un tema completamente ajeno a los fragmentos fuente, emite veredictos 'no_respaldada'.\n\n"
         f"--- FRAGMENTOS FUENTE ---\n{texto_fuente}\n\n"

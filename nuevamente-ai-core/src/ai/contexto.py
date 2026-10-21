@@ -5,13 +5,16 @@ y presupuesto de tokens, con trazabilidad jerárquica (sección, página, tipo).
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+import math
+import os
+from typing import Any, Callable, Dict, List, Optional
 from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 
-# Presupuesto predeterminado de tokens de contexto para la llamada al LLM
-PRESUPUESTO_TOKENS_DEFAULT = 24000
+# Presupuesto predeterminado de tokens de contexto para la llamada al LLM.
+# Configurable: el modelo admite mucho más contexto, a cambio de más latencia y costo.
+PRESUPUESTO_TOKENS_DEFAULT = int(os.getenv("IA_CONTEXTO_PRESUPUESTO_TOKENS", "24000"))
 
 
 def _obtener_cliente_vectorstore():
@@ -84,12 +87,14 @@ def obtener_registro_documento(
             if not isinstance(ped_meta, dict):
                 ped_meta = {
                     "conceptos_clave": getattr(ped_obj, "conceptos_clave", []),
-                    "prerrequisitos": getattr(ped_obj, "prerrequisitos", []),
+                    "prerequisitos": getattr(ped_obj, "prerequisitos", []),
                     "resumen_ejecutivo": getattr(ped_obj, "resumen_ejecutivo", "")
                 }
 
     conceptos = list((ped_meta or {}).get("conceptos_clave") or [])
-    prerrequisitos = list((ped_meta or {}).get("prerrequisitos") or [])
+    # Data/IA guarda 'prerequisitos' (nombre del modelo y de las cachés existentes);
+    # se acepta también 'prerrequisitos' por compatibilidad. AI Core expone 'prerrequisitos'.
+    prerrequisitos = list((ped_meta or {}).get("prerequisitos") or (ped_meta or {}).get("prerrequisitos") or [])
     resumen = (ped_meta or {}).get("resumen_ejecutivo") or ""
 
     return {
@@ -108,15 +113,44 @@ def _estimar_tokens(texto: str) -> int:
     return max(1, int(len(texto.split()) * 1.3))
 
 
+def _preseleccionar_candidatos(chunks: List[Document], objetivo_tokens: float, tokens_totales: int) -> List[Document]:
+    """
+    Candidatos repartidos por sección en proporción a su tamaño y espaciados dentro de cada una,
+    hasta `objetivo_tokens`. Siempre incluye al menos uno por sección. Conserva el orden del documento.
+    """
+    por_seccion: Dict[str, List[Document]] = {}
+    for c in chunks:
+        por_seccion.setdefault(str(c.metadata.get("section") or "General"), []).append(c)
+    elegidos = set()
+    for items in por_seccion.values():
+        tokens_seccion = sum(_estimar_tokens(c.page_content) for c in items)
+        cuota = objetivo_tokens * tokens_seccion / tokens_totales
+        cantidad = min(len(items), max(1, math.ceil(cuota / (tokens_seccion / len(items)))))
+        if cantidad == 1:
+            indices = {0}
+        else:
+            indices = {round(i * (len(items) - 1) / (cantidad - 1)) for i in range(cantidad)}
+        elegidos.update(id(items[i]) for i in indices)
+    return [c for c in chunks if id(c) in elegidos]
+
+
+# Candidatos clasificados por cada fragmento que entra en el presupuesto
+FACTOR_CANDIDATOS = 2
+
+
 def seleccionar_fragmentos(
     chunks: List[Document],
     formato: str,
-    presupuesto_tokens: int = PRESUPUESTO_TOKENS_DEFAULT
+    presupuesto_tokens: int = PRESUPUESTO_TOKENS_DEFAULT,
+    clasificar: Optional[Callable[[List[str]], List[str]]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Selecciona fragmentos respetando el formato didáctico y el presupuesto de tokens:
     - Si el documento completo cabe en el presupuesto, se entrega completo en su orden original.
     - Si supera el presupuesto, prioriza por tipo_contenido y garantiza cobertura por sección.
+    `clasificar(textos) -> tipos` asigna tipo_contenido solo a los candidatos (el doble de lo que
+    cabe): clasificar cientos de fragmentos para usar unos pocos agotaba el tiempo del pipeline.
+    Sin `clasificar`, se usa el tipo_contenido que ya traigan los metadatos.
     Retorna lista de diccionarios con id 'F1'..'Fn' y metadatos pedagógicos.
     """
     if not chunks:
@@ -129,6 +163,17 @@ def seleccionar_fragmentos(
         chunks_seleccionados = list(chunks)
     else:
         # Caso 2: Selección estructurada por formato y sección
+        if clasificar is not None:
+            base = _preseleccionar_candidatos(chunks, presupuesto_tokens * FACTOR_CANDIDATOS, tokens_totales)
+            tipos = clasificar([c.page_content for c in base])
+            base = [
+                Document(page_content=c.page_content, metadata={**(c.metadata or {}), "tipo_contenido": tipo})
+                for c, tipo in zip(base, tipos)
+            ]
+        else:
+            base = list(chunks)
+        tokens_base = sum(_estimar_tokens(c.page_content) for c in base)
+
         fmt = (formato or "").lower()
         if "flashcard" in fmt:
             prioridad_tipos = ["definicion", "afirmacion", "procedimiento", "ejemplo", "codigo", "tabla"]
@@ -139,51 +184,64 @@ def seleccionar_fragmentos(
         else:  # Resumen, Mapa Mental, etc.
             prioridad_tipos = ["definicion", "afirmacion", "procedimiento", "ejemplo", "codigo", "tabla"]
 
-        # Agrupar por sección
+        def prioridad(c: Document) -> int:
+            tipo = c.metadata.get("tipo_contenido")
+            return prioridad_tipos.index(tipo) if tipo in prioridad_tipos else 99
+
+        def clave(c: Document) -> str:
+            return c.metadata.get("chunk_id") or c.page_content
+
+        # Agrupar por sección; dentro de cada una, orden por prioridad de tipo
+        # (el orden estable conserva la posición en el documento ante empates).
         por_seccion: Dict[str, List[Document]] = {}
-        for c in chunks:
+        for c in base:
             sec = str(c.metadata.get("section") or "General")
             por_seccion.setdefault(sec, []).append(c)
+        candidatos = {sec: sorted(items, key=prioridad) for sec, items in por_seccion.items()}
 
         seleccionados_set = set()
         presupuesto_restante = presupuesto_tokens
+        usado_por_seccion = {sec: 0 for sec in por_seccion}
 
-        # Fase A de selección: al menos 1 chunk por sección (para cobertura completa del documento)
-        for sec, items_sec in por_seccion.items():
-            # Ordenar items de la sección según prioridad de tipo
-            items_ordenados = sorted(
-                items_sec,
-                key=lambda x: prioridad_tipos.index(x.metadata.get("tipo_contenido", "afirmacion"))
-                if x.metadata.get("tipo_contenido") in prioridad_tipos else 99
-            )
-            elegido = items_ordenados[0]
-            cid = elegido.metadata.get("chunk_id") or elegido.page_content
-            seleccionados_set.add(cid)
-            presupuesto_restante -= _estimar_tokens(elegido.page_content)
-
-        # Fase B de selección: completar con los chunks de mayor prioridad hasta agotar presupuesto
-        todos_restantes = [
-            c for c in chunks
-            if (c.metadata.get("chunk_id") or c.page_content) not in seleccionados_set
-        ]
-        todos_restantes_ordenados = sorted(
-            todos_restantes,
-            key=lambda x: prioridad_tipos.index(x.metadata.get("tipo_contenido", "afirmacion"))
-            if x.metadata.get("tipo_contenido") in prioridad_tipos else 99
-        )
-
-        for c in todos_restantes_ordenados:
+        def agregar(sec: str, c: Document) -> None:
+            nonlocal presupuesto_restante
             costo = _estimar_tokens(c.page_content)
-            if costo <= presupuesto_restante:
-                cid = c.metadata.get("chunk_id") or c.page_content
-                seleccionados_set.add(cid)
-                presupuesto_restante -= costo
+            seleccionados_set.add(clave(c))
+            presupuesto_restante -= costo
+            usado_por_seccion[sec] += costo
+
+        # Fase A: al menos 1 chunk por sección (cobertura completa del documento).
+        # Tiene prioridad sobre el presupuesto: omitir una sección es peor que exceder el límite.
+        for sec, items in candidatos.items():
+            agregar(sec, items[0])
+
+        # Fase B: cada sección recibe una cuota proporcional a su tamaño en el documento.
+        # Antes se llenaba en orden de aparición y las últimas secciones quedaban con un fragmento.
+        for sec, items in candidatos.items():
+            cuota = presupuesto_tokens * sum(_estimar_tokens(c.page_content) for c in items) / tokens_base
+            for c in items:
+                costo = _estimar_tokens(c.page_content)
+                if clave(c) in seleccionados_set or costo > presupuesto_restante:
+                    continue
+                if usado_por_seccion[sec] + costo <= cuota:
+                    agregar(sec, c)
+
+        # Fase C: el presupuesto sobrante se reparte por turnos entre secciones.
+        pendientes = {sec: [c for c in items if clave(c) not in seleccionados_set] for sec, items in candidatos.items()}
+        hubo_cambios = True
+        while hubo_cambios:
+            hubo_cambios = False
+            for sec, cola in pendientes.items():
+                while cola:
+                    c = cola.pop(0)
+                    # Un chunk que no cabe ahora no cabrá después: el presupuesto solo disminuye.
+                    if _estimar_tokens(c.page_content) <= presupuesto_restante:
+                        agregar(sec, c)
+                        hubo_cambios = True
+                        break
 
         # Preservar siempre el orden secuencial del documento original
-        chunks_seleccionados = [
-            c for c in chunks
-            if (c.metadata.get("chunk_id") or c.page_content) in seleccionados_set
-        ]
+        chunks_seleccionados = [c for c in base if clave(c) in seleccionados_set]
 
     # Formatear la lista de fragmentos resultante con etiquetas F1...Fn
     resultado = []

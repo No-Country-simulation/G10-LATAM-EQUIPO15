@@ -1,0 +1,119 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Quiz Interactivo",
+    "tiempo_estimado_estudio_minutos": 15,
+    "conceptos_clave": [
+      "Triaje",
+      "Urgencias médicas",
+      "Niveles de prioridad",
+      "Signos vitales",
+      "Evaluación inicial",
+      "Reevaluación",
+      "Infraclasificación",
+      "Sobreclasificación"
+    ],
+    "nicho_contexto": "Salud"
+  },
+  "contenido_adaptado": {
+    "titulo": "Quiz de Arquitectura y Procesos de Triaje en Urgencias",
+    "introduccion_contextualizada": "Evaluacion tecnica basada en los protocolos y fundamentos del sistema de triaje estructurado para la toma de decisiones clinicas y operativas en unidades de urgencias.",
+    "items": [
+      {
+        "pregunta": "Bajo el objetivo fundamental del triaje, ¿bajo qué criterio principal se debe clasificar y atender a los pacientes que ingresan a urgencias?",
+        "opciones": [
+          "Estrictamente por riguroso orden de llegada",
+          "Según la gravedad de su estado para priorizar el riesgo vital",
+          "Dependiendo de la disponibilidad de personal de enfermería en el turno",
+          "Con base en el tiempo máximo de estancia administrativa"
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El triaje clasifica a los pacientes según la gravedad de su estado y no según el orden de llegada, con el propósito de que quien corre mayor riesgo vital sea atendido primero y que el tiempo de espera sea seguro.",
+        "pista_didactica": "Piense en qué factor clínico determina la urgencia real en lugar de una cola de atención convencional.",
+        "explicacion_distractores": "La opción basada en el orden de llegada contradice directamente el principio de triaje. La disponibilidad de personal y el tiempo de estancia administrativa no son los criterios de clasificación según el documento fuente.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "En un sistema de triaje estructurado de cinco niveles, ¿cuál es el tiempo objetivo de atención asignado para un paciente clasificado como nivel 2 (muy urgente)?",
+        "opciones": [
+          "Atención inmediata",
+          "10 minutos",
+          "60 minutos",
+          "120 minutos"
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El documento establece explícitamente que el nivel 1 corresponde a la atención inmediata, el nivel 2 es muy urgente con un tiempo objetivo de 10 minutos, el nivel 3 a 60 minutos, el nivel 4 a 120 minutos y el nivel 5 a 240 minutos.",
+        "pista_didactica": "Considere el intervalo inmediatamente posterior a la atención de carácter inmediato.",
+        "explicacion_distractores": "La atención inmediata corresponde al nivel 1. Los 60 minutos corresponden al nivel 3 (urgente) y los 120 minutos corresponden al nivel 4 (menos urgente).",
+        "fuentes": [
+          "F2"
+        ]
+      },
+      {
+        "pregunta": "Durante la evaluación inicial realizada por la enfermera de triaje, ¿cuál de los siguientes conjuntos de parámetros y valoraciones clínicos se deben registrar obligatoriamente según el procedimiento?",
+        "opciones": [
+          "Motivo de consulta, signos vitales (frecuencia cardíaca, presión arterial, frecuencia respiratoria, temperatura y saturación de oxígeno), nivel de conciencia y dolor de 0 a 10",
+          "Exclusivamente el motivo de consulta, la temperatura y la saturación de oxígeno",
+          "Signos vitales completos junto con antecedentes patológicos familiares y ocupacionales",
+          "Valoración de glucemia capilar, nivel de conciencia y escala de dolor de 0 a 10 únicamente"
+        ],
+        "indice_correcto": 0,
+        "justificacion_tecnica": "La fuente especifica que la enfermera de triaje registra el motivo de consulta y los signos vitales (frecuencia cardíaca, presión arterial, frecuencia respiratoria, temperatura y saturación de oxígeno), además de valorar el nivel de conciencia y el dolor con una escala de 0 a 10.",
+        "pista_didactica": "Revise el listado integral de parámetros fisiológicos y escalas mencionados en la fase de evaluación inicial.",
+        "explicacion_distractores": "Las opciones que omiten signos vitales completos, que agregan antecedentes familiares no mencionados o que limitan la evaluación a pocos parámetros contradicen el alcance detallado en el texto fuente.",
+        "fuentes": [
+          "F3"
+        ]
+      },
+      {
+        "pregunta": "En el protocolo de reevaluación, ¿bajo qué circunstancias específicas un paciente debe ser reevaluado o puede cambiar de nivel de prioridad?",
+        "opciones": [
+          "Únicamente cuando el médico de guardia lo solicita de forma aleatoria",
+          "Cuando el paciente decide abandonar la sala de espera por fatiga",
+          "Si el paciente espera más que el tiempo objetivo de su nivel, si sus síntomas cambian, o si empeora (por ejemplo, al aparecer dificultad respiratoria)",
+          "Solo cuando se completa el registro administrativo de admisión"
+        ],
+        "indice_correcto": 2,
+        "justificacion_tecnica": "La prioridad no es definitiva; el texto indica que si un paciente espera más que el tiempo objetivo de su nivel, o si sus síntomas cambian, debe reevaluarse, pudiendo subir de nivel al empeorar, como ante la aparición de dificultad respiratoria.",
+        "pista_didactica": "Analice las condiciones temporales de espera y la evolución sintomatológica descritas en la sección de reevaluación.",
+        "explicacion_distractores": "La solicitud aleatoria del médico, la decisión de abandono por fatiga y el registro administrativo no son los detonantes de reevaluación clínica especificados en el documento.",
+        "fuentes": [
+          "F4"
+        ]
+      },
+      {
+        "pregunta": "Respecto a los errores frecuentes en el proceso de triaje, ¿cómo se define el error considerado como el más grave según la literatura técnica provista?",
+        "opciones": [
+          "La sobreclasificación, por ocupar recursos de atención inmediata innecesariamente",
+          "La infraclasificación, que consiste en asignar a un paciente un nivel menos urgente que el que le corresponde",
+          "Demorar la toma de signos vitales más de sesenta minutos",
+          "No registrar la escala de dolor en pacientes con nivel 5"
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El documento señala explícitamente que el error más grave es la infraclasificación (asignar un nivel menos urgente que el correspondiente), mientras que la sobreclasificación también representa un problema al ocupar recursos de atención inmediata.",
+        "pista_didactica": "Identifique cuál de los fallos de asignación implica subestimar el riesgo real del paciente.",
+        "explicacion_distractores": "Aunque la sobreclasificación es un problema reconocido en la fuente, esta no se cataloga como el error más grave. Las demoras en signos vitales o la omisión específica del dolor en nivel 5 no se definen bajo esos términos en el texto.",
+        "fuentes": [
+          "F5"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado está completamente respaldado por los fragmentos fuente provistos y cumple rigurosamente con los datos e información técnica sobre el triaje en urgencias.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "salud_triaje_urgencias.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

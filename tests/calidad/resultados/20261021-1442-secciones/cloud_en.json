@@ -1,0 +1,82 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 10,
+    "conceptos_clave": [
+      "Least Privilege",
+      "Cloud Identity and Access Management",
+      "Roles and policies",
+      "Service accounts",
+      "Temporary credentials",
+      "Reviewing permissions"
+    ],
+    "nicho_contexto": "Fintech"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de Arquitectura IAM: Principio de Menor Privilegio",
+    "introduccion_contextualizada": "Conjunto de tarjetas de memorización activa diseñadas para ingenieros senior y líderes técnicos en entornos Fintech, enfocado estrictamente en la gestión de accesos e identidades en la nube según el documento fuente provisto.",
+    "items": [
+      {
+        "frente": "What is the principle of least privilege and its primary security purpose?",
+        "dorso": "The principle states that every user, service, or application should receive only the permissions it needs to perform its task, and nothing more. Its purpose is to limit the damage an attacker can cause with stolen credentials.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "How do cloud providers manage permissions using roles and policies, and why use custom roles over broad predefined roles?",
+        "dorso": "Cloud providers group permissions into roles, and policies assign those roles to identities. Broad predefined roles (such as an administrator role) grant far more access than a workload requires, whereas custom roles let teams grant a narrower set of actions.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F2"
+        ]
+      },
+      {
+        "frente": "What are service accounts used for and how should they be scoped per workload?",
+        "dorso": "Applications authenticate with service accounts instead of personal user accounts. Each workload should have its own service account so permissions can be scoped specifically to that workload and revoked independently without affecting others.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F3"
+        ]
+      },
+      {
+        "frente": "Why are long-lived access keys a security risk and how do temporary credentials mitigate it?",
+        "dorso": "Long-lived access keys are a common source of breaches when they leak into code repositories. Temporary credentials expire automatically after a short period, which reduces the window in which a leaked credential can be used.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F4"
+        ]
+      },
+      {
+        "frente": "How should permissions be maintained over time according to review practices?",
+        "dorso": "Permissions tend to accumulate over time. Regular access reviews remove permissions that are no longer used, and access logs help identify which permissions each identity actually exercises.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F5"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado refleja fielmente los fragmentos fuente proporcionados sin introducir ninguna alucinación o datos técnicos externos.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "cloud_iam_least_privilege.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

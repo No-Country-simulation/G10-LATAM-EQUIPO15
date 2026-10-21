@@ -1,0 +1,82 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 10,
+    "conceptos_clave": [
+      "Git",
+      "Ramas",
+      "git switch",
+      "git merge",
+      "git rebase",
+      "Pull requests"
+    ],
+    "nicho_contexto": "General"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de Arquitectura y Flujo de Trabajo con Ramas en Git",
+    "introduccion_contextualizada": "Conjunto de tarjetas de memorización activa enfocadas en la gestión de ramas, integración de código, control de versiones lineales y flujos de revisión basados en el documento fuente para ingenieros y líderes técnicos.",
+    "items": [
+      {
+        "frente": "¿Para qué sirve una rama en Git y cuál es su propósito en el desarrollo?",
+        "dorso": "Una rama es una línea de desarrollo independiente. Permite trabajar en una funcionalidad o corrección sin afectar la rama principal (usualmente llamada main). Al finalizar, la rama se integra de nuevo.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué comando se utiliza para crear una rama nueva y cambiar a ella en un solo paso?",
+        "dorso": "Se utiliza el comando 'git switch -c' seguido del nombre de la rama, por ejemplo: 'git switch -c funcionalidad/login'. Para regresar a la rama principal se emplea 'git switch main'.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cómo actúa 'git merge' y qué sucede si ocurren modificaciones concurrentes en las mismas líneas?",
+        "dorso": "'git merge' combina el historial de otra rama con la rama actual. Si ambas ramas modificaron las mismas líneas de un archivo, Git detiene la integración y marca un conflicto que debe resolverse a mano antes de confirmar.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué efecto produce 'git rebase' en el historial y por qué no se recomienda en commits ya publicados?",
+        "dorso": "'git rebase' reaplica los commits de una rama sobre otra base, produciendo un historial lineal. No se recomienda su uso en commits que ya fueron publicados y que otras personas usan, debido a que reescribe su historia.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cuál es la función de las pull requests en plataformas como GitHub según el flujo de trabajo?",
+        "dorso": "Una pull request propone integrar una rama y permite que otras personas revisen el código antes de aceptarlo. Es habitual exigir que las pruebas automáticas pasen antes de realizar la integración.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado está completamente respaldado por el fragmento fuente y no contiene alucinaciones.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "software_git_ramas.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

@@ -14,6 +14,7 @@ from google.genai.errors import ClientError, ServerError
 from dataia.common.providers import provider_call
 from ia_http import main, runner
 from src.ai.agents import creador
+from src.ai.pipeline import ContenidoInseguroError, DocumentoDemasiadoExtensoError
 from src.ai.schemas import AdaptacionContenidoResponse, NichoSectorEnum, PerfilDestinatarioEnum
 
 FORM = {"perfil_destinatario": "Junior", "formato_salida": "Flashcards", "nicho_sector": "General"}
@@ -229,6 +230,8 @@ def test_service_requires_credentials_and_strict_mode(configured, monkeypatch, m
 @pytest.mark.parametrize("failure,status,code", [
     (ValueError("Contexto Insuficiente (Error 422): private-source"), 422, "CONTEXTO_INSUFICIENTE"),
     (ValueError("Error de Ingestión: private-path"), 422, "DOCUMENTO_RECHAZADO"),
+    (ContenidoInseguroError("Auditoría de seguridad rechazó el contenido: private-pattern"), 422, "CONTENIDO_RECHAZADO"),
+    (DocumentoDemasiadoExtensoError("private-pages"), 413, "DOCUMENTO_DEMASIADO_EXTENSO"),
     (ValueError("Error de Chunking: private-key"), 502, "ERROR_PROCESAMIENTO_IA"),
     (ValueError("Error de VectorStore: private-key"), 502, "ERROR_PROCESAMIENTO_IA"),
     (RuntimeError("private-key"), 500, "ERROR_INTERNO_IA"),

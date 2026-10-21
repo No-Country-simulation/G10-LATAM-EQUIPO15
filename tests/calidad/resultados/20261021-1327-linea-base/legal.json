@@ -1,0 +1,82 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Junior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 10,
+    "conceptos_clave": [
+      "Datos personales",
+      "Datos sensibles",
+      "Licitud y consentimiento",
+      "Finalidad y minimización",
+      "Derechos de los titulares",
+      "Seguridad y notificación"
+    ],
+    "nicho_contexto": "Salud"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de Proteccion de Datos Personales en el Contexto de Salud",
+    "introduccion_contextualizada": "¡Hola, colega en formación! En el sector de la salud tratamos información muy delicada de los pacientes. Estas tarjetas de memorización activa te ayudarán a dominar los conceptos básicos sobre cómo proteger los datos personales según el documento de referencia.",
+    "items": [
+      {
+        "frente": "Dato personal y dato sensible",
+        "dorso": "Un dato personal es cualquier información que identifica o permite identificar a una persona, como el nombre, el documento de identidad, la dirección de correo o la ubicación. Los datos sensibles, como la salud o la orientación política, requieren una protección reforzada.",
+        "pista_didactica": "Piensa en el expediente médico de un paciente: su nombre es una etiqueta clara, pero su historial de salud es un secreto bajo siete llaves que requiere doble seguridad.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "Licitud y consentimiento",
+        "dorso": "El tratamiento de datos debe tener una base legal. Una de las más comunes es el consentimiento, que debe ser libre, informado y específico para una finalidad. Aceptar condiciones generales poco claras no equivale a un consentimiento válido.",
+        "pista_didactica": "Es como pedir permiso explícito a un paciente antes de realizar un procedimiento clínico, explicándole exactamente para qué se usará su información.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "Finalidad y minimización",
+        "dorso": "Los datos solo pueden usarse para la finalidad que se informó al recolectarlos. Además, se debe recolectar únicamente lo necesario para esa finalidad: pedir la fecha de nacimiento para enviar un boletín de noticias excede lo necesario.",
+        "pista_didactica": "Imagina que solo necesitas recetar una medicina y pides el tipo de sangre de un paciente cuando no es relevante para esa receta específica; estarías pidiendo datos de más.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "Derechos de los titulares",
+        "dorso": "Las personas pueden solicitar acceso a sus datos, su rectificación si son incorrectos, su eliminación cuando ya no son necesarios y oponerse a ciertos tratamientos. La organización debe ofrecer un canal para ejercer estos derechos y responder en un plazo razonable.",
+        "pista_didactica": "Es equivalente a cuando un paciente pide revisar su propia historia clínica, corregir un número de teléfono mal anotado o pedir que borren registros que ya no sirven.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "Seguridad y notificación",
+        "dorso": "Quien trata datos debe aplicar medidas técnicas y organizativas para protegerlos, como el control de accesos y el cifrado. Ante una filtración que pueda afectar a los titulares, muchas regulaciones exigen notificar a la autoridad y, en ciertos casos, a las personas afectadas.",
+        "pista_didactica": "Funciona igual que guardar los historiales médicos bajo llave y en cajas fuertes digitales (cifrado), avisando de inmediato al director o autoridad si alguien forzó la cerradura.",
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado es altamente fiel a la fuente proporcionada. Los dorsos reproducen de manera exacta los conceptos clave, y las pistas didácticas cumplen correctamente con la función pedagógica sin introducir datos técnicos falsos ni alucinaciones.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "legal_datos_personales.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

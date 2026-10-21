@@ -17,10 +17,12 @@ IA_ERRORS = {
     "DOCUMENTO_VACIO": (422, "El documento está vacío."),
     "FORMATO_NO_SOPORTADO": (415, "Utilizar PDF, Markdown o TXT."),
     "DOCUMENTO_DEMASIADO_GRANDE": (413, "El documento supera el límite de tamaño del servicio IA."),
+    "DOCUMENTO_DEMASIADO_EXTENSO": (413, "El documento supera el máximo de páginas o de texto que IA puede procesar."),
     "IA_OCUPADA": (503, "IA está procesando otro documento. Reintentar más tarde."),
     "IA_NO_CONFIGURADA": (503, "El servicio IA no está configurado para procesar solicitudes."),
     "CONTEXTO_INSUFICIENTE": (422, "IA rechazó el contenido por no alcanzar su criterio de fidelidad."),
-    "DOCUMENTO_RECHAZADO": (422, "IA no pudo extraer contenido técnico suficiente del documento."),
+    "DOCUMENTO_RECHAZADO": (422, "IA no encontró en el documento contenido suficiente para generar material de estudio."),
+    "CONTENIDO_RECHAZADO": (422, "IA rechazó el contenido generado por no superar la auditoría de seguridad."),
     "PROVEEDOR_TIMEOUT": (504, "El proveedor de IA no respondió a tiempo."),
     "PROVEEDOR_CUOTA_AGOTADA": (503, "El servicio de IA alcanzó su límite de uso. Intenta nuevamente más tarde. "
                                     "Si el problema continúa, contacta al equipo de soporte."),

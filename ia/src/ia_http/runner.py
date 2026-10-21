@@ -12,7 +12,7 @@ import httpx
 from google.genai.errors import APIError
 from pydantic import ValidationError
 
-from src.ai.pipeline import ejecutar_pipeline_adaptacion
+from src.ai.pipeline import ContenidoInseguroError, DocumentoDemasiadoExtensoError, ejecutar_pipeline_adaptacion
 from src.ai.schemas import AdaptacionContenidoResponse
 from dataia.common.providers import provider_limits, safe_error_fields
 
@@ -50,6 +50,10 @@ def _traducir_error(error: Exception) -> PipelineServiceError:
             return PipelineServiceError(503, "PROVEEDOR_NO_DISPONIBLE", "No se pudo contactar al proveedor de IA.")
         current = current.__cause__ or current.__context__
 
+    if isinstance(error, DocumentoDemasiadoExtensoError):
+        return PipelineServiceError(413, "DOCUMENTO_DEMASIADO_EXTENSO", "El documento supera el máximo de páginas o de texto que IA puede procesar.")
+    if isinstance(error, ContenidoInseguroError):
+        return PipelineServiceError(422, "CONTENIDO_RECHAZADO", "IA rechazó el contenido generado por no superar la auditoría de seguridad.")
     if isinstance(error, ValidationError):
         return PipelineServiceError(502, "RESPUESTA_IA_INVALIDA", "IA produjo una respuesta que no cumple su esquema.")
     if isinstance(error, ValueError):
@@ -57,7 +61,7 @@ def _traducir_error(error: Exception) -> PipelineServiceError:
         if message.startswith("Contexto Insuficiente (Error 422):"):
             return PipelineServiceError(422, "CONTEXTO_INSUFICIENTE", "IA rechazó el contenido por no alcanzar su criterio de fidelidad.")
         if message.startswith("Error de Ingestión:"):
-            return PipelineServiceError(422, "DOCUMENTO_RECHAZADO", "IA no pudo extraer contenido técnico suficiente del documento.")
+            return PipelineServiceError(422, "DOCUMENTO_RECHAZADO", "IA no encontró en el documento contenido suficiente para generar material de estudio.")
         # Chunking y VectorStore devuelven mensajes sin preservar el tipo
         # de excepción original. No atribuimos estos fallos al usuario.
         if message.startswith(("Error de Chunking:", "Error de VectorStore:")):

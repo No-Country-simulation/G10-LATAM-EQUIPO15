@@ -1,0 +1,116 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Junior",
+    "formato_generado": "Quiz Interactivo",
+    "tiempo_estimado_estudio_minutos": 15,
+    "conceptos_clave": [
+      "última milla",
+      "logística inversa",
+      "puntos de retiro",
+      "planificación de rutas",
+      "intentos fallidos de entrega"
+    ],
+    "nicho_contexto": "E-commerce"
+  },
+  "contenido_adaptado": {
+    "titulo": "Quiz Interactivo: Logística de Última Milla en Comercio Electrónico",
+    "introduccion_contextualizada": "¡Hola, futuro desarrollador! Bienvenido a este quiz interactivo diseñado especialmente para ti. Imagina que el comercio electrónico es como una gran fiesta de entrega de regalos: la última milla es justo cuando caminas por la sala entregando cada paquete en la mano de su invitado correspondiente. Vamos a revisar juntos los conceptos clave sobre cómo funciona este tramo final según nuestra documentación.",
+    "items": [
+      {
+        "pregunta": "¿Qué es la última milla en el comercio electrónico y por qué se considera la etapa más costosa?",
+        "opciones": [
+          "Es el tramo intermedio entre dos almacenes y es costoso por el uso de trenes de carga.",
+          "Es el tramo final desde el centro de distribución hasta el domicilio del cliente, y es costosa porque cada entrega va a un destino distinto y requiere más tiempo por paquete.",
+          "Es el proceso inicial de empaque en la fábrica y cuesta más por los materiales de embalaje.",
+          "Es el proceso de devolución internacional y su costo se debe a las aduanas."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El texto establece explícitamente que la última milla es el tramo final del envío, desde el centro de distribución hasta el domicilio del cliente, siendo la etapa más costosa porque cada entrega va a un destino distinto y requiere más tiempo por paquete que el transporte entre almacenes.",
+        "pista_didactica": "Piensa en repartir invitaciones puerta a puerta en un vecindario grande en lugar de entregar un paquete gigante a una sola oficina central.",
+        "explicacion_distractores": "La opción A menciona transporte entre almacenes, lo cual el texto diferencia de la última milla; la opción C habla del empaque en fábrica y la opción D de aduanas internacionales, conceptos que la fuente no especifica.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "¿Qué estrategias se mencionan para reducir los costos generados por los intentos fallidos de entrega?",
+        "opciones": [
+          "Llamar por teléfono obligatoriamente a cada cliente cinco minutos antes de salir.",
+          "Ofrecer ventanas horarias de entrega, notificaciones en tiempo real con el estado del pedido y la opción de reprogramar la visita.",
+          "Cobrar una multa automática al cliente por cada intento fallido.",
+          "Contratar personal exclusivo para llamadas de atención al cliente."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "La fuente indica directamente que para reducir los intentos fallidos se ofrecen ventanas horarias de entrega, notificaciones en tiempo real con el estado del pedido y la opción de reprogramar la visita.",
+        "pista_didactica": "Imagina que avisas exactamente a qué hora llegarás para que nadie se vaya de casa.",
+        "explicacion_distractores": "Las opciones A, C y D mencionan llamadas obligatorias, multas automáticas o personal exclusivo de llamadas, las cuales no están presentes en el texto fuente como medidas para este fin.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "¿Cuál es la función principal de los puntos de retiro y los casilleros automáticos en la logística?",
+        "opciones": [
+          "Almacenar productos defectuosos para su destrucción inmediata.",
+          "Concentrar muchas entregas en un mismo lugar para que el cliente recoja cuando le sea conveniente, evitando que el transportista recorra domicilios vacíos.",
+          "Servir como centros de distribución principales entre diferentes ciudades del país.",
+          "Reemplazar por completo a los centros de distribución tradicionales."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El documento señala que los puntos de retiro y casilleros automáticos concentran muchas entregas en un mismo lugar, permitiendo que el cliente recoja el paquete cuando le convenga y evitando que el transportista recorra domicilios en los que nadie puede recibir.",
+        "pista_didactica": "Piensa en un casillero postal comunitario donde dejas varias cartas juntas en vez de ir puerta por puerta.",
+        "explicacion_distractores": "La opción A habla de productos defectuosos, la opción C de centros entre ciudades y la opción D de reemplazos totales, ninguna de las cuales se fundamenta en la fuente.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "¿Qué factores consideran los sistemas de ruteo al momento de planificar las rutas de entrega?",
+        "opciones": [
+          "El clima, la temperatura exterior y la marca del vehículo de reparto.",
+          "El tráfico, la capacidad del vehículo y las ventanas horarias comprometidas con cada cliente.",
+          "La cantidad de empleados disponibles en el centro de distribución y su salario.",
+          "El tipo de embalaje utilizado y el peso exacto en gramos del producto."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "La fuente afirma textualmente que los sistemas de ruteo consideran el tráfico, la capacidad del vehículo y las ventanas horarias comprometidas con cada cliente.",
+        "pista_didactica": "Imagina que organizas un viaje en auto considerando los embotellamientos, cuánto espacio tienes en la cajuela y la hora en que debes llegar a cada parada.",
+        "explicacion_distractores": "Las opciones A, C y D introducen variables técnicas como temperatura, marcas, salarios o gramos que la fuente no menciona en absoluto.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "De acuerdo con el documento, ¿qué implica cada proceso de devolución dentro de la logística inversa?",
+        "opciones": [
+          "Únicamente un registro en una hoja de cálculo digital.",
+          "Un nuevo transporte, inspección del producto y reingreso al inventario.",
+          "La destrucción inmediata del artículo devuelto.",
+          "El reembolso financiero automático sin necesidad de inspeccionar el artículo."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El texto explica claramente que cada devolución implica un nuevo transporte, inspección del producto y reingreso al inventario.",
+        "pista_didactica": "Piensa en una línea de ensamblaje que corre al revés: el producto regresa por el camino, se revisa y vuelve a ponerse en la estantería.",
+        "explicacion_distractores": "La opción A limita el proceso a una hoja de cálculo, la opción C menciona destrucción y la opción D reembolso sin inspección, ideas ajenas al texto provisto.",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado mantiene una alta fidelidad a los fragmentos fuente, utilizando adecuadamente las fuentes para las respuestas correctas y justificaciones técnicas, mientras que los distractores y analogías didácticas cumplen con las reglas establecidas.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "ecommerce_ultima_milla.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}
