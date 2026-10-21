@@ -1,0 +1,44 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Variables de entorno y secretos
+.env
+.env.local
+*.pem
+*.key
+
+# Almacenamiento local ChromaDB / Embeddings
+chroma_db/
+.chroma/
+data/processed/
+data/embeddings/
+
+# Pruebas y cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Archivos de prueba locales y salidas temporales
+*.pdf
+salida_*.json
+scripts/
+benchmark_archivos.py
+cli_interactiva.py
+run_demo_local.py
+data/

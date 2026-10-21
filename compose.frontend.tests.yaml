@@ -1,0 +1,71 @@
+name: nuevamente-web-tests
+
+# Nginx y Backend reales, IA explícitamente simulada; sin claves, puertos ni red externa.
+services:
+  frontend:
+    image: adaptive-content-frontend-web-tests:local
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    image: adaptive-content-backend-web-tests:local
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      IA_BASE_URL: http://ia-fixture:8001
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    depends_on:
+      ia-fixture:
+        condition: service_healthy
+
+  ia-fixture:
+    image: adaptive-content-backend-web-tests:local
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      target: runtime
+    command: [python, /checks/ia_fixture.py]
+    volumes:
+      - ./frontend/tests/ia_fixture.py:/checks/ia_fixture.py:ro
+    read_only: true
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  tests:
+    image: node:24-alpine
+    user: node
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/workspace:ro
+    environment:
+      FRONTEND_TEST_URL: http://frontend:8080
+      IA_FIXTURE_URL: http://ia-fixture:8001
+    command: [node, --test, tests/unit.test.cjs, tests/http.test.cjs, tests/proxy.test.cjs]
+    read_only: true
+    init: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+networks:
+  default:
+    internal: true

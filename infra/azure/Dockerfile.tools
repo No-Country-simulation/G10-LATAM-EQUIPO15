@@ -1,0 +1,7 @@
+FROM hashicorp/terraform:1.16.6 AS terraform
+FROM mcr.microsoft.com/azure-cli:2.91.0-azurelinux3.0
+RUN tdnf install -y openssh-clients tar gzip && tdnf clean all
+COPY --from=terraform /bin/terraform /usr/local/bin/terraform
+ENV AZURE_CONFIG_DIR=/state/azure-auth TF_IN_AUTOMATION=1 TF_INPUT=0
+WORKDIR /state
+ENTRYPOINT ["python3", "/scripts/gestionar.py"]

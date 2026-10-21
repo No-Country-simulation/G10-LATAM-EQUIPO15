@@ -1,0 +1,23 @@
+FROM python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/workspace/nuevamente-ai-core:/workspace/ia/src \
+    ANONYMIZED_TELEMETRY=False
+
+WORKDIR /workspace
+COPY nuevamente-ai-core/requirements.txt nuevamente-ai-core/requirements.txt
+COPY ia/requirements-tests.txt ia/requirements-tests.txt
+RUN pip install --no-cache-dir -r nuevamente-ai-core/requirements.txt -r ia/requirements-tests.txt
+
+COPY nuevamente-ai-core/src nuevamente-ai-core/src
+COPY nuevamente-ai-core/tests nuevamente-ai-core/tests
+COPY ia/src/dataia ia/src/dataia
+
+RUN useradd --create-home --shell /usr/sbin/nologin testuser \
+    && chown -R testuser:testuser /workspace
+USER testuser
+WORKDIR /workspace/nuevamente-ai-core
+
+CMD ["python", "-m", "pytest", "tests", "-q", "--tb=short", "--timeout=30", "--junitxml=/tmp/ia-tests.xml"]
