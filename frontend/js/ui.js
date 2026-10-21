@@ -226,9 +226,30 @@ const UI = {
       pregunta.append(etiqueta);
       return radio;
     });
-    // Las respuestas correctas no se revelan pregunta por pregunta.
-    // La evaluación se muestra únicamente al finalizar el quiz.
+    // Permite comprobar cada respuesta durante el quiz.
+    // La selección solo queda bloqueada cuando se finaliza el cuestionario.
+    const comprobar = this.elemento("button", "Comprobar respuesta", "button-secondary");
+    comprobar.type = "button";
+    const feedback = this.elemento("p", null, "quiz-feedback");
+    feedback.setAttribute("aria-live", "polite");
     const seleccion = () => opciones.findIndex(opcion => opcion.checked);
+    comprobar.addEventListener("click", () => {
+      if (contenedor.classList.contains("quiz-finalizado")) return;
+      const elegida = seleccion();
+      feedback.className = "quiz-feedback";
+      if (elegida === -1) {
+        feedback.textContent = "Elige una opción antes de comprobar.";
+        return;
+      }
+      const correcta = elegida === item.indice_correcto;
+      feedback.classList.add(correcta ? "respuesta-correcta" : "respuesta-incorrecta");
+      feedback.textContent = (correcta
+        ? "Respuesta correcta."
+        : `Respuesta incorrecta. La correcta es: ${item.opciones[item.indice_correcto]}.`)
+        + (item.justificacion_tecnica ? `\\n${item.justificacion_tecnica}` : "")
+        + (!correcta && item.explicacion_distractores ? `\\n${item.explicacion_distractores}` : "");
+    });
+    pregunta.append(comprobar, feedback);
     contenedor.append(pregunta);
     // La comprobación adicional en captura impide que eventos de ratón,
     // teclado o scripts externos alteren preguntas tras finalizar el quiz.
