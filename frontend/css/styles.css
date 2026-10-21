@@ -1438,3 +1438,18 @@ select:focus, input:focus {
   .quiz-confirm-actions { flex-direction: column-reverse; }
   .quiz-confirm-actions button { width: 100%; }
 }
+
+
+/* Quiz finalizado: estado bloqueado visible y controles no interactivos */
+.quiz-pregunta:disabled,
+.quiz-pregunta.quiz-pregunta-finalizada {
+  opacity: .82;
+}
+.quiz-pregunta:disabled .quiz-opcion,
+.quiz-pregunta:disabled button {
+  cursor: not-allowed;
+}
+.quiz-pregunta:disabled button {
+  filter: grayscale(.25);
+  box-shadow: none;
+}
