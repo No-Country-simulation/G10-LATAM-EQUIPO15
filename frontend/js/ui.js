@@ -143,6 +143,15 @@ const UI = {
       resumen.append(pista);
       resumen.classList.remove("oculto");
       document.querySelector(".result-actions")?.prepend(resumen);
+
+      // Al confirmar el resultado, bloquear toda interacción con las preguntas.
+      // Evita comprobar respuestas o cambiar selecciones después de cerrar el quiz.
+      preguntas.forEach(({ elemento }) => {
+        elemento.classList.add("quiz-pregunta-finalizada");
+        elemento.querySelectorAll("input, button").forEach(control => {
+          control.disabled = true;
+        });
+      });
       finalizar.disabled = true;
       finalizar.textContent = "Quiz finalizado";
       resumen.scrollIntoView({ behavior: "smooth", block: "nearest" });
