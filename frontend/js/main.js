@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function volverAConfiguracion() {
     limpiarDocumento();
     AppState.reset();
+    // Evita conservar un desplazamiento horizontal accidental al volver al inicio.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
   // Garantiza que la etiqueta visible se sincronice cada vez que el estado
