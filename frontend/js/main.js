@@ -1,5 +1,8 @@
 // El archivo se conserva al reintentar, pero se limpia al iniciar una nueva configuración.
 document.addEventListener("DOMContentLoaded", () => {
+  // Empezar siempre desde la esquina superior izquierda, evitando restaurar
+  // una posición horizontal accidental al recargar la aplicación.
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   UI.render(AppState.current, AppState.data);
   const formulario = document.getElementById("form-configuracion");
   const inputDocumento = document.getElementById("documento");
@@ -22,6 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function volverAConfiguracion() {
     limpiarDocumento();
     AppState.reset();
+    // Evita conservar un desplazamiento horizontal accidental al volver al inicio.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
   // Garantiza que la etiqueta visible se sincronice cada vez que el estado

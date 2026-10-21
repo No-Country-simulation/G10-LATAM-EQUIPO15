@@ -80,6 +80,8 @@ const UI = {
     }
     document.getElementById("resultado-almacenamiento").textContent = mensajeAlmacenamiento;
     const contenedor = document.getElementById("resultado-items");
+    contenedor.classList.remove("quiz-finalizado");
+    contenedor.removeAttribute("data-quiz-finalizado");
     contenedor.replaceChildren();
     const resumenAnterior = document.querySelector(".result-actions .quiz-score");
     resumenAnterior?.remove();
@@ -106,9 +108,35 @@ const UI = {
     const acciones = this.elemento("div", null, "quiz-final-actions");
     const finalizar = this.elemento("button", "Finalizar quiz y ver resultado", "button-primary");
     finalizar.type = "button";
+    acciones.append(finalizar);
     const resumen = this.elemento("section", null, "quiz-score oculto");
     resumen.setAttribute("aria-live", "polite");
-    finalizar.addEventListener("click", () => {
+
+    // Diálogo de confirmación: permite revisar las preguntas pendientes o finalizar igualmente.
+    const dialogo = this.elemento("dialog", null, "quiz-confirm-dialog");
+    dialogo.setAttribute("aria-labelledby", "quiz-confirm-title");
+    const contenidoDialogo = this.elemento("div", null, "quiz-confirm-content");
+    const iconoAviso = this.elemento("span", "!", "quiz-confirm-icon");
+    iconoAviso.setAttribute("aria-hidden", "true");
+    const tituloDialogo = this.elemento("h3", "¿Finalizar el quiz?", "quiz-confirm-title");
+    tituloDialogo.id = "quiz-confirm-title";
+    const mensajeDialogo = this.elemento("p", "", "quiz-confirm-message");
+    const accionesDialogo = this.elemento("div", null, "quiz-confirm-actions");
+    const revisar = this.elemento("button", "Revisar preguntas", "button-secondary");
+    revisar.type = "button";
+    const finalizarDeTodosModos = this.elemento("button", "Finalizar de todos modos", "button-primary");
+    finalizarDeTodosModos.type = "button";
+    accionesDialogo.append(revisar, finalizarDeTodosModos);
+    contenidoDialogo.append(iconoAviso, tituloDialogo, mensajeDialogo, accionesDialogo);
+    dialogo.append(contenidoDialogo);
+    contenedor.append(acciones, resumen, dialogo);
+
+    const pendientes = () => preguntas.filter(p => p.seleccion() === -1);
+    let quizFinalizado = false;
+
+    const mostrarResultado = () => {
+      if (quizFinalizado) return;
+      quizFinalizado = true;
       const respondidas = preguntas.filter(p => p.seleccion() !== -1).length;
       const correctas = preguntas.filter(p => p.seleccion() === p.correcta).length;
       const total = preguntas.length;
@@ -122,7 +150,7 @@ const UI = {
       if (respondidas < total) {
         resumen.append(this.elemento("p", `Respondiste ${respondidas} de ${total} preguntas. Las preguntas sin responder cuentan como incorrectas en la puntuación final.`, "quiz-score-note"));
       } else {
-        resumen.append(this.elemento("p", "¡Terminaste todas las preguntas! Revisa las justificaciones para reforzar lo aprendido.", "quiz-score-note"));
+        resumen.append(this.elemento("p", "¡Terminaste todas las preguntas! Tu puntuación final está lista.", "quiz-score-note"));
       }
       const pista = this.elemento("div", null, "quiz-score-track");
       const relleno = this.elemento("span");
@@ -130,15 +158,72 @@ const UI = {
       pista.append(relleno);
       resumen.append(pista);
       resumen.classList.remove("oculto");
-      const accionesResultado = document.querySelector(".result-actions");
-      accionesResultado?.prepend(resumen);
-      preguntas.forEach(pregunta => pregunta.bloquear());
+      document.querySelector(".result-actions")?.prepend(resumen);
+
+      // Al confirmar el resultado, bloquear toda interacción con las preguntas.
+      // Evita comprobar respuestas o cambiar selecciones después de cerrar el quiz.
+      contenedor.classList.add("quiz-finalizado");
+      contenedor.setAttribute("data-quiz-finalizado", "true");
+      preguntas.forEach(({ elemento }) => {
+        elemento.disabled = true;
+        elemento.setAttribute("aria-disabled", "true");
+        elemento.classList.add("quiz-pregunta-finalizada");
+        elemento.querySelectorAll("input, button").forEach(control => {
+          control.disabled = true;
+          control.setAttribute("disabled", "");
+          control.setAttribute("aria-disabled", "true");
+          if (control.matches('input[type="radio"]')) control.tabIndex = -1;
+        });
+        elemento.querySelectorAll("label").forEach(etiqueta => {
+          etiqueta.setAttribute("aria-disabled", "true");
+          etiqueta.style.pointerEvents = "none";
+          etiqueta.style.cursor = "not-allowed";
+        });
+      });
       finalizar.disabled = true;
       finalizar.textContent = "Quiz finalizado";
       resumen.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+
+    const completar = () => {
+      if (dialogo.open) dialogo.close();
+      mostrarResultado();
+    };
+
+    finalizar.addEventListener("click", () => {
+      if (quizFinalizado) return;
+      const faltantes = pendientes();
+      if (faltantes.length === 0) {
+        completar();
+        return;
+      }
+      mensajeDialogo.textContent = `Has respondido ${preguntas.length - faltantes.length} de ${preguntas.length} preguntas. ${faltantes.length === 1 ? "Te falta responder 1 pregunta." : `Te faltan responder ${faltantes.length} preguntas.`}`;
+      revisar.dataset.firstPending = String(preguntas.indexOf(faltantes[0]));
+      if (typeof dialogo.showModal === "function") {
+        dialogo.showModal();
+      } else {
+        // Respaldo para navegadores sin soporte de <dialog>.
+        if (window.confirm(`${mensajeDialogo.textContent} ¿Deseas finalizar de todos modos? Cancela para revisar las preguntas.`)) completar();
+        else {
+          faltantes[0].elemento.scrollIntoView({ behavior: "smooth", block: "center" });
+          faltantes[0].elemento.querySelector('input[type="radio"]')?.focus({ preventScroll: true });
+        }
+      }
     });
-    acciones.append(finalizar);
-    contenedor.append(acciones, resumen);
+
+    revisar.addEventListener("click", () => {
+      const indice = Number(revisar.dataset.firstPending);
+      const pendiente = preguntas[indice];
+      dialogo.close();
+      if (pendiente) {
+        pendiente.elemento.scrollIntoView({ behavior: "smooth", block: "center" });
+        pendiente.elemento.querySelector('input[type="radio"]')?.focus({ preventScroll: true });
+      }
+    });
+    finalizarDeTodosModos.addEventListener("click", completar);
+    dialogo.addEventListener("click", evento => {
+      if (evento.target === dialogo) dialogo.close();
+    });
   },
   pregunta(contenedor, item, indice) {
     const pregunta = this.elemento("fieldset", null, "quiz-pregunta");
@@ -153,33 +238,49 @@ const UI = {
       pregunta.append(etiqueta);
       return radio;
     });
-    const comprobar = this.elemento("button", "Comprobar respuesta");
+    // Permite comprobar cada respuesta durante el quiz.
+    // La selección solo queda bloqueada cuando se finaliza el cuestionario.
+    const comprobar = this.elemento("button", "Comprobar respuesta", "button-secondary");
     comprobar.type = "button";
     const feedback = this.elemento("p", null, "quiz-feedback");
     feedback.setAttribute("aria-live", "polite");
     const seleccion = () => opciones.findIndex(opcion => opcion.checked);
     comprobar.addEventListener("click", () => {
+      if (contenedor.classList.contains("quiz-finalizado")) return;
       const elegida = seleccion();
       feedback.className = "quiz-feedback";
       if (elegida === -1) {
-        feedback.textContent = "Elegí una opción antes de comprobar.";
+        feedback.textContent = "Elige una opción antes de comprobar.";
         return;
       }
       const correcta = elegida === item.indice_correcto;
       feedback.classList.add(correcta ? "respuesta-correcta" : "respuesta-incorrecta");
-      feedback.textContent = (correcta ? "Respuesta correcta." : `Respuesta incorrecta. La correcta es: ${item.opciones[item.indice_correcto]}.`)
-        + `\n${item.justificacion_tecnica}`
+      feedback.textContent = (correcta
+        ? "Respuesta correcta."
+        : `Respuesta incorrecta. La correcta es: ${item.opciones[item.indice_correcto]}.`)
+        + (item.justificacion_tecnica ? `\n${item.justificacion_tecnica}` : "")
         + (!correcta && item.explicacion_distractores ? `\n${item.explicacion_distractores}` : "");
     });
     pregunta.append(comprobar, feedback);
     contenedor.append(pregunta);
-    return {
-      seleccion,
-      correcta: item.indice_correcto,
-      bloquear() {
-        opciones.forEach(opcion => { opcion.disabled = true; });
-      },
-    };
+    // Cada pregunta conserva sus controles de eventos; al reemplazarla
+    // también se eliminan, sin acumularlos en el contenedor del resultado.
+    pregunta.addEventListener("click", evento => {
+      if (!contenedor.classList.contains("quiz-finalizado")) return;
+      if (evento.target.closest(".quiz-pregunta")) {
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+      }
+    }, true);
+    pregunta.addEventListener("change", evento => {
+      if (!contenedor.classList.contains("quiz-finalizado")) return;
+      if (evento.target.closest(".quiz-pregunta")) {
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        if (evento.target.matches('input[type="radio"]')) evento.target.checked = false;
+      }
+    }, true);
+    return { seleccion, correcta: item.indice_correcto, elemento: pregunta };
   },
   resumen(contenedor, item) {
     contenedor.append(this.elemento("h3", "Resumen"), this.elemento("p", item.tldr));
