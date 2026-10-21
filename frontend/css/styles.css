@@ -1365,3 +1365,76 @@ select:focus, input:focus {
   .visual-core { width: 112px; height: 112px; }
   .visual-core svg { width: 76px; height: 76px; }
 }
+
+
+/* Confirmación accesible al finalizar un quiz con preguntas pendientes */
+.quiz-confirm-dialog {
+  width: min(480px, calc(100% - 32px));
+  max-width: none;
+  padding: 0;
+  border: 1px solid #dce4fb;
+  border-radius: 20px;
+  color: var(--ink);
+  background: linear-gradient(145deg, #ffffff, #f6f8ff);
+  box-shadow: 0 24px 80px rgba(15, 27, 65, .28);
+}
+.quiz-confirm-dialog::backdrop {
+  background: rgba(9, 17, 43, .58);
+  backdrop-filter: blur(4px);
+}
+.quiz-confirm-content { padding: clamp(24px, 5vw, 34px); }
+.quiz-confirm-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 17px;
+  border: 1px solid #f4d59a;
+  border-radius: 13px;
+  color: #925b08;
+  background: #fff6df;
+  font-size: 23px;
+  font-weight: 800;
+}
+.quiz-confirm-title {
+  margin: 0 0 10px;
+  color: #17233d;
+  font: 800 23px/1.25 "Manrope", sans-serif;
+  letter-spacing: -.035em;
+}
+.quiz-confirm-message {
+  margin: 0;
+  color: #56647e;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.quiz-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+.quiz-confirm-actions button {
+  min-height: 44px;
+  padding: 10px 15px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.quiz-confirm-actions .button-secondary {
+  border: 1px solid #d6def4;
+  color: #34466d;
+  background: #fff;
+}
+.quiz-confirm-actions .button-primary {
+  border: 1px solid transparent;
+  color: #fff;
+  background: linear-gradient(105deg, #7855ff, #405ce6);
+  box-shadow: 0 7px 18px rgba(64, 92, 230, .2);
+}
+.quiz-confirm-actions button:hover { filter: brightness(.98); transform: translateY(-1px); }
+@media (max-width: 480px) {
+  .quiz-confirm-actions { flex-direction: column-reverse; }
+  .quiz-confirm-actions button { width: 100%; }
+}
