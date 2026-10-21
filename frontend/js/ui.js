@@ -96,6 +96,7 @@ const UI = {
     const acciones = this.elemento("div", null, "quiz-final-actions");
     const finalizar = this.elemento("button", "Finalizar quiz y ver resultado", "button-primary");
     finalizar.type = "button";
+    acciones.append(finalizar);
     const resumen = this.elemento("section", null, "quiz-score oculto");
     resumen.setAttribute("aria-live", "polite");
 
