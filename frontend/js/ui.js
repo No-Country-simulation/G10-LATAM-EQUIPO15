@@ -137,7 +137,7 @@ const UI = {
       if (respondidas < total) {
         resumen.append(this.elemento("p", `Respondiste ${respondidas} de ${total} preguntas. Las preguntas sin responder cuentan como incorrectas en la puntuación final.`, "quiz-score-note"));
       } else {
-        resumen.append(this.elemento("p", "¡Terminaste todas las preguntas! Revisa las justificaciones para reforzar lo aprendido.", "quiz-score-note"));
+        resumen.append(this.elemento("p", "¡Terminaste todas las preguntas! Tu puntuación final está lista.", "quiz-score-note"));
       }
       const pista = this.elemento("div", null, "quiz-score-track");
       const relleno = this.elemento("span");
@@ -225,28 +225,9 @@ const UI = {
       pregunta.append(etiqueta);
       return radio;
     });
-    const comprobar = this.elemento("button", "Comprobar respuesta");
-    comprobar.type = "button";
-    const feedback = this.elemento("p", null, "quiz-feedback");
-    feedback.setAttribute("aria-live", "polite");
+    // Las respuestas correctas no se revelan pregunta por pregunta.
+    // La evaluación se muestra únicamente al finalizar el quiz.
     const seleccion = () => opciones.findIndex(opcion => opcion.checked);
-    comprobar.addEventListener("click", () => {
-      // Defensa adicional: no procesar eventos si el quiz ya fue cerrado,
-      // incluso si algún control se reactivara por error.
-      if (pregunta.disabled || pregunta.classList.contains("quiz-pregunta-finalizada")) return;
-      const elegida = seleccion();
-      feedback.className = "quiz-feedback";
-      if (elegida === -1) {
-        feedback.textContent = "Elegí una opción antes de comprobar.";
-        return;
-      }
-      const correcta = elegida === item.indice_correcto;
-      feedback.classList.add(correcta ? "respuesta-correcta" : "respuesta-incorrecta");
-      feedback.textContent = (correcta ? "Respuesta correcta." : `Respuesta incorrecta. La correcta es: ${item.opciones[item.indice_correcto]}.`)
-        + `\n${item.justificacion_tecnica}`
-        + (!correcta && item.explicacion_distractores ? `\n${item.explicacion_distractores}` : "");
-    });
-    pregunta.append(comprobar, feedback);
     contenedor.append(pregunta);
     // La comprobación adicional en captura impide que eventos de ratón,
     // teclado o scripts externos alteren preguntas tras finalizar el quiz.
