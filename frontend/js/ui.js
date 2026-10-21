@@ -149,15 +149,22 @@ const UI = {
 
       // Al confirmar el resultado, bloquear toda interacción con las preguntas.
       // Evita comprobar respuestas o cambiar selecciones después de cerrar el quiz.
+      contenedor.classList.add("quiz-finalizado");
+      contenedor.setAttribute("data-quiz-finalizado", "true");
       preguntas.forEach(({ elemento }) => {
-        // Deshabilitar el fieldset completo es más robusto que bloquear solo
-        // los controles descendientes por separado.
         elemento.disabled = true;
         elemento.setAttribute("aria-disabled", "true");
         elemento.classList.add("quiz-pregunta-finalizada");
         elemento.querySelectorAll("input, button").forEach(control => {
           control.disabled = true;
+          control.setAttribute("disabled", "");
           control.setAttribute("aria-disabled", "true");
+          if (control.matches('input[type="radio"]')) control.tabIndex = -1;
+        });
+        elemento.querySelectorAll("label").forEach(etiqueta => {
+          etiqueta.setAttribute("aria-disabled", "true");
+          etiqueta.style.pointerEvents = "none";
+          etiqueta.style.cursor = "not-allowed";
         });
       });
       finalizar.disabled = true;
@@ -241,6 +248,23 @@ const UI = {
     });
     pregunta.append(comprobar, feedback);
     contenedor.append(pregunta);
+    // La comprobación adicional en captura impide que eventos de ratón,
+    // teclado o scripts externos alteren preguntas tras finalizar el quiz.
+    contenedor.addEventListener("click", evento => {
+      if (!contenedor.classList.contains("quiz-finalizado")) return;
+      if (evento.target.closest(".quiz-pregunta")) {
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+      }
+    }, true);
+    contenedor.addEventListener("change", evento => {
+      if (!contenedor.classList.contains("quiz-finalizado")) return;
+      if (evento.target.closest(".quiz-pregunta")) {
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        if (evento.target.matches('input[type="radio"]')) evento.target.checked = false;
+      }
+    }, true);
     return { seleccion, correcta: item.indice_correcto, elemento: pregunta };
   },
   resumen(contenedor, item) {
