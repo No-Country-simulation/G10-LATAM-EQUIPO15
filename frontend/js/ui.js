@@ -98,7 +98,29 @@ const UI = {
     finalizar.type = "button";
     const resumen = this.elemento("section", null, "quiz-score oculto");
     resumen.setAttribute("aria-live", "polite");
-    finalizar.addEventListener("click", () => {
+
+    // Diálogo de confirmación: permite revisar las preguntas pendientes o finalizar igualmente.
+    const dialogo = this.elemento("dialog", null, "quiz-confirm-dialog");
+    dialogo.setAttribute("aria-labelledby", "quiz-confirm-title");
+    const contenidoDialogo = this.elemento("div", null, "quiz-confirm-content");
+    const iconoAviso = this.elemento("span", "!", "quiz-confirm-icon");
+    iconoAviso.setAttribute("aria-hidden", "true");
+    const tituloDialogo = this.elemento("h3", "¿Finalizar el quiz?", "quiz-confirm-title");
+    tituloDialogo.id = "quiz-confirm-title";
+    const mensajeDialogo = this.elemento("p", "", "quiz-confirm-message");
+    const accionesDialogo = this.elemento("div", null, "quiz-confirm-actions");
+    const revisar = this.elemento("button", "Revisar preguntas", "button-secondary");
+    revisar.type = "button";
+    const finalizarDeTodosModos = this.elemento("button", "Finalizar de todos modos", "button-primary");
+    finalizarDeTodosModos.type = "button";
+    accionesDialogo.append(revisar, finalizarDeTodosModos);
+    contenidoDialogo.append(iconoAviso, tituloDialogo, mensajeDialogo, accionesDialogo);
+    dialogo.append(contenidoDialogo);
+    contenedor.append(acciones, resumen, dialogo);
+
+    const pendientes = () => preguntas.filter(p => p.seleccion() === -1);
+
+    const mostrarResultado = () => {
       const respondidas = preguntas.filter(p => p.seleccion() !== -1).length;
       const correctas = preguntas.filter(p => p.seleccion() === p.correcta).length;
       const total = preguntas.length;
@@ -120,14 +142,50 @@ const UI = {
       pista.append(relleno);
       resumen.append(pista);
       resumen.classList.remove("oculto");
-      const accionesResultado = document.querySelector(".result-actions");
-      accionesResultado?.prepend(resumen);
+      document.querySelector(".result-actions")?.prepend(resumen);
       finalizar.disabled = true;
       finalizar.textContent = "Quiz finalizado";
       resumen.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+
+    const completar = () => {
+      if (dialogo.open) dialogo.close();
+      mostrarResultado();
+    };
+
+    finalizar.addEventListener("click", () => {
+      const faltantes = pendientes();
+      if (faltantes.length === 0) {
+        completar();
+        return;
+      }
+      mensajeDialogo.textContent = `Has respondido ${preguntas.length - faltantes.length} de ${preguntas.length} preguntas. ${faltantes.length === 1 ? "Te falta responder 1 pregunta." : `Te faltan responder ${faltantes.length} preguntas.`}`;
+      revisar.dataset.firstPending = String(preguntas.indexOf(faltantes[0]));
+      if (typeof dialogo.showModal === "function") {
+        dialogo.showModal();
+      } else {
+        // Respaldo para navegadores sin soporte de <dialog>.
+        if (window.confirm(`${mensajeDialogo.textContent} ¿Deseas finalizar de todos modos? Cancela para revisar las preguntas.`)) completar();
+        else {
+          faltantes[0].elemento.scrollIntoView({ behavior: "smooth", block: "center" });
+          faltantes[0].elemento.querySelector('input[type="radio"]')?.focus({ preventScroll: true });
+        }
+      }
     });
-    acciones.append(finalizar);
-    contenedor.append(acciones, resumen);
+
+    revisar.addEventListener("click", () => {
+      const indice = Number(revisar.dataset.firstPending);
+      const pendiente = preguntas[indice];
+      dialogo.close();
+      if (pendiente) {
+        pendiente.elemento.scrollIntoView({ behavior: "smooth", block: "center" });
+        pendiente.elemento.querySelector('input[type="radio"]')?.focus({ preventScroll: true });
+      }
+    });
+    finalizarDeTodosModos.addEventListener("click", completar);
+    dialogo.addEventListener("click", evento => {
+      if (evento.target === dialogo) dialogo.close();
+    });
   },
   pregunta(contenedor, item, indice) {
     const pregunta = this.elemento("fieldset", null, "quiz-pregunta");
@@ -162,7 +220,7 @@ const UI = {
     });
     pregunta.append(comprobar, feedback);
     contenedor.append(pregunta);
-    return { seleccion, correcta: item.indice_correcto };
+    return { seleccion, correcta: item.indice_correcto, elemento: pregunta };
   },
   resumen(contenedor, item) {
     contenedor.append(this.elemento("h3", "Resumen"), this.elemento("p", item.tldr));
