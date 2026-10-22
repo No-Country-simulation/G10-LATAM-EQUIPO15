@@ -222,7 +222,9 @@ def test_api_key_configuration_uses_private_profile_and_region_override(monkeypa
 
 
 @pytest.fixture
-def endpoint_factory(sdk_factory):
+def endpoint_factory(sdk_factory, monkeypatch):
+    # Estas regresiones verifican el contrato dual original; el catálogo se prueba aparte.
+    monkeypatch.setattr(settings, "HISTORY_ENABLED", False)
     clients = []
     def create(handler=None, statuses=(200, 200)):
         sdk, transport = sdk_factory(statuses)
@@ -280,4 +282,14 @@ def test_ia_cannot_claim_backend_storage_results(endpoint_factory, claimed):
     response = post_document(client)
     assert response.status_code == 502
     assert response.json()["detail"]["codigo"] == "RESPUESTA_IA_INVALIDA"
+    assert transport.calls == []
+
+
+@pytest.mark.parametrize("reference", [None, {"status":"disponible", "documento_id":"identificador-propuesto-por-ia"}])
+def test_ia_no_puede_proponer_un_historial_confirmado(endpoint_factory, reference):
+    data = payload()
+    data["historial"] = reference
+    client, transport = endpoint_factory(lambda request: httpx.Response(200, json=data))
+    response = post_document(client)
+    assert response.status_code == 502
     assert transport.calls == []

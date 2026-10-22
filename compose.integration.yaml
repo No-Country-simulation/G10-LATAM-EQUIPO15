@@ -39,6 +39,8 @@ services:
       OCI_CONFIG_FILE: "${OCI_CONFIG_FILE:-/run/secrets/oci/config}"
       OCI_CONFIG_PROFILE: "${OCI_CONFIG_PROFILE:-DEFAULT}"
       OCI_HTTP_TIMEOUT_SECONDS: "${OCI_HTTP_TIMEOUT_SECONDS:-10}"
+      HISTORY_ENABLED: "${HISTORY_ENABLED:-true}"
+      HISTORY_COOKIE_SECURE: "${HISTORY_COOKIE_SECURE:-false}"
     depends_on:
       ia-http:
         condition: service_healthy

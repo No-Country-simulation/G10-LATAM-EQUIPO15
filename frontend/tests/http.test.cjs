@@ -10,6 +10,7 @@ const tipos = {
   'css/styles.css': 'text/css',
   'js/state.js': 'application/javascript',
   'js/api.js': 'application/javascript',
+  'js/history.js': 'application/javascript',
   'js/ui.js': 'application/javascript',
   'js/main.js': 'application/javascript',
 };

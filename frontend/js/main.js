@@ -7,6 +7,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const formulario = document.getElementById("form-configuracion");
   const inputDocumento = document.getElementById("documento");
   const nombreArchivo = document.getElementById("nombre-archivo");
+  let documentoGuardado = null;
+  if (typeof Historial !== 'undefined') Historial.iniciar();
+  document.addEventListener('app:documento-guardado', evento => {
+    AppState.reset();
+    documentoGuardado = evento.detail;
+    inputDocumento.required = false;
+    nombreArchivo.textContent = `${documentoGuardado.nombre} · Guardado en tu historial`;
+    nombreArchivo.classList.add('has-file');
+    document.getElementById('documento-contexto').textContent = 'Usaremos el original guardado. Generar otro material puede consumir cuota de IA.';
+  });
+  inputDocumento.addEventListener('change', () => {
+    documentoGuardado = null;
+    inputDocumento.required = true;
+    const contexto = document.getElementById('documento-contexto');
+    if (contexto) contexto.textContent = 'Tu documento es la fuente para generar el material de estudio.';
+  });
 
   formulario.addEventListener("submit", async evento => {
     evento.preventDefault();
@@ -17,9 +33,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("boton-nuevo").addEventListener("click", volverAConfiguracion);
 
   function limpiarDocumento() {
+    documentoGuardado = null;
+    inputDocumento.required = true;
     inputDocumento.value = "";
     nombreArchivo.textContent = "Ningún archivo seleccionado";
     nombreArchivo.classList.remove("has-file");
+    const contexto = document.getElementById('documento-contexto');
+    if (contexto) contexto.textContent = 'Tu documento es la fuente para generar el material de estudio.';
   }
 
   function volverAConfiguracion() {
@@ -50,9 +70,13 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     AppState.setState("PROCESSING", { documento, configuracion, resultado: null, error: null });
     try {
-      const resultado = await Api.generarContenido(documento, configuracion, stage => {
+      if (typeof Historial !== 'undefined') await Api.inicializarHistorial();
+      const onStage = stage => {
         document.dispatchEvent(new CustomEvent("app:processing-stage", { detail: { stage } }));
-      });
+      };
+      const resultado = documentoGuardado
+        ? await Api.adaptarGuardado(documentoGuardado.id, configuracion, onStage)
+        : await Api.generarContenido(documento, configuracion, onStage);
       // Deja que el navegador pinte la etapa de validación antes de mostrar el resultado.
       // No es un porcentaje de progreso: es una pausa breve para que el cambio de estado sea perceptible.
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));

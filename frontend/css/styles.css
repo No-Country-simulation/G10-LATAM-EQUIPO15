@@ -29,6 +29,19 @@ button:disabled { cursor: wait; opacity: .62; }
 a { color: inherit; }
 svg { display: block; }
 .oculto { display: none !important; }
+.history-nav { display: flex; gap: 8px; }
+.history-nav button { border: 1px solid #65759a; background: transparent; color: #fff; padding: 9px 12px; border-radius: 8px; white-space: nowrap; }
+.history-nav button[aria-current] { background: #eef1ff; color: var(--navy); border-color: #eef1ff; }
+.history-notice { color: var(--muted); background: var(--blue-soft); padding: 14px 18px; border-radius: 12px; font-size: 13px; }
+.history-list { display: grid; gap: 18px; margin: 20px 0; }
+.history-card { min-width: 0; border: 1px solid var(--line); border-radius: 16px; padding: 24px; background: var(--surface); }
+.history-card h3, .history-adaptation h4 { overflow-wrap: anywhere; margin-bottom: 8px; }
+.history-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.history-actions button, .history-panel > button { width: auto; min-height: 42px; }
+.history-link { color: var(--blue-dark); font-size: 13px; text-underline-offset: 3px; }
+.history-adaptation { background: var(--page); border-radius: 10px; padding: 18px; margin-top: 16px; }
+.history-error { color: var(--danger); }
+@media (max-width: 800px) { .topbar .status-pill, .topbar .topbar-label, .topbar .topbar-divider { display: none; } .history-nav button { padding: 8px; font-size: 12px; } }
 :focus-visible { outline: 3px solid #7c91ff; outline-offset: 3px; }
 
 .app-shell { min-height: 100vh; }

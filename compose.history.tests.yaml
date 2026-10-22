@@ -1,0 +1,54 @@
+name: nuevamente-history-qa
+
+# QA local únicamente. Ninguna credencial real y ninguna llamada a proveedores.
+services:
+  frontend:
+    image: nuevamente-history-frontend:local
+    build: { context: frontend }
+    ports: ["127.0.0.1:18008:8080"]
+    depends_on:
+      backend: { condition: service_healthy }
+    read_only: true
+    tmpfs: [/tmp]
+  backend:
+    image: nuevamente-history-backend:local
+    build: { context: backend, target: tests }
+    command: [python, /app/tests/history_server.py]
+    environment:
+      IA_BASE_URL: http://ia-fixture:8001
+      PYTHONPATH: /app:/app/tests
+    user: root
+    volumes: ["history-fixture:/data"]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    depends_on:
+      ia-fixture: { condition: service_healthy }
+  ia-fixture:
+    image: nuevamente-history-backend:local
+    pull_policy: never
+    command: [python, /checks/ia_fixture.py]
+    volumes: ["./frontend/tests/ia_fixture.py:/checks/ia_fixture.py:ro"]
+    ports: ["127.0.0.1:18009:8001"]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  tests:
+    image: node:24-alpine
+    profiles: [checks]
+    working_dir: /workspace
+    volumes: ["./frontend:/workspace:ro"]
+    environment:
+      FRONTEND_TEST_URL: http://frontend:8080
+      IA_FIXTURE_URL: http://ia-fixture:8001
+    command: [node, --test, tests/history.proxy.test.cjs]
+    read_only: true
+    depends_on:
+      frontend: { condition: service_healthy }
+
+volumes:
+  history-fixture:

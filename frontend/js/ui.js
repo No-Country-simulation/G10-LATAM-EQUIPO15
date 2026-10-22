@@ -79,6 +79,11 @@ const UI = {
       mensajeAlmacenamiento = "No se pudo confirmar el almacenamiento en OCI. El contenido generado está disponible.";
     }
     document.getElementById("resultado-almacenamiento").textContent = mensajeAlmacenamiento;
+    if (resultado.historial?.status === 'disponible') {
+      document.getElementById('resultado-almacenamiento').textContent += ' Disponible en Mis documentos.';
+    } else if (resultado.historial?.status === 'error') {
+      document.getElementById('resultado-almacenamiento').textContent += ' No se confirmó su registro en el historial.';
+    }
     const contenedor = document.getElementById("resultado-items");
     contenedor.classList.remove("quiz-finalizado");
     contenedor.removeAttribute("data-quiz-finalizado");

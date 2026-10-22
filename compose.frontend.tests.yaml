@@ -57,7 +57,7 @@ services:
     environment:
       FRONTEND_TEST_URL: http://frontend:8080
       IA_FIXTURE_URL: http://ia-fixture:8001
-    command: [node, --test, tests/unit.test.cjs, tests/http.test.cjs, tests/proxy.test.cjs]
+    command: [node, --test, tests/unit.test.cjs, tests/history.test.cjs, tests/history.ui.test.cjs, tests/http.test.cjs, tests/proxy.test.cjs]
     read_only: true
     init: true
     cap_drop: [ALL]

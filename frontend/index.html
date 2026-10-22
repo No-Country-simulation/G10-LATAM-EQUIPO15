@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=quiz-lock-20261021" />
+  <link rel="stylesheet" href="css/styles.css?v=historial-20261021" />
 </head>
 <body>
   <div class="app-shell">
@@ -21,6 +21,10 @@
         <span class="brand-copy"><strong>NuevaMente</strong><small>LEARNING INTELLIGENCE</small></span>
       </a>
       <div class="topbar-right">
+        <nav class="history-nav" aria-label="Navegación principal">
+          <button id="boton-crear" type="button" aria-current="page">Crear material</button>
+          <button id="boton-historial" type="button">Mis documentos</button>
+        </nav>
         <span class="status-pill"><span class="status-dot"></span> Plataforma disponible</span>
         <span class="topbar-divider" aria-hidden="true"></span>
         <span class="topbar-label">Tu espacio de aprendizaje</span>
@@ -50,6 +54,18 @@
         </div>
       </section>
 
+      <section id="seccion-historial" class="workspace history-panel oculto" aria-labelledby="historial-titulo">
+        <div class="workspace-heading">
+          <div><span class="section-kicker">TU BIBLIOTECA</span><h2 id="historial-titulo">Mis documentos</h2>
+            <p>Volvé a tu material de estudio o creá otra adaptación desde un documento guardado.</p></div>
+          <button id="historial-actualizar" type="button" class="button-secondary">Actualizar</button>
+        </div>
+        <p class="history-notice">Este historial pertenece a este navegador. Si borrás sus datos o usás otro dispositivo, no tendrás acceso automático. Incluye los documentos guardados desde esta versión.</p>
+        <p id="historial-estado" role="status" aria-live="polite">Preparando tu historial…</p>
+        <div id="historial-documentos" class="history-list"></div>
+        <button id="historial-mas" type="button" class="button-secondary oculto">Más documentos</button>
+      </section>
+
       <section class="workspace" id="workspace" aria-label="Espacio de trabajo">
         <div class="workspace-heading">
           <div>
@@ -73,7 +89,7 @@
                 <input type="file" id="documento" name="documento_original" accept=".pdf,.md,.markdown,.txt" required />
                 <span class="file-name" id="nombre-archivo" aria-live="polite">Ningún archivo seleccionado</span>
               </div>
-              <span class="field-hint">Tu documento es la fuente para generar el material de estudio.</span>
+              <span class="field-hint" id="documento-contexto">Tu documento es la fuente para generar el material de estudio.</span>
             </div>
 
             <div class="form-grid">
@@ -161,9 +177,10 @@
   </div>
 
   <script src="js/state.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/ui.js?v=quiz-lock-20261021-3"></script>
-  <script src="js/main.js?v=quiz-lock-20261021"></script>
+  <script src="js/api.js?v=historial-20261021"></script>
+  <script src="js/ui.js?v=historial-20261021"></script>
+  <script src="js/history.js?v=historial-20261021"></script>
+  <script src="js/main.js?v=historial-20261021"></script>
   <script>
     // Mejora visual progresiva: informa el nombre del archivo sin interferir con el flujo existente.
     document.addEventListener("DOMContentLoaded", () => {

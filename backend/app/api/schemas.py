@@ -87,6 +87,13 @@ class AlmacenamientoOCI(ContratoIA):
     mensaje: str | None = None
 
 
+class HistorialReferencia(BaseModel):
+    status: Literal["disponible", "error"]
+    documento_id: str | None = None
+    adaptacion_id: str | None = None
+    mensaje: str | None = None
+
+
 class AdaptacionResponse(ContratoIA):
     status: Literal["exito", "success"]
     metadatos: MetadatosContenido
@@ -94,6 +101,7 @@ class AdaptacionResponse(ContratoIA):
     evaluacion_calidad: EvaluacionCalidad
     almacenamiento_oci: AlmacenamientoOCI
     codigo_respuesta: Literal[200]
+    historial: HistorialReferencia | None = None
 
     @model_validator(mode="after")
     def validar_formato_contenido(self):

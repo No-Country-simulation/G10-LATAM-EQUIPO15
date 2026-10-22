@@ -46,7 +46,10 @@ class OCIStorage:
         self.client_factory = client_factory
         self.clock = clock or (lambda: datetime.now(timezone.utc))
 
-    def guardar(self, documento, resultado: AdaptacionResponse) -> AdaptacionResponse:
+    def guardar(self, documento, resultado: AdaptacionResponse, scope: str | None = None) -> AdaptacionResponse:
+        if scope is not None and not re.fullmatch(r"[a-f0-9]{64}", scope):
+            raise ValueError("Propietario de almacenamiento inválido.")
+        prefix = f"historial-archivos-v1/{scope}/" if scope is not None else ""
         # IA puede haber consumido el stream. Persistimos exactamente el original.
         documento.file.seek(0)
         original = documento.file.read()
@@ -55,11 +58,12 @@ class OCIStorage:
         suffix = Path(filename).suffix.lower()
         stem = re.sub(r"[^A-Za-z0-9_-]", "_", Path(filename).stem).strip("_")[:64] or "documento"
         period = self.clock().strftime("%Y/%m")
-        source_key = f"documentos-fuente/{period}/{digest}-{stem}{suffix}"
+        source_key = f"{prefix}documentos-fuente/{period}/{digest}-{stem}{suffix}"
         # Ignoramos los nombres de objetos propuestos por IA. El Backend los asigna.
-        content = resultado.model_dump(mode="json", exclude_unset=True, exclude={"almacenamiento_oci"})
+        content = resultado.model_dump(mode="json", exclude_unset=True, exclude={"almacenamiento_oci", "historial"})
         artifact_digest = sha256(json_bytes(content)).hexdigest()
-        artifact_key = f"artefactos-generados/{period}/{digest}-{artifact_digest}.json"
+        source_reference = "-" + sha256(source_key.encode()).hexdigest()[:16] if scope else ""
+        artifact_key = f"{prefix}artefactos-generados/{period}/{digest}-{artifact_digest}{source_reference}.json"
         stored = resultado.model_copy(update={"almacenamiento_oci": AlmacenamientoOCI(
             bucket=self.bucket, objeto_id=artifact_key, status_upload="subido",
             ruta_publica_o_par=None, documento_original_objeto_id=source_key,

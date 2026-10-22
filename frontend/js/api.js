@@ -38,6 +38,9 @@ const Api = {
         ? mensaje
         : `No se pudo completar la adaptación (HTTP ${respuesta.status}). Podés reintentar.`);
     }
+    return this.validarResultado(resultado, configuracion);
+  },
+  validarResultado(resultado, configuracion) {
     const metadatos = resultado?.metadatos;
     const contenido = resultado?.contenido_adaptado;
     if (!["exito", "success"].includes(resultado?.status)
@@ -67,5 +70,44 @@ const Api = {
     }
     if (!valido) throw new Error("El servidor devolvió contenido incompatible con el formato solicitado.");
     return resultado;
+  },
+  inicializarHistorial() {
+    if (!this.inicioHistorial) {
+      const preparar = () => this.pedirHistorial('/historial/sesion');
+      // En localhost/HTTPS, serializa la primera cookie entre pestañas del mismo origen.
+      const solicitud = typeof navigator !== 'undefined' && navigator.locks
+        ? navigator.locks.request('nuevamente-historial-inicio', preparar) : preparar();
+      this.inicioHistorial = solicitud.catch(error => {
+        this.inicioHistorial = null;
+        throw error;
+      });
+    }
+    return this.inicioHistorial;
+  },
+  async pedirHistorial(ruta, opciones = {}) {
+    let respuesta;
+    try {
+      respuesta = await fetch('/api/v1' + ruta, {
+        ...opciones, credentials: 'same-origin',
+        signal: AbortSignal.timeout(opciones.method === 'POST' ? 660000 : 30000),
+      });
+    } catch {
+      throw new Error('No se pudo conectar con el historial. Revisá la conexión y reintentá.');
+    }
+    let datos;
+    try { datos = await respuesta.json(); } catch {
+      throw new Error('El servidor no devolvió una respuesta válida para el historial.');
+    }
+    if (!respuesta.ok) throw new Error(datos?.detail?.mensaje || 'No se pudo consultar el historial.');
+    return datos;
+  },
+  async adaptarGuardado(documentoId, configuracion, onStage = () => {}) {
+    await this.inicializarHistorial();
+    onStage('waiting');
+    const resultado = await this.pedirHistorial(`/documentos/${encodeURIComponent(documentoId)}/adaptaciones`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(configuracion),
+    });
+    onStage('validating');
+    return this.validarResultado(resultado, configuracion);
   },
 };

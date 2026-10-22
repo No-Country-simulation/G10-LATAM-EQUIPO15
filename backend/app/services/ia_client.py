@@ -100,7 +100,7 @@ class IAClient:
         if (metadata.perfil_aplicado.value, metadata.formato_generado.value, metadata.nicho_contexto.value) != (perfil, formato, nicho):
             raise invalid_response()
         # Solo Backend puede confirmar una subida. IA propone un almacenamiento pendiente.
-        if result.almacenamiento_oci.status_upload not in {"pendiente", "listo_para_subida"}:
+        if result.almacenamiento_oci.status_upload not in {"pendiente", "listo_para_subida"} or "historial" in payload:
             raise invalid_response()
         return result
 
