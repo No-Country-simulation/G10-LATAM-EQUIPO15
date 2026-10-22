@@ -67,8 +67,50 @@ def test_documento_corto_genera_un_fragmento_por_seccion():
     # Antes un documento corto quedaba en un único fragmento y toda cita era F1.
     text = "# Título\n\n## Bóveda\n\nGuarda la relación entre token y PAN.\n\n## Cifrado\n\nEs reversible con la clave.\n"
     pieces = StructuralSplitter().split_with_sections(text)
-    assert [p.section for p in pieces] == ["Bóveda", "Cifrado"]
-    assert pieces[0].text.startswith("## Bóveda") and "Cifrado" not in pieces[0].text
+    assert [p.section for p in pieces] == ["Título > Bóveda", "Título > Cifrado"]
+    assert pieces[0].text.startswith("# Título\n\n## Bóveda") and "Cifrado" not in pieces[0].text
+
+
+def test_subtitulos_repetidos_conservan_sus_titulos_padre():
+    text = (
+        "# Planes\n\n## Gratuito\n\n### Usuarios\n\nSe permite 1 usuario.\n\n"
+        "## Premium\n\n### Usuarios\n\nSe permiten 10 usuarios.\n"
+    )
+    pieces = StructuralSplitter().split_with_sections(text)
+    assert [p.section for p in pieces] == [
+        "Planes > Gratuito > Usuarios", "Planes > Premium > Usuarios",
+    ]
+    assert pieces[0].text.startswith("# Planes\n\n## Gratuito\n\n### Usuarios")
+    assert pieces[1].text.startswith("# Planes\n\n## Premium\n\n### Usuarios")
+    assert "Premium" not in pieces[0].text and "Gratuito" not in pieces[1].text
+    assert text[pieces[0].start:pieces[0].end] == "### Usuarios\n\nSe permite 1 usuario."
+
+
+def test_seccion_extensa_repite_contexto_sin_arrastrar_titulos_anteriores():
+    text = (
+        "# Manual\n\n## Anterior\n\nTexto previo.\n\n"
+        "## Actual\n\n### Requisitos\n\n" + TECH_TEXT * 30
+        + "\n\n# Otro manual\n\n## Requisitos\n\nTexto final.\n"
+    )
+    pieces = StructuralSplitter(chunk_size=100, chunk_overlap=15).split_with_sections(text)
+    requisitos = [p for p in pieces if p.section == "Manual > Actual > Requisitos"]
+    assert len(requisitos) > 1
+    assert all(p.text.startswith("# Manual\n\n## Actual\n\n### Requisitos") for p in requisitos)
+    assert all("Anterior" not in p.text for p in requisitos)
+    assert pieces[-1].section == "Otro manual > Requisitos"
+    assert pieces[-1].text.startswith("# Otro manual\n\n## Requisitos")
+    assert "## Actual" not in pieces[-1].text
+
+
+def test_titulos_padre_no_alteran_las_paginas_del_contenido():
+    chunks = perform_structural_chunking("doc-x", [
+        content("# Manual\n\n## Gratuito", page=1),
+        content("### Usuarios\n\nSe permite 1 usuario.", page=2),
+    ])
+    assert len(chunks) == 1
+    assert chunks[0].metadata.section == "Manual > Gratuito > Usuarios"
+    assert chunks[0].metadata.page == chunks[0].metadata.page_end == 2
+    assert chunks[0].text.startswith("# Manual\n\n## Gratuito\n\n### Usuarios")
 
 
 def test_texto_sin_titulos_agrupa_parrafos(monkeypatch):

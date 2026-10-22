@@ -142,7 +142,7 @@ def _clean_header_title(title: str) -> str:
     return re.sub(r"[*_`]+", "", title).strip()
 
 class SplitPiece(NamedTuple):
-    text: str              # Texto final del chunk (con el título de su sección si se antepuso)
+    text: str              # Texto final del chunk, con el contexto de sus títulos
     start: int             # Posición del chunk en el texto original
     end: int
     section: Optional[str]
@@ -239,6 +239,16 @@ class StructuralSplitter:
     def split_with_sections(self, text: str) -> List[SplitPiece]:
         headers = self._header_positions(text)
         header_offsets = [offset for offset, _ in headers]
+        # Un subtítulo pertenece a los encabezados de menor nivel que lo preceden.
+        # Al pasar a una sección hermana se descarta la rama anterior, no sus ancestros.
+        hierarchy: List[Tuple[int, str]] = []
+        header_paths: List[List[str]] = []
+        for _, header_line in headers:
+            level = len(HEADER_PATTERN.match(header_line).group(1))
+            while hierarchy and hierarchy[-1][0] >= level:
+                hierarchy.pop()
+            hierarchy.append((level, header_line))
+            header_paths.append([line for _, line in hierarchy])
 
         located: List[Tuple[str, int]] = []
         for seg_start, seg_end in self._segments(text, headers):
@@ -255,15 +265,13 @@ class StructuralSplitter:
         pieces = []
         for chunk, start in located:
             if not chunk or HEADER_PATTERN.fullmatch(chunk.strip()):
-                # Un título aislado no aporta contenido: los chunks siguientes ya lo llevan antepuesto
+                # Los títulos sin texto propio se conservan en el contexto de sus descendientes.
                 continue
             index = bisect_right(header_offsets, start) - 1
-            header_line = headers[index][1] if index >= 0 else None
-            final_text = chunk
-            if header_line and not chunk.startswith(header_line):
-                # Se antepone el título de la sección a la que pertenece el inicio del chunk
-                final_text = f"{header_line}\n\n{chunk}"
-            section = _clean_header_title(HEADER_PATTERN.match(header_line).group(2)) if header_line else None
+            path = header_paths[index] if index >= 0 else []
+            prefix = path[:-1] if path and chunk.startswith(path[-1]) else path
+            final_text = "\n\n".join([*prefix, chunk])
+            section = " > ".join(_clean_header_title(HEADER_PATTERN.match(line).group(2)) for line in path)
             pieces.append(SplitPiece(final_text, start, start + len(chunk), section or None))
         return pieces
 

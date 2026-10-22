@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+from tempfile import NamedTemporaryFile
 from typing import List, Optional
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -8,6 +10,8 @@ from dataia.common.credentials import get_google_api_key
 from dataia.common.models import Chunk, DocumentPedagogicalMetadata
 from dataia.common.providers import provider_call, provider_http_options
 from google import genai
+
+logger = logging.getLogger(__name__)
 
 # Carpeta de persistencia configurable por entorno (Local / Docker-OCI)
 PERSIST_DIRECTORY = os.getenv("CHROMADB_DIR", os.path.join(os.getcwd(), ".chromadb_data"))
@@ -128,13 +132,39 @@ def save_document_record(
         "pedagogical_metadata": pedagogical_metadata.model_dump() if pedagogical_metadata else None,
         "chunk_records": chunk_records(chunks),
     }
-    with open(_document_record_path(document_id), "w", encoding="utf-8") as f:
-        json.dump(record, f, ensure_ascii=False, indent=2)
+    # El archivo definitivo solo cambia una vez completado el JSON. El temporal
+    # está en el mismo directorio para que el reemplazo sea atómico en el volumen.
+    temporary_path = None
+    try:
+        with NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=DOCUMENTS_DIRECTORY,
+            prefix=f".{document_id}.", suffix=".tmp", delete=False,
+        ) as f:
+            temporary_path = f.name
+            json.dump(record, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary_path, _document_record_path(document_id))
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            try:
+                os.unlink(temporary_path)
+            except FileNotFoundError:
+                pass
 
 def load_document_record(document_id: str) -> Optional[dict]:
-    """Devuelve el registro del documento o None si no fue indexado."""
+    """Devuelve el registro, o None si falta o está dañado y debe regenerarse."""
     path = _document_record_path(document_id)
-    if not os.path.exists(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            record = json.load(f)
+    except FileNotFoundError:
         return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        logger.warning("Registro de documento ilegible; se regenerará: %s", document_id)
+        return None
+    if not isinstance(record, dict):
+        logger.warning("Registro de documento inválido; se regenerará: %s", document_id)
+        return None
+    return record
