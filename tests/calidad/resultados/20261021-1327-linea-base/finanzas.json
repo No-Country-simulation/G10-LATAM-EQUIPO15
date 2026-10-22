@@ -1,0 +1,52 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Ejecutivo",
+    "formato_generado": "Resumen Ejecutivo",
+    "tiempo_estimado_estudio_minutos": 5,
+    "conceptos_clave": [
+      "Flujo de caja",
+      "Flujo operativo",
+      "Flujo de inversión",
+      "Flujo de financiamiento",
+      "Ciclo de conversión de efectivo",
+      "Proyección financiera"
+    ],
+    "nicho_contexto": "Fintech"
+  },
+  "contenido_adaptado": {
+    "titulo": "Resumen Ejecutivo: Gestión de Flujo de Caja para Pequeñas Empresas y Fintech",
+    "introduccion_contextualizada": "El presente informe traduce los conceptos fundamentales sobre la gestión del flujo de caja a un lenguaje ejecutivo y estratégico para la toma de decisiones financieras en entornos fintech.",
+    "items": {
+      "tldr": "El flujo de caja registra el movimiento efectivo de dinero, diferenciándose de las ganancias contables y permitiendo anticipar faltantes de liquidez mediante la gestión de flujos operativos, de inversión y financiamiento.",
+      "puntos_clave": [
+        "El flujo de caja registra el dinero que efectivamente entra y sale de la empresa en un período, destacando que una empresa puede tener ganancias contables pero quedarse sin efectivo si los clientes pagan tarde.",
+        "Se divide en tres tipos: operativo (actividad principal como cobros y pagos), de inversión (compra o venta de activos) y de financiamiento (préstamos y aportes de socios).",
+        "El ciclo de conversión de efectivo mide los días transcurridos desde que se paga a proveedores hasta que se cobra a clientes; acortarlo reduce la necesidad de financiamiento.",
+        "La proyección del flujo de caja para los próximos meses permite anticipar faltantes de efectivo y negociar financiamiento con tiempo para evitar costos mayores por urgencias."
+      ],
+      "impacto_negocio": "Permite a la dirección anticipar faltantes de efectivo para negociar financiamiento con tiempo en lugar de hacerlo con urgencia y a mayor costo, además de comprender la liquidez real más allá de las ganancias contables y optimizar el ciclo de conversión de efectivo para reducir necesidades de financiamiento.",
+      "recomendaciones": [
+        "Monitorear el ciclo de conversión de efectivo sumando días de inventario y cobro, y restando días de pago a proveedores para reducir la necesidad de financiamiento.",
+        "Proyectar el flujo de caja para los próximos meses con el fin de anticipar faltantes de efectivo y negociar financiamiento con anticipación."
+      ],
+      "fuentes": [
+        "F1"
+      ]
+    }
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado refleja fielmente los conceptos de la fuente sobre el flujo de caja, sin introducir alucinaciones de datos técnicos. Se añade leve contexto estratégico de nivel ejecutivo sin alterar la fidelidad de los hechos.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "finanzas_flujo_caja.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

@@ -32,6 +32,8 @@ Estos documentos conservan antecedentes y propuestas. Ante diferencias de enums,
 - [Propuesta AI Core](19_PROPUESTA_CAMBIOS_AI_CORE.md): propuestas posteriores a la Fase A.
 - [Resolución integral de Marcos](20_RESOLUCION_INTEGRAL_ARQUITECTURA_DATA_IA.md): cambios y pendientes identificados por AI Core.
 - [Reporte de integración](18_REPORTE_INTEGRACION_DATAIA_LANGGRAPH.md)
+- [Resumen de cambios y pruebas (octubre 2026)](21_RESUMEN_CAMBIOS_Y_PRUEBAS.md): auditor, prompts, filtro multisector, límites, respaldo Gemini/Groq y resultados reales.
+- [Sustentación de las decisiones](22_SUSTENTACION_DECISIONES_RECURSOS_GRATUITOS.md): recursos gratuitos y foco en documentos cortos.
 - [Formatos de salida](16_FORMATOS_DE_SALIDA_JSON.md)
 
 ## Dossier y planes

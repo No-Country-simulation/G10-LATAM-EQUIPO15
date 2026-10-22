@@ -22,6 +22,7 @@ def offline(monkeypatch, tmp_path):
     monkeypatch.delenv("IA_STRICT_PROVIDERS", raising=False)
     monkeypatch.setattr(structural_splitter, "CACHE_DIR", str(tmp_path / "chunk_cache"))
     monkeypatch.setattr(client, "DOCUMENTS_DIRECTORY", str(tmp_path / "documents"))
+    monkeypatch.setattr(ingestion, "EXTRACTION_CACHE_DIR", str(tmp_path / "extraction"))
     monkeypatch.setattr(enrichment, "enrich_document_metadata", lambda doc_id, _text: enrichment.DocumentPedagogicalMetadata(document_id=doc_id))
 
 
@@ -62,6 +63,74 @@ def test_titulo_dentro_de_codigo_no_es_seccion():
     assert all(piece.text.startswith("# Instalación") for piece in pieces)
 
 
+def test_documento_corto_genera_un_fragmento_por_seccion():
+    # Antes un documento corto quedaba en un único fragmento y toda cita era F1.
+    text = "# Título\n\n## Bóveda\n\nGuarda la relación entre token y PAN.\n\n## Cifrado\n\nEs reversible con la clave.\n"
+    pieces = StructuralSplitter().split_with_sections(text)
+    assert [p.section for p in pieces] == ["Título > Bóveda", "Título > Cifrado"]
+    assert pieces[0].text.startswith("# Título\n\n## Bóveda") and "Cifrado" not in pieces[0].text
+
+
+def test_subtitulos_repetidos_conservan_sus_titulos_padre():
+    text = (
+        "# Planes\n\n## Gratuito\n\n### Usuarios\n\nSe permite 1 usuario.\n\n"
+        "## Premium\n\n### Usuarios\n\nSe permiten 10 usuarios.\n"
+    )
+    pieces = StructuralSplitter().split_with_sections(text)
+    assert [p.section for p in pieces] == [
+        "Planes > Gratuito > Usuarios", "Planes > Premium > Usuarios",
+    ]
+    assert pieces[0].text.startswith("# Planes\n\n## Gratuito\n\n### Usuarios")
+    assert pieces[1].text.startswith("# Planes\n\n## Premium\n\n### Usuarios")
+    assert "Premium" not in pieces[0].text and "Gratuito" not in pieces[1].text
+    assert text[pieces[0].start:pieces[0].end] == "### Usuarios\n\nSe permite 1 usuario."
+
+
+def test_seccion_extensa_repite_contexto_sin_arrastrar_titulos_anteriores():
+    text = (
+        "# Manual\n\n## Anterior\n\nTexto previo.\n\n"
+        "## Actual\n\n### Requisitos\n\n" + TECH_TEXT * 30
+        + "\n\n# Otro manual\n\n## Requisitos\n\nTexto final.\n"
+    )
+    pieces = StructuralSplitter(chunk_size=100, chunk_overlap=15).split_with_sections(text)
+    requisitos = [p for p in pieces if p.section == "Manual > Actual > Requisitos"]
+    assert len(requisitos) > 1
+    assert all(p.text.startswith("# Manual\n\n## Actual\n\n### Requisitos") for p in requisitos)
+    assert all("Anterior" not in p.text for p in requisitos)
+    assert pieces[-1].section == "Otro manual > Requisitos"
+    assert pieces[-1].text.startswith("# Otro manual\n\n## Requisitos")
+    assert "## Actual" not in pieces[-1].text
+
+
+def test_titulos_padre_no_alteran_las_paginas_del_contenido():
+    chunks = perform_structural_chunking("doc-x", [
+        content("# Manual\n\n## Gratuito", page=1),
+        content("### Usuarios\n\nSe permite 1 usuario.", page=2),
+    ])
+    assert len(chunks) == 1
+    assert chunks[0].metadata.section == "Manual > Gratuito > Usuarios"
+    assert chunks[0].metadata.page == chunks[0].metadata.page_end == 2
+    assert chunks[0].text.startswith("# Manual\n\n## Gratuito\n\n### Usuarios")
+
+
+def test_texto_sin_titulos_agrupa_parrafos(monkeypatch):
+    monkeypatch.setattr(structural_splitter, "PARAGRAPH_GROUP_TOKENS", 50)  # ~2 párrafos por grupo
+    parrafos = [f"Párrafo {n} con contenido técnico sobre logística y entregas." * 2 for n in range(4)]
+    pieces = StructuralSplitter().split_with_sections("\n\n".join(parrafos))
+    assert 1 < len(pieces) < 4
+    assert all(p.text.strip().startswith("Párrafo") for p in pieces)  # no corta párrafos a la mitad
+    assert "".join(p.text for p in pieces).replace("\n", "") == "".join(parrafos)
+
+
+def test_bloque_de_codigo_con_lineas_en_blanco_no_se_parte(monkeypatch):
+    monkeypatch.setattr(structural_splitter, "PARAGRAPH_GROUP_TOKENS", 5)
+    text = "Texto previo con varias palabras de contexto.\n\n```bash\ngit switch main\n\ngit merge rama\n```\n\nTexto final."
+    pieces = StructuralSplitter().split_with_sections(text)
+    assert any("git switch main\n\ngit merge rama" in p.text for p in pieces)
+    assert all(p.text.count("```") % 2 == 0 for p in pieces)
+    assert "Texto final." in pieces[-1].text  # no se pierde contenido alrededor del bloque
+
+
 def test_titulo_aislado_no_genera_chunk():
     pieces = StructuralSplitter().split_with_sections("## Tokens\n\n" + "Firma del token JWT. " * 400)
     assert all(piece.text.strip() != "## Tokens" for piece in pieces)
@@ -90,25 +159,137 @@ def test_enriquecimiento_por_lotes_cache_y_reintento(monkeypatch):
         return {0: INFO}  # omite el segundo fragmento de cada lote
 
     monkeypatch.setattr(structural_splitter, "_enrich_batch", fake_batch)
-    monkeypatch.setattr(structural_splitter, "enrich_chunk_metadata", lambda _id, _text: INFO)
     texts = ["uno", "dos", "tres"]
     assert structural_splitter.enrich_chunks_metadata(texts) == [INFO, INFO, INFO]
-    assert calls == [["uno", "dos"], ["tres"]]
+    # Los omitidos se reintentan juntos en una llamada (antes, uno por uno y en serie).
+    # Los lotes corren en paralelo: el orden de las llamadas no está garantizado.
+    assert sorted(calls) == [["dos"], ["tres"], ["uno", "dos"]]
 
     calls.clear()
     structural_splitter.enrich_chunks_metadata(["uno", "tres"])
     assert calls == []  # ambos quedaron en caché
 
 
-def test_enriquecimiento_sin_proveedor(monkeypatch):
+def test_enriquecimiento_clasifica_lotes_en_paralelo(monkeypatch):
+    import threading
+
+    monkeypatch.setenv("IA_STRICT_PROVIDERS", "1")
+    monkeypatch.setattr(structural_splitter, "BATCH_SIZE", 1)
+    monkeypatch.setattr(structural_splitter, "CONCURRENCY", 2)
+    # Solo se libera si dos lotes están en curso a la vez; en serie, vence y falla.
+    barrier = threading.Barrier(2, timeout=5)
+
+    def fake_batch(texts):
+        barrier.wait()
+        return {0: INFO}
+
+    monkeypatch.setattr(structural_splitter, "_enrich_batch", fake_batch)
+    assert structural_splitter.enrich_chunks_metadata(["uno", "dos"]) == [INFO, INFO]
+
+
+def test_enriquecimiento_clasifica_una_vez_los_textos_repetidos(monkeypatch):
+    calls = []
+    monkeypatch.setattr(structural_splitter, "_enrich_batch", lambda texts: calls.append(list(texts)) or {i: INFO for i in range(len(texts))})
+    assert structural_splitter.enrich_chunks_metadata(["uno", "uno", "dos"]) == [INFO, INFO, INFO]
+    assert calls == [["uno", "dos"]]
+
+
+@pytest.mark.parametrize("estricto", [False, True])
+def test_enriquecimiento_sin_proveedor_no_corta_la_solicitud(monkeypatch, estricto):
+    # La clase solo ordena prioridades al seleccionar contexto: un 503 en un lote
+    # no debe hacer fallar la adaptación completa, tampoco en modo estricto.
+    if estricto:
+        monkeypatch.setenv("IA_STRICT_PROVIDERS", "1")
+
     def fail(_texts):
         raise ConnectionError("sin red")
 
     monkeypatch.setattr(structural_splitter, "_enrich_batch", fail)
     assert structural_splitter.enrich_chunks_metadata(["uno"])[0].concepto_principal == "General"
-    monkeypatch.setenv("IA_STRICT_PROVIDERS", "1")
-    with pytest.raises(ConnectionError):
-        structural_splitter.enrich_chunks_metadata(["dos"])
+    # La clase por defecto no se guarda en caché: con proveedor disponible se clasifica.
+    monkeypatch.setattr(structural_splitter, "_enrich_batch", lambda texts: {0: INFO})
+    assert structural_splitter.enrich_chunks_metadata(["uno"]) == [INFO]
+
+
+def test_chunking_no_llama_al_proveedor(monkeypatch):
+    monkeypatch.setattr(structural_splitter, "_enrich_batch", lambda _texts: pytest.fail("El chunking ya no clasifica"))
+    chunks = perform_structural_chunking("doc-x", [content("## JWT\n\n" + TECH_TEXT * 5)])
+    assert chunks and all(c.metadata.tipo_contenido == "afirmacion" for c in chunks)
+
+
+def _pdf(path, paginas, texto=TECH_TEXT):
+    document = pymupdf.open()
+    for _ in range(paginas):
+        document.new_page().insert_text((72, 72), texto)
+    document.save(path)
+    document.close()
+
+
+def test_pdf_con_demasiadas_paginas_se_rechaza_antes_de_extraer(tmp_path, monkeypatch):
+    monkeypatch.setenv("IA_MAX_PAGINAS", "3")
+    monkeypatch.setattr(ingestion, "_extract_pdf", lambda *_a: pytest.fail("No debe extraer"))
+    _pdf(tmp_path / "libro.pdf", 4)
+    result = ingestion.ingest_document(str(tmp_path / "libro.pdf"))
+    assert (result.status, result.codigo) == ("rechazado", "DOCUMENTO_DEMASIADO_EXTENSO")
+
+
+def test_texto_demasiado_extenso_se_rechaza_en_cualquier_formato(tmp_path, monkeypatch):
+    monkeypatch.setenv("IA_MAX_TOKENS_DOCUMENTO", "100")
+    path = tmp_path / "largo.md"
+    path.write_text(TECH_TEXT * 10, encoding="utf-8")
+    result = ingestion.ingest_document(str(path))
+    assert (result.status, result.codigo) == ("rechazado", "DOCUMENTO_DEMASIADO_EXTENSO")
+
+
+def test_pdf_pesado_con_pocas_paginas_se_acepta(tmp_path):
+    # El límite es de contenido, no de bytes: una imagen grande no cuenta como texto.
+    document = pymupdf.open()
+    page = document.new_page()
+    page.insert_text((72, 72), TECH_TEXT)
+    pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 1500, 1500), False)
+    page.insert_image(page.rect, pixmap=pix)
+    document.save(tmp_path / "pesado.pdf")
+    document.close()
+    assert ingestion.ingest_document(str(tmp_path / "pesado.pdf")).status == "aprobado"
+
+
+def test_extraccion_de_pdf_se_reutiliza_por_hash(tmp_path, monkeypatch):
+    _pdf(tmp_path / "a.pdf", 2)
+    first = ingestion.ingest_document(str(tmp_path / "a.pdf"), document_name="original.pdf")
+    monkeypatch.setattr(ingestion, "_extract_pdf", lambda *_a: pytest.fail("Debe usar la caché"))
+    second = ingestion.ingest_document(str(tmp_path / "a.pdf"), document_name="otro-nombre.pdf")
+    assert [c.text for c in second.content] == [c.text for c in first.content]
+    assert [c.metadata.page for c in second.content] == [1, 2]
+    assert second.content[0].metadata.name == "otro-nombre.pdf"
+
+
+@pytest.mark.parametrize("texto", [
+    # Sectores sin vocabulario informático: antes se rechazaban con DOCUMENTO_NO_TECNICO.
+    "El embudo de conversión mide cuántos visitantes avanzan desde el anuncio hasta la compra. "
+    "Una campaña con segmentación por intereses reduce el costo por adquisición.",
+    "La hipertensión arterial se diagnostica con dos mediciones elevadas en consultas distintas. "
+    "El tratamiento inicial combina cambios en la dieta y actividad física.",
+    "A Java class can extend only one superclass but implement multiple interfaces. "
+    "Static methods belong to the class rather than to an instance.",
+])
+def test_documentos_de_cualquier_sector_e_idioma_se_aceptan(tmp_path, texto):
+    path = tmp_path / "documento.md"
+    path.write_text(texto, encoding="utf-8")
+    assert ingestion.ingest_document(str(path)).status == "aprobado"
+
+
+def test_documento_no_apto_segun_el_modelo_se_rechaza(tmp_path, monkeypatch):
+    monkeypatch.setattr(enrichment, "enrich_document_metadata", lambda doc_id, _text:
+        enrichment.DocumentPedagogicalMetadata(document_id=doc_id, apto_para_aprendizaje=False))
+    path = tmp_path / "documento.md"
+    path.write_text("Hola, ¿nos vemos mañana a las 8? Llevo las entradas del cine y algo para comer.", encoding="utf-8")
+    result = ingestion.ingest_document(str(path))
+    assert (result.status, result.codigo) == ("rechazado", "DOCUMENTO_NO_APTO")
+
+
+def test_metadata_en_cache_anterior_se_considera_apta():
+    # Las cachés creadas antes de este campo no lo tienen y no deben rechazar documentos ya procesados.
+    assert enrichment.DocumentPedagogicalMetadata(document_id="doc-x").apto_para_aprendizaje is True
 
 
 def test_document_id_estable_y_nombre_original(tmp_path):
@@ -201,6 +382,32 @@ def test_registro_documento():
     assert record["sections"] == ["S"]
     assert record["pedagogical_metadata"]["conceptos_clave"] == ["JWT"]
     assert client.load_document_record("doc-otro") is None
+
+
+def test_sin_embeddings_los_fragmentos_se_leen_del_registro(monkeypatch):
+    from dataia.common.models import ChunkingResult
+    from dataia.vectorstore.service import process_vectorstore
+
+    monkeypatch.delenv("DATAIA_EMBEDDINGS_ENABLED", raising=False)
+    monkeypatch.setattr(client, "get_vector_store", lambda: pytest.fail("Sin embeddings no se usa Chroma"))
+    chunking = ChunkingResult(document_id="doc-x", chunks=make_chunks("b", "a"))
+    first = process_vectorstore(chunking)
+    assert (first.status, first.already_indexed) == ("aprobado", False)
+    assert process_vectorstore(chunking).already_indexed is True
+    stored = client.get_document_chunks("doc-x")
+    assert [d.page_content for d in stored] == ["b", "a"]  # orden del documento
+    assert stored[0].metadata["section"] == "S"
+
+
+def test_con_embeddings_se_indexa_en_chroma(monkeypatch):
+    from dataia.common.models import ChunkingResult
+    from dataia.vectorstore.service import process_vectorstore
+
+    monkeypatch.setenv("DATAIA_EMBEDDINGS_ENABLED", "true")
+    store = FakeStore()
+    monkeypatch.setattr(client, "get_vector_store", lambda: store)
+    assert process_vectorstore(ChunkingResult(document_id="doc-x", chunks=make_chunks("a", "b"))).status == "aprobado"
+    assert store.added == 2
 
 
 @pytest.mark.parametrize("filename", ["JWT en OCI.pdf", "Arquitectura de microservicios.pdf", "VCN y subredes.pdf"])

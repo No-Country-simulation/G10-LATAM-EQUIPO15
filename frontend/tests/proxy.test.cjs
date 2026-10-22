@@ -60,7 +60,7 @@ for (const [filename, status, codigo] of [
 test('Proxy aplica el límite de cuerpo antes de enviar un documento excesivo', async () => {
   const before = await (await fetch(`${fixture}/test/requests`)).json();
   const response = await fetch(`${base}/api/v1/adaptar-contenido`, {
-    method: 'POST', body: new Uint8Array(12 * 1024 * 1024), signal: AbortSignal.timeout(10000),
+    method: 'POST', body: new Uint8Array(27 * 1024 * 1024), signal: AbortSignal.timeout(10000),
   });
   assert.equal(response.status, 413);
   const after = await (await fetch(`${fixture}/test/requests`)).json();

@@ -1,0 +1,82 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Junior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 10,
+    "conceptos_clave": [
+      "Datos personales",
+      "Datos sensibles",
+      "Licitud y consentimiento",
+      "Finalidad y minimización",
+      "Derechos de los titulares",
+      "Seguridad y notificación"
+    ],
+    "nicho_contexto": "Salud"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de Protección de Datos Personales en el Sector Salud",
+    "introduccion_contextualizada": "¡Hola, colega en formación! En el entorno de la salud, manejamos información muy delicada de los pacientes. Estas tarjetas te ayudarán a comprender paso a paso los conceptos clave sobre la gestión y protección de datos personales basándonos estrictamente en nuestra documentación oficial.",
+    "items": [
+      {
+        "frente": "¿Qué es un dato personal y qué son los datos sensibles?",
+        "dorso": "Un dato personal es cualquier información que identifica o permite identificar a una persona, como el nombre, documento de identidad, correo o ubicación. Los datos sensibles, como los relacionados con la salud o la orientación política, requieren una protección reforzada.",
+        "pista_didactica": "Imagina que el nombre de un paciente es la etiqueta en la puerta de su habitación, mientras que su expediente médico es un cofre bajo llave que requiere máxima seguridad.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué características debe tener el consentimiento para que el tratamiento de datos sea lícito?",
+        "dorso": "Debe tener una base legal y ser libre, informado y específico para una finalidad. El documento señala explícitamente que aceptar condiciones generales poco claras no equivale a un consentimiento válido.",
+        "pista_didactica": "Es como firmar el permiso para una cirugía: debes saber exactamente qué te van a hacer y dar tu aprobación consciente, sin que te obliguen a firmar un contrato gigante ilegible.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F2"
+        ]
+      },
+      {
+        "frente": "¿En qué consiste el principio de finalidad y minimización?",
+        "dorso": "Los datos solo pueden usarse para la finalidad que se informó al recolectarlos. Además, se debe recolectar únicamente lo necesario para dicha finalidad; por ejemplo, pedir la fecha de nacimiento para enviar un boletín de noticias excede lo necesario.",
+        "pista_didactica": "Es como pedir los ingredientes justos para una receta: si vas a hornear pan, pides harina y agua, no el número de calzado del panadero.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F3"
+        ]
+      },
+      {
+        "frente": "¿Qué derechos tienen los titulares sobre sus datos personales?",
+        "dorso": "Las personas pueden solicitar acceso a sus datos, su rectificación si son incorrectos, su eliminación cuando ya no son necesarios y oponerse a ciertos tratamientos. La organización debe ofrecer un canal para ejercerlos y responder en un plazo razonable.",
+        "pista_didactica": "Piensa en el paciente como el dueño absoluto de su historial clínico: puede pedir verlo, corregir un error de transcripción o pedir que se borre si ya no se requiere.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F4"
+        ]
+      },
+      {
+        "frente": "¿Qué medidas de seguridad y acciones de notificación se exigen ante filtraciones?",
+        "dorso": "Se deben aplicar medidas técnicas y organizativas para proteger los datos, tales como el control de accesos y el cifrado. Ante una filtración que pueda afectar a los titulares, muchas regulaciones exigen notificar a la autoridad y, en ciertos casos, a las personas afectadas.",
+        "pista_didactica": "Igual que guardar las medicinas bajo llave y tener alarmas en el hospital, con la obligación de avisar al director y al paciente si la puerta de seguridad fue vulnerada.",
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F5"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado se alinea perfectamente con los fragmentos fuente proporcionados. Las pistas didácticas cumplen una función puramente pedagógica sin introducir datos técnicos nuevos no contemplados en las fuentes.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "legal_datos_personales.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

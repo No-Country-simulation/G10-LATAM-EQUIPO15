@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+from tempfile import NamedTemporaryFile
 from typing import List, Optional
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -9,11 +11,30 @@ from dataia.common.models import Chunk, DocumentPedagogicalMetadata
 from dataia.common.providers import provider_call, provider_http_options
 from google import genai
 
+logger = logging.getLogger(__name__)
+
 # Carpeta de persistencia configurable por entorno (Local / Docker-OCI)
 PERSIST_DIRECTORY = os.getenv("CHROMADB_DIR", os.path.join(os.getcwd(), ".chromadb_data"))
 COLLECTION_NAME = os.getenv("CHROMADB_COLLECTION", "nuevamente_docs")
 # Registro por documento (metadata pedagógica y resumen de la indexación)
 DOCUMENTS_DIRECTORY = os.getenv("DATAIA_DOCUMENTS_DIR", os.path.join(os.getcwd(), ".dataia_documents"))
+
+def embeddings_enabled() -> bool:
+    """
+    La generación lee los fragmentos del documento en orden, sin búsqueda
+    vectorial: los embeddings no intervienen en la calidad ni en la fidelidad.
+    Se calculan solo con DATAIA_EMBEDDINGS_ENABLED=true (p. ej. para una futura
+    búsqueda por tema o entre documentos).
+    """
+    return os.getenv("DATAIA_EMBEDDINGS_ENABLED", "false").strip().lower() in {"true", "1"}
+
+def _metadata_dict(chunk: Chunk) -> dict:
+    # ChromaDB no soporta valores None en metadatos; el registro usa la misma forma.
+    return {k: v for k, v in chunk.metadata.model_dump().items() if v is not None}
+
+def chunk_records(chunks: List[Chunk]) -> List[dict]:
+    """Fragmentos tal como se persisten en el registro del documento."""
+    return [{"text": chunk.text, "metadata": _metadata_dict(chunk)} for chunk in chunks]
 
 def get_embeddings_model():
     """Inicializa el modelo de Embeddings de Gemini (requiere DATAIA_GOOGLE_API_KEY o GOOGLE_API_KEY)."""
@@ -52,13 +73,9 @@ def insert_chunks(chunks: List[Chunk]) -> bool:
     documents = []
     ids = []
     for chunk in chunks:
-        # ChromaDB no soporta valores "None" en metadatos, por lo que filtramos los nulos
-        # pero garantizamos que document_id, chunk_id, etc. estén siempre presentes.
-        meta_dict = {k: v for k, v in chunk.metadata.model_dump().items() if v is not None}
-
         doc = Document(
             page_content=chunk.text,
-            metadata=meta_dict
+            metadata=_metadata_dict(chunk)
         )
         documents.append(doc)
         ids.append(chunk.metadata.chunk_id)
@@ -79,12 +96,18 @@ def get_document_chunks(document_id: str) -> List[Document]:
     """
     Lectura para la etapa de generación: todos los chunks del documento, en el
     orden del documento original (no una búsqueda por similitud).
+    Se leen del registro del documento; los registros anteriores a este cambio
+    no guardaban los fragmentos y se leen de Chroma.
     """
-    result = get_vector_store().get(where={"document_id": document_id}, include=["documents", "metadatas"])
-    documents = [
-        Document(page_content=text, metadata=metadata or {})
-        for text, metadata in zip(result["documents"], result["metadatas"])
-    ]
+    record = load_document_record(document_id)
+    if record and record.get("chunk_records"):
+        documents = [Document(page_content=r["text"], metadata=r["metadata"]) for r in record["chunk_records"]]
+    else:
+        result = get_vector_store().get(where={"document_id": document_id}, include=["documents", "metadatas"])
+        documents = [
+            Document(page_content=text, metadata=metadata or {})
+            for text, metadata in zip(result["documents"], result["metadatas"])
+        ]
     return sorted(documents, key=lambda d: d.metadata.get("chunk_id", ""))
 
 def _document_record_path(document_id: str) -> str:
@@ -107,14 +130,41 @@ def save_document_record(
         "chunks": len(chunks),
         "sections": sections,
         "pedagogical_metadata": pedagogical_metadata.model_dump() if pedagogical_metadata else None,
+        "chunk_records": chunk_records(chunks),
     }
-    with open(_document_record_path(document_id), "w", encoding="utf-8") as f:
-        json.dump(record, f, ensure_ascii=False, indent=2)
+    # El archivo definitivo solo cambia una vez completado el JSON. El temporal
+    # está en el mismo directorio para que el reemplazo sea atómico en el volumen.
+    temporary_path = None
+    try:
+        with NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=DOCUMENTS_DIRECTORY,
+            prefix=f".{document_id}.", suffix=".tmp", delete=False,
+        ) as f:
+            temporary_path = f.name
+            json.dump(record, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary_path, _document_record_path(document_id))
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            try:
+                os.unlink(temporary_path)
+            except FileNotFoundError:
+                pass
 
 def load_document_record(document_id: str) -> Optional[dict]:
-    """Devuelve el registro del documento o None si no fue indexado."""
+    """Devuelve el registro, o None si falta o está dañado y debe regenerarse."""
     path = _document_record_path(document_id)
-    if not os.path.exists(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            record = json.load(f)
+    except FileNotFoundError:
         return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        logger.warning("Registro de documento ilegible; se regenerará: %s", document_id)
+        return None
+    if not isinstance(record, dict):
+        logger.warning("Registro de documento inválido; se regenerará: %s", document_id)
+        return None
+    return record

@@ -1,0 +1,57 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Ejecutivo",
+    "formato_generado": "Resumen Ejecutivo",
+    "tiempo_estimado_estudio_minutos": 5,
+    "conceptos_clave": [
+      "SEO on-page",
+      "Intención de búsqueda",
+      "Etiqueta de título",
+      "Meta descripción",
+      "Encabezados y estructura",
+      "Enlazado interno",
+      "Velocidad y experiencia de usuario"
+    ],
+    "nicho_contexto": "E-commerce"
+  },
+  "contenido_adaptado": {
+    "titulo": "Resumen Ejecutivo: Estrategia de SEO On-Page para E-commerce",
+    "introduccion_contextualizada": "Para los tomadores de decisiones en el sector de e-commerce, alinear la estrategia digital con las directrices de SEO on-page descritas en el documento permite optimizar la visibilidad y la experiencia del cliente en la tienda en línea.",
+    "items": {
+      "tldr": "El documento detalla los elementos fundamentales de la optimización SEO on-page, abarcando desde la alineación con la intención de búsqueda del usuario y la estructuración de metadatos y encabezados, hasta la gestión del enlazado interno y la mejora de la velocidad y experiencia de carga en la plataforma.",
+      "puntos_clave": [
+        "Es indispensable alinear el contenido con la intención de búsqueda del usuario (informarse, comparar u comprar) para lograr el posicionamiento en buscadores.",
+        "El uso estratégico de etiquetas title únicas y meta descripciones claras ayuda a mejorar la tasa de clics en los resultados de búsqueda.",
+        "Una estructura jerárquica clara con un único H1 y subtítulos H2 y H3 facilita la lectura tanto para los usuarios como para los motores de búsqueda.",
+        "El enlazado interno distribuye la autoridad en el sitio y facilita el descubrimiento de nuevo contenido mediante textos descriptivos.",
+        "La optimización de la velocidad de carga, a través de la compresión de imágenes, reducción de código y uso de caché, impacta directamente en la experiencia del usuario y el posicionamiento."
+      ],
+      "impacto_negocio": "El documento no especifica métricas de impacto financiero ni cifras de retorno de inversión, pero señala que una adecuada optimización de la velocidad y la experiencia de usuario afecta directamente al posicionamiento y a la tasa de clics.",
+      "recomendaciones": [
+        "Identificar qué busca el usuario con una consulta antes de redactar el contenido.",
+        "Incluir la palabra clave principal cerca del inicio en una etiqueta title única para cada página.",
+        "Utilizar un único encabezado H1 por página y organizar las secciones con H2 y H3.",
+        "Conectar las páginas del sitio mediante enlaces internos con textos descriptivos de la página de destino.",
+        "Mejorar la velocidad de carga mediante la compresión de imágenes, reducción de código que bloquea el renderizado y el uso de caché del navegador."
+      ],
+      "fuentes": [
+        "F1"
+      ]
+    }
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado es un resumen perfectamente alineado y respaldado por el fragmento fuente F1, sin introducir alucinaciones ni datos técnicos ajenos.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "marketing_seo_on_page.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

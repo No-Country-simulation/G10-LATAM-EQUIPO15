@@ -1,12 +1,27 @@
 import os
 import json
+from typing import Optional
 from dataia.common.credentials import get_google_api_key
 from dataia.common.models import DocumentPedagogicalMetadata
-from dataia.common.providers import create_gemini_llm, provider_call
-from pydantic import ValidationError
+from dataia.common.providers import create_gemini_llm, gemini_fallback_models, provider_call, with_fallback_chain
 
 # El document_id deriva del contenido, por lo que la caché es reutilizable entre ingestiones
 CACHE_DIR = os.path.join(os.getenv("DATAIA_CACHE_DIR", ".dataia_cache"), "metadata")
+# Conceptos, prerrequisitos y resumen se obtienen de una muestra repartida por todo el documento.
+# Enviar un libro completo (~450.000 tokens) en una llamada superó el límite de tokens por minuto (429).
+MAX_CHARS = int(os.getenv("DATAIA_ENRICH_MAX_CHARS", "120000"))
+VENTANAS_MUESTRA = 12
+SEPARADOR_MUESTRA = "\n\n[...]\n\n"
+
+
+def _muestra_representativa(texto: str, max_chars: Optional[int] = None, ventanas: int = VENTANAS_MUESTRA) -> str:
+    """Devuelve el texto completo si cabe; si no, `ventanas` tramos equidistantes de principio a fin."""
+    max_chars = MAX_CHARS if max_chars is None else max_chars
+    if len(texto) <= max_chars:
+        return texto
+    tamano = max_chars // ventanas
+    paso = (len(texto) - tamano) / (ventanas - 1)
+    return SEPARADOR_MUESTRA.join(texto[int(i * paso):int(i * paso) + tamano] for i in range(ventanas))
 
 def enrich_document_metadata(document_id: str, full_text: str) -> DocumentPedagogicalMetadata:
     """
@@ -25,13 +40,24 @@ def enrich_document_metadata(document_id: str, full_text: str) -> DocumentPedago
             pass # Fallback to re-generating
 
     try:
-        llm = create_gemini_llm(api_key=get_google_api_key())
+        # Solo respaldos Gemini: la entrada (hasta DATAIA_ENRICH_MAX_CHARS) supera el límite gratuito de Groq.
+        llm = with_fallback_chain(create_gemini_llm(api_key=get_google_api_key()), [
+            create_gemini_llm(api_key=get_google_api_key(), model=m) for m in gemini_fallback_models()
+        ])
         structured_llm = llm.with_structured_output(DocumentPedagogicalMetadata)
         
+        texto = _muestra_representativa(full_text)
+        aviso_muestra = (
+            "El documento es extenso: se incluyen tramos distribuidos de principio a fin, separados por [...].\n"
+            if texto is not full_text else ""
+        )
         prompt = (
-            "Extrae la metadata pedagógica del siguiente documento técnico.\n"
+            "Extrae la metadata pedagógica del siguiente documento. Puede pertenecer a cualquier sector "
+            "(tecnología, finanzas, salud, marketing, negocios, etc.) y estar en cualquier idioma. "
+            "Indica en 'apto_para_aprendizaje' si contiene conocimiento del que se pueda generar material de estudio.\n"
+            f"{aviso_muestra}"
             f"El ID del documento es: {document_id}\n\n"
-            f"Documento:\n{full_text[:4000000]}\n" # Limiting slightly to avoid exceeding 1M tokens just in case, but 5MB is well within 1M tokens.
+            f"Documento:\n{texto}\n"
         )
         
         with provider_call("ENRIQUECIMIENTO_DOCUMENTO"):

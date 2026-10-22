@@ -1,14 +1,16 @@
 from dataia.common.models import ChunkingResult, VectorStoreResponse, VectorStoreResult, VectorStoreError
-from dataia.vectorstore.client import insert_chunks, save_document_record, COLLECTION_NAME
+from dataia.vectorstore.client import (
+    COLLECTION_NAME, chunk_records, embeddings_enabled, insert_chunks, load_document_record, save_document_record,
+)
 import os
 from dataia.common.providers import is_provider_error
 
 def process_vectorstore(chunking_result: ChunkingResult) -> VectorStoreResponse:
     """
     Orquestador de IA-04:
-    Toma el éxito de la fase de segmentación (ChunkingResult), genera los embeddings
-    usando Gemini, y almacena en el VectorStore preservando la trazabilidad.
-    También registra la metadata pedagógica del documento para la etapa de generación.
+    Persiste los fragmentos y la metadata pedagógica en el registro del documento,
+    que es lo que lee la etapa de generación. Con DATAIA_EMBEDDINGS_ENABLED=true
+    también genera embeddings con Gemini y los indexa en ChromaDB.
     """
     try:
         if not chunking_result.chunks:
@@ -17,8 +19,12 @@ def process_vectorstore(chunking_result: ChunkingResult) -> VectorStoreResponse:
                 mensaje="El resultado de chunking no contiene fragmentos para procesar."
             )
 
-        # Genera embeddings y persiste manteniendo los metadatos de los chunks
-        already_indexed = insert_chunks(chunking_result.chunks)
+        if embeddings_enabled():
+            # Genera embeddings y persiste manteniendo los metadatos de los chunks
+            already_indexed = insert_chunks(chunking_result.chunks)
+        else:
+            previous = load_document_record(chunking_result.document_id)
+            already_indexed = bool(previous) and previous.get("chunk_records") == chunk_records(chunking_result.chunks)
         save_document_record(
             chunking_result.document_id,
             chunking_result.chunks,

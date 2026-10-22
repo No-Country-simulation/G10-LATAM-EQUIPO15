@@ -2,8 +2,10 @@
 
 import multiprocessing
 
+import pytest
 
-def _index_document(connection, directory):
+
+def _index_document(connection, directory, embeddings_enabled):
     import os
     from pathlib import Path
     from types import SimpleNamespace
@@ -13,6 +15,8 @@ def _index_document(connection, directory):
     os.environ["DATAIA_DOCUMENTS_DIR"] = str(base / "documents")
     os.environ["DATAIA_CACHE_DIR"] = str(base / "cache")
     os.environ["IA_STRICT_PROVIDERS"] = "1"
+    os.environ["GEMINI_FALLBACK_MODELS"] = ""  # el LLM simulado no admite respaldos
+    os.environ["DATAIA_EMBEDDINGS_ENABLED"] = "true" if embeddings_enabled else "false"
     from langchain_core.embeddings import Embeddings
     from dataia.ingestion import enrichment
     from dataia.ingestion.service import ingest_document
@@ -64,10 +68,10 @@ def _index_document(connection, directory):
         connection.close()
 
 
-def _fresh_process(directory):
+def _fresh_process(directory, embeddings_enabled):
     context = multiprocessing.get_context("spawn")
     receiving, sending = context.Pipe(duplex=False)
-    process = context.Process(target=_index_document, args=(sending, str(directory)))
+    process = context.Process(target=_index_document, args=(sending, str(directory), embeddings_enabled))
     try:
         process.start()
         sending.close()
@@ -85,18 +89,21 @@ def _fresh_process(directory):
         process.close()
 
 
-def test_same_document_reuses_cache_and_vectors_after_process_restart(tmp_path):
+@pytest.mark.parametrize("embeddings_enabled", [True, False])
+def test_same_document_reuses_cache_and_vectors_after_process_restart(tmp_path, embeddings_enabled):
     (tmp_path / "jwt.md").write_text(
         "# JWT\n\nLa arquitectura del sistema usa una API con token JWT "
         "para la seguridad del servidor en la nube.\n", encoding="utf-8",
     )
-    first = _fresh_process(tmp_path)
-    second = _fresh_process(tmp_path)
+    first = _fresh_process(tmp_path, embeddings_enabled)
+    second = _fresh_process(tmp_path, embeddings_enabled)
     assert first["document_id"] == second["document_id"]
     assert first["already_indexed"] is False
     assert second["already_indexed"] is True
     assert first["chunk_ids"] == second["chunk_ids"]
     assert len(first["chunk_ids"]) == 1
-    assert first["calls"] == {"llm":2, "embeddings":1}
+    # Sin embeddings, Chroma no interviene: los fragmentos se leen del registro.
+    # Una sola llamada al LLM (metadata del documento): el chunking ya no clasifica fragmentos.
+    assert first["calls"] == {"llm":1, "embeddings":1 if embeddings_enabled else 0}
     assert second["calls"] == {"llm":0, "embeddings":0}
     assert second["concepts"] == ["JWT"]

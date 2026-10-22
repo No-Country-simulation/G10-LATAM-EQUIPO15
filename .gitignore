@@ -34,6 +34,8 @@ coverage/
 ia_old/
 remote-repo-temp/
 *.txt
+# Las dependencias sí se versionan: sin ellas no se construyen las imágenes
+!requirements*.txt
 mock_salida.py
 test_salida.py
 .specify/
@@ -55,3 +57,6 @@ nuevamente-oci-conexion.zip
 *.tfplan
 *.tfvars
 *.tfvars.json
+
+# Cachés de la evaluación de calidad (extracción y metadata por documento)
+tests/calidad/.datos/

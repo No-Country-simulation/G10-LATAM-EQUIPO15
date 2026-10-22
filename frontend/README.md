@@ -69,8 +69,10 @@ requiere revisión humana para verificar fidelidad pedagógica.
 
 ## Límites y operación
 
-El límite predeterminado de archivo es 10 MiB en Backend/IA. Nginx acepta cuerpos
-de hasta 11 MiB para dejar espacio al multipart. Los presupuestos predeterminados
+El límite predeterminado de archivo es 25 MiB en Backend/IA. Nginx acepta cuerpos
+de hasta 26 MiB para dejar espacio al multipart. Ese límite solo protege el
+transporte: IA rechaza con 413 `DOCUMENTO_DEMASIADO_EXTENSO` los PDF de más de
+50 páginas o los documentos con más de 24.000 tokens estimados de texto. Los presupuestos predeterminados
 son 480 segundos en IA, 600 en Backend, 650 en el proxy y 660 en el navegador.
 Al cambiar los límites de Backend/IA, revisar también `nginx.conf` y `js/api.js`.
 Nginx evita reenviar una solicitud a otro upstream automáticamente.

@@ -24,6 +24,17 @@ class DocumentPedagogicalMetadata(BaseModel):
     prerequisitos: List[str] = Field(default_factory=list)
     resumen_ejecutivo: str = ""
     nicho_sugerido: str = "General"
+    # Reemplaza a una lista fija de palabras de informática, que rechazaba otros sectores e idiomas.
+    # El valor por defecto mantiene aptas las cachés anteriores a este campo.
+    apto_para_aprendizaje: bool = Field(
+        default=True,
+        description=(
+            "true si el documento contiene conocimiento técnico, profesional o formativo de cualquier sector "
+            "o idioma (tecnología, finanzas, salud, marketing, negocios, ciencia, derecho, etc.) del que se pueda "
+            "generar material de estudio. false solo si no lo contiene: texto aleatorio o ilegible, spam, "
+            "conversación personal o datos sueltos sin explicación, como facturas o formularios."
+        ),
+    )
 
 class IngestionResult(BaseModel):
     status: str = "aprobado"

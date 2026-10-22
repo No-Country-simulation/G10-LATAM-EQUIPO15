@@ -11,6 +11,11 @@ services:
       DATAIA_ENRICH_BATCH_SIZE: "${DATAIA_ENRICH_BATCH_SIZE:-15}"
       LLM_PROVIDER: gemini
       GEMINI_MODEL: "${GEMINI_MODEL:-gemini-3.5-flash-lite}"
+      # Respaldo ante 503/429: otros modelos Gemini (cuota propia) y luego Groq si hay clave
+      GEMINI_FALLBACK_MODELS: "${GEMINI_FALLBACK_MODELS:-gemini-3.1-flash-lite}"
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      GROQ_MODEL: "${GROQ_MODEL:-openai/gpt-oss-20b,openai/gpt-oss-120b}"
+      GROQ_CRITIC_MODEL: "${GROQ_CRITIC_MODEL:-openai/gpt-oss-120b,openai/gpt-oss-20b}"
       IA_STRICT_PROVIDERS: "1"
       IA_PROVIDER_TIMEOUT_SECONDS: "${IA_PROVIDER_TIMEOUT_SECONDS:-60}"
       IA_PROVIDER_MAX_RETRIES: "${IA_PROVIDER_MAX_RETRIES:-1}"
