@@ -10,7 +10,10 @@ const Historial = {
     this.estado = document.getElementById('historial-estado');
     this.mas = document.getElementById('historial-mas');
     document.getElementById('boton-historial').addEventListener('click', () => this.mostrar());
-    document.getElementById('boton-crear').addEventListener('click', () => this.crear());
+    document.getElementById('boton-crear').addEventListener('click', () => {
+      this.crear();
+      document.getElementById('workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     document.getElementById('historial-actualizar').addEventListener('click', () => this.cargar());
     this.mas.addEventListener('click', () => this.cargar(true));
     this.preparacion = Api.inicializarHistorial().then(() => this.cargar()).catch(error => this.error(error));

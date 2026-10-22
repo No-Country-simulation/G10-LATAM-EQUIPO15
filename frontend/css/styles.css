@@ -51,8 +51,9 @@ svg { display: block; }
   color: #fff; background: var(--navy); border-bottom: 1px solid rgba(255,255,255,.09);
 }
 .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
-.brand-mark { width: 42px; height: 42px; display: grid; place-items: center; color: #aebcff; }
-.brand-mark svg { width: 100%; height: 100%; }
+.brand-mark { position: relative; width: 48px; height: 54px; flex-shrink: 0; overflow: hidden; border-radius: 10px; }
+/* Encuadre del cerebro en la cabecera; se conserva el archivo original completo. */
+.brand-mark img { position: absolute; top: 50%; left: 50%; display: block; width: 230%; max-width: none; height: auto; transform: translate(-50%, -42.5%); }
 .brand-copy { display: flex; flex-direction: column; gap: 1px; }
 .brand-copy strong { font: 800 19px/1.2 "Manrope", sans-serif; letter-spacing: -.045em; }
 .brand-copy small { color: #9ca9c3; font-size: 9px; font-weight: 700; letter-spacing: .17em; }
@@ -81,6 +82,10 @@ h1, h2, h3, p { margin-top: 0; }
 .visual-glow { position: absolute; width: 155px; height: 155px; border-radius: 50%; background: #dce4ff; filter: blur(22px); opacity: .8; }
 .visual-core { position: relative; z-index: 1; width: 112px; height: 112px; display: grid; place-items: center; color: var(--blue); background: linear-gradient(145deg, #fff, #e9edff); border: 1px solid #d9e0ff; border-radius: 34px; box-shadow: 0 20px 55px rgba(52,75,184,.18); transform: rotate(-5deg); }
 .visual-core svg { width: 78px; height: 78px; }
+.visual-core.visual-logo { width: 240px; height: 240px; overflow: hidden; border-radius: 28px; border-color: rgba(150,175,255,.3); background: #192650; transform: none; }
+.visual-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.hero-visual .tag-top { top: 0; }
+.hero-visual .tag-bottom { bottom: 0; }
 .visual-tag { position: absolute; z-index: 2; padding: 8px 12px; border: 1px solid rgba(222,228,242,.95); border-radius: 10px; background: rgba(255,255,255,.92); box-shadow: 0 8px 24px rgba(25,39,77,.07); color: #45516b; font-size: 10px; font-weight: 700; }
 .tag-top { top: 24px; right: 0; }
 .tag-bottom { bottom: 24px; left: 0; }
@@ -213,8 +218,9 @@ h1, h2, h3, p { margin-top: 0; }
   .page-footer { flex-direction: column; gap: 8px; }
 }
 @media (max-width: 520px) {
-  .topbar { padding: 0 16px; }
-  .brand-mark { width: 36px; height: 36px; }
+  .topbar { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+  .topbar .topbar-right { margin-left: auto; }
+  .brand-mark { width: 40px; height: 46px; }
   .brand-copy strong { font-size: 17px; }
   .status-pill { padding: 6px 8px; font-size: 10px; }
   .page-layout { width: calc(100% - 24px); }

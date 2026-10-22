@@ -8,6 +8,7 @@ const base = new URL(process.env.FRONTEND_TEST_URL || 'http://localhost:18003');
 const tipos = {
   'index.html': 'text/html',
   'css/styles.css': 'text/css',
+  'assets/logo-nm.webp': 'image/webp',
   'js/state.js': 'application/javascript',
   'js/api.js': 'application/javascript',
   'js/history.js': 'application/javascript',

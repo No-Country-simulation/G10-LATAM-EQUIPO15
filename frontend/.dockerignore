@@ -6,6 +6,8 @@
 !css/**
 !js/
 !js/**
+!assets/
+!assets/**
 **/.env
 **/.env.*
 **/node_modules/
