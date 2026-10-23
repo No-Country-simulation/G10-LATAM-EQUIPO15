@@ -77,3 +77,29 @@ test('Proxy conserva Origin y puerto: permite el propio y rechaza otro antes de 
   assert.equal(other.status, 403);
   assert.equal(await llamadas(), before);
 });
+
+test('Borrado de punta a punta: resultado conserva original, documento elimina todo sin IA', async () => {
+  const browser = navegador();
+  await browser.api.inicializarHistorial();
+  const before = await llamadas();
+  const config = { perfil_destinatario: 'Junior', formato_salida: 'Flashcards', nicho_sector: 'General' };
+  const first = await browser.api.generarContenido(new File([bytes], 'manual-borrado.md'), config);
+  const path = `/documentos/${first.historial.documento_id}`;
+  await browser.api.adaptarGuardado(first.historial.documento_id, { ...config, formato_salida: 'Quiz Interactivo' });
+  const old = await browser.api.pedirHistorial(path + '/eliminacion');
+  assert.equal(old.resultados, 2);
+  const other = navegador();
+  await other.api.inicializarHistorial();
+  assert.equal((await other.request('/api/v1' + path, { method: 'DELETE', headers: { 'If-Match': old.version } })).status, 404);
+  assert.equal((await browser.api.pedirHistorial(path + '/adaptaciones/' + first.historial.adaptacion_id, { method: 'DELETE' })).eliminado, true);
+  assert.deepEqual(Buffer.from(await (await browser.request('/api/v1' + path + '/original')).arrayBuffer()), bytes);
+  assert.equal((await browser.api.pedirHistorial(path + '/adaptaciones')).adaptaciones.length, 1);
+  const stale = await browser.request('/api/v1' + path, { method: 'DELETE', headers: { 'If-Match': old.version } });
+  assert.equal(stale.status, 409);
+  const current = await browser.api.pedirHistorial(path + '/eliminacion');
+  assert.equal(current.resultados, 1);
+  assert.equal((await browser.api.pedirHistorial(path, { method: 'DELETE', headers: { 'If-Match': '"' + current.version + '"' } })).eliminado, true);
+  assert.equal((await browser.api.pedirHistorial('/documentos')).documentos.length, 0);
+  assert.equal((await browser.request('/api/v1' + path + '/original')).status, 404);
+  assert.equal(await llamadas(), before + 2);
+});

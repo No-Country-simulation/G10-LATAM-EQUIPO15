@@ -9,6 +9,7 @@ const tipos = {
   'index.html': 'text/html',
   'css/styles.css': 'text/css',
   'assets/logo-nm.webp': 'image/webp',
+  'assets/icons/trash.svg': 'image/svg+xml',
   'js/state.js': 'application/javascript',
   'js/api.js': 'application/javascript',
   'js/history.js': 'application/javascript',

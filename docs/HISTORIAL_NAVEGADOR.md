@@ -49,7 +49,37 @@ Se usa OCI sin otra base de datos: un índice SQL sería más flexible para bús
 pero añade respaldo y sincronización para este MVP. Listados paginados y lecturas
 acotadas. Original descargado comprobado por SHA-256 y límite de tamaño. JSON
 recuperado validado con el contrato existente y la configuración del manifiesto.
-No hay reintentos automáticos de generación ni eliminación de objetos existentes.
+No hay reintentos automáticos de generación. Las eliminaciones son explícitas y
+requieren confirmación en la interfaz.
+
+## Eliminar documentos y resultados
+
+Cada documento y resultado tiene una papelera visible, con nombre accesible y
+superficie de 44 px. El diálogo enfoca Cancelar; Escape cancela. No hay peticiones
+DELETE antes de confirmar. Mientras se elimina se bloquean los controles del
+historial, se informa el progreso y se evita el doble envío.
+
+Eliminar un resultado conserva el original y los demás resultados. Un JSON
+compartido no se elimina mientras otra adaptación lo referencie. Eliminar un
+documento incluye todos sus resultados, todas las páginas del catálogo y las
+variantes de sus archivos dentro del espacio de este navegador en OCI. No toca
+objetos de otros navegadores, archivos antiguos sin propietario ni la caché de IA.
+La confirmación muestra el número real de resultados. Si otra pestaña modifica
+el catálogo, el servidor rechaza la versión antigua y se debe confirmar de nuevo.
+
+Un registro de operación en `historial-control-v1/{owner}/` permite retomar un
+borrado parcial y reconocer solicitudes repetidas. Tras completarse conserva
+solo un recibo de control, sin el nombre ni el contenido del documento/resultado.
+Un borrado incompleto se muestra con su papelera para reintentar; abrir o reutilizar
+esos elementos se bloquea. El elemento se retira de la interfaz al confirmar éxito.
+Las generaciones que comenzaron antes de eliminar un documento no lo vuelven a
+publicar; volver a cargarlo después es una acción nueva y explícita.
+
+El backend MVP se ejecuta con un único worker, fijado en su Dockerfile. Serializa
+la persistencia y las eliminaciones de cada navegador mediante locks en ese
+proceso; la generación de IA ocurre fuera del lock. Antes de escalar a varios
+procesos o réplicas se requiere coordinación distribuida. Los registros de
+operación sí persisten en OCI y permiten retomar después de reiniciar el backend.
 
 ## API y Frontend
 
@@ -57,6 +87,12 @@ No hay reintentos automáticos de generación ni eliminación de objetos existen
 - GET `/api/v1/historial/sesion`: prepara la cookie sin consultar OCI ni invocar IA.
 - GET `/api/v1/documentos/{id}/adaptaciones`: resultados de un documento.
 - GET `/api/v1/documentos/{id}/original`: descarga del original.
+- GET `/api/v1/documentos/{id}/eliminacion`: nombre, cantidad total y versión
+  para la confirmación de borrado.
+- DELETE `/api/v1/documentos/{id}`: original y resultados del navegador. Exige
+  `If-Match` con la versión confirmada; 428 sin confirmación y 409 si cambió.
+- DELETE `/api/v1/documentos/{id}/adaptaciones/{adaptacion}`: un resultado;
+  conserva las referencias compartidas y permite reintentar la misma solicitud.
 - GET `/api/v1/documentos/{id}/adaptaciones/{adaptacion}`: resultado almacenado.
 - GET con sufijo `/descarga`: descarga JSON como adjunto.
 - POST `/api/v1/documentos/{id}/adaptaciones`: configuración JSON, obtiene el original
@@ -94,6 +130,24 @@ Resultado de la validación del cambio (cierre 22-10-2026):
 
 En todas estas pruebas la IA estuvo simulada para no consumir cuota de Gemini;
 la comprobación contra OCI real sí guardó y recuperó objetos nuevos del bucket.
+
+### Validación del borrado (22-10-2026)
+
+- Backend: **109 pruebas aprobadas**, incluido borrado por navegador, JSON con
+  referencias compartidas, confirmación desactualizada, 26 resultados paginados,
+  fallos parciales y generación en curso durante el borrado.
+- Frontend/HTTP/proxy: **84 pruebas aprobadas**, incluidas cancelación, Escape,
+  doble clic, errores recuperables y retorno del foco después de eliminar.
+- Integración completa: **5 pruebas aprobadas**, incluidos los tres formatos y
+  eliminar un resultado o todo el documento sin nuevas llamadas a IA.
+- Navegador real a 1410 × 1117 y 375 × 812: papeleras de 44 × 44 px, sin
+  desbordamiento horizontal; cancelación sin borrar, confirmación con cantidad
+  real, documento conservado al eliminar su último resultado y persistencia
+  después de recargar. Sin errores de consola en los recorridos revisados.
+
+Estas **198 pruebas** y los recorridos de borrado usan almacenamiento controlado
+y una IA simulada. No borran documentos reales en OCI ni consumen cuota de IA.
+El cambio se valida localmente; este registro no acredita un despliegue en AWS.
 
 ### Ejecutar las pruebas
 

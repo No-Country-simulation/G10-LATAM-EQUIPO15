@@ -41,6 +41,29 @@ svg { display: block; }
 .history-link { color: var(--blue-dark); font-size: 13px; text-underline-offset: 3px; }
 .history-adaptation { background: var(--page); border-radius: 10px; padding: 18px; margin-top: 16px; }
 .history-error { color: var(--danger); }
+.history-card-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; margin-bottom: 8px; }
+.history-card-heading h3 { margin: 4px 0 0; min-width: 0; }
+.history-delete { flex: 0 0 44px; width: 44px; min-width: 44px; min-height: 44px; padding: 11px; display: inline-grid; place-items: center; border: 1px solid #e6b4b0; border-radius: 9px; color: var(--danger); background: transparent; }
+.history-delete img { display: block; width: 20px; height: 20px; filter: invert(18%) sepia(80%) saturate(2190%) hue-rotate(345deg) brightness(85%) contrast(101%); }
+.history-delete:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); }
+.history-delete:disabled { opacity: .55; }
+.history-adaptation { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.history-adaptation-copy { min-width: 0; }
+.history-adaptation-copy > :last-child { margin-bottom: 0; }
+.history-adaptation .history-actions { flex-shrink: 0; }
+.history-adaptation + .history-adaptation { margin-top: 12px; }
+.history-deleting { opacity: .7; }
+.history-deleting a { pointer-events: none; }
+.history-busy a { pointer-events: none; }
+#historial-aviso:empty { display: none; }
+.history-delete-dialog { width: min(510px, calc(100% - 32px)); max-width: none; padding: 30px; border: 1px solid var(--line); border-radius: 20px; color: var(--ink); background: var(--surface); box-shadow: 0 24px 80px rgba(15,27,65,.28); }
+.history-delete-dialog::backdrop { background: rgba(9,17,43,.58); }
+.history-delete-dialog h2 { margin: 0 0 14px; font-size: 24px; }
+.history-delete-dialog p { overflow-wrap: anywhere; color: var(--muted); line-height: 1.65; }
+.history-dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 26px; }
+.history-danger-confirm { border: 1px solid var(--danger); border-radius: 10px; padding: 12px 16px; background: var(--danger); color: #fff; font-weight: 700; }
+@media (max-width: 900px) { .history-adaptation { align-items: stretch; flex-direction: column; } .history-adaptation .history-actions { width: 100%; } .history-adaptation .history-delete { margin-left: auto; } }
+@media (max-width: 480px) { .history-dialog-actions { flex-direction: column-reverse; } .history-dialog-actions button { width: 100%; min-height: 44px; } .history-delete-dialog { padding: 24px; } }
 @media (max-width: 800px) { .topbar .status-pill, .topbar .topbar-label, .topbar .topbar-divider { display: none; } .history-nav button { padding: 8px; font-size: 12px; } }
 :focus-visible { outline: 3px solid #7c91ff; outline-offset: 3px; }
 

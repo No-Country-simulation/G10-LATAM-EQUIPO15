@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=logo-20261022" />
+  <link rel="stylesheet" href="css/styles.css?v=borrado-20261022" />
 </head>
 <body>
   <div class="app-shell">
@@ -62,6 +62,7 @@
         </div>
         <p class="history-notice">Este historial pertenece a este navegador. Si borrás sus datos o usás otro dispositivo, no tendrás acceso automático. Incluye los documentos guardados desde esta versión.</p>
         <p id="historial-estado" role="status" aria-live="polite">Preparando tu historial…</p>
+        <p id="historial-aviso" role="status" aria-live="polite"></p>
         <div id="historial-documentos" class="history-list"></div>
         <button id="historial-mas" type="button" class="button-secondary oculto">Más documentos</button>
       </section>
@@ -177,9 +178,19 @@
   </div>
 
   <script src="js/state.js"></script>
-  <script src="js/api.js?v=historial-20261021"></script>
+  <dialog id="confirmar-eliminacion" class="history-delete-dialog" aria-labelledby="eliminacion-titulo" aria-describedby="eliminacion-mensaje">
+    <form method="dialog">
+      <h2 id="eliminacion-titulo">¿Eliminar?</h2>
+      <p id="eliminacion-mensaje"></p>
+      <div class="history-dialog-actions">
+        <button id="eliminacion-cancelar" class="button-secondary" value="cancelar" autofocus>Cancelar</button>
+        <button id="eliminacion-confirmar" class="history-danger-confirm" value="eliminar">Eliminar</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="js/api.js?v=borrado-20261022"></script>
   <script src="js/ui.js?v=historial-20261021"></script>
-  <script src="js/history.js?v=historial-nav-20261022"></script>
+  <script src="js/history.js?v=borrado-20261022"></script>
   <script src="js/main.js?v=historial-20261021"></script>
   <script>
     // Mejora visual progresiva: informa el nombre del archivo sin interferir con el flujo existente.

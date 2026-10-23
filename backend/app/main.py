@@ -1,5 +1,4 @@
 import os
-import logging
 from io import BytesIO
 from pathlib import Path
 from typing import Annotated
@@ -10,14 +9,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 from starlette.datastructures import Headers
 from app.core.config import settings
-from app.api.schemas import AdaptacionResponse, ErrorResponse, FormatoSalida, HistorialReferencia, NichoSector, PerfilDestinatario
+from app.api.schemas import AdaptacionResponse, ErrorResponse, FormatoSalida, NichoSector, PerfilDestinatario
 from app.services.ia_client import IAClient, IAServiceError, get_ia_client
 from app.services.oci_service import OCIStorage, get_oci_storage
 from app.services.browser_identity import browser_identity
 from app.services.history_service import AdaptationConfig, HistoryError, HistoryStorage, get_history_storage
 from app.services.oci_service import json_bytes
-
-logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -29,6 +26,8 @@ app.middleware("http")(browser_identity)
 
 @app.exception_handler(HistoryError)
 async def history_error(_request, error):
+    if _request.method == "DELETE" and error.detail["codigo"] == "HISTORIAL_NO_DISPONIBLE":
+        error.detail["mensaje"] = "No se pudo completar la eliminación. Podés reintentar para continuar donde quedó."
     return JSONResponse(status_code=error.status, content={"detail": error.detail}, headers={"Cache-Control": "no-store"})
 
 @app.get("/")
@@ -88,6 +87,7 @@ def adaptar_contenido(
 
 def _adaptar_y_guardar(request, documento_original, perfil_destinatario, formato_salida, nicho_sector,
                       ia_client, oci_storage, history):
+    started = request.state.history_started
     if history is not None and request.state.history_identity_new:
         raise HTTPException(409, {"codigo": "HISTORIAL_IDENTIDAD_REQUERIDA",
                                  "mensaje": "Prepará el historial antes de generar. Volvé a intentar la solicitud."})
@@ -105,18 +105,10 @@ def _adaptar_y_guardar(request, documento_original, perfil_destinatario, formato
         resultado = ia_client.adaptar(documento_original, perfil_destinatario.value, formato_salida.value, nicho_sector.value)
     except IAServiceError as error:
         raise HTTPException(error.status_code, error.detail, headers=error.headers) from error
-    if oci_storage is not None:
-        resultado = oci_storage.guardar(documento_original, resultado,
-                                        scope=request.state.history_owner if history is not None else None)
     if history is not None:
-        reference = HistorialReferencia(status="error", mensaje="El resultado está disponible, pero no se confirmó su registro en el historial.")
-        stored = resultado.almacenamiento_oci
-        if stored.status_upload == "subido" and stored.documento_original_subido is True:
-            try:
-                reference = HistorialReferencia(**history.register(request.state.history_owner, documento_original, resultado))
-            except Exception as error:
-                logger.warning("No se confirmó el registro del historial: %s", type(error).__name__)
-        resultado = resultado.model_copy(update={"historial": reference})
+        resultado = history.save(request.state.history_owner, documento_original, resultado, started)
+    elif oci_storage is not None:
+        resultado = oci_storage.guardar(documento_original, resultado)
     return resultado
 
 
@@ -151,6 +143,21 @@ def download_original(document_id: str, request: Request, history: History):
     return Response(data, media_type="application/octet-stream", headers={
         "Content-Disposition": f"attachment; filename*=UTF-8''{quote(record.nombre, safe='')}",
     })
+
+
+@app.get(f"{settings.API_V1_STR}/documentos/{{document_id}}/eliminacion", tags=["Historial"])
+def document_deletion_summary(document_id: str, request: Request, history: History):
+    return history.deletion_summary(request.state.history_owner, document_id)
+
+
+@app.delete(f"{settings.API_V1_STR}/documentos/{{document_id}}", tags=["Historial"])
+def delete_document(document_id: str, request: Request, history: History):
+    return history.delete_document(request.state.history_owner, document_id, request.headers.get("if-match", "").strip('"'))
+
+
+@app.delete(f"{settings.API_V1_STR}/documentos/{{document_id}}/adaptaciones/{{adaptation_id}}", tags=["Historial"])
+def delete_adaptation(document_id: str, adaptation_id: str, request: Request, history: History):
+    return history.delete_adaptation(request.state.history_owner, document_id, adaptation_id)
 
 
 @app.get(f"{settings.API_V1_STR}/documentos/{{document_id}}/adaptaciones/{{adaptation_id}}", response_model=AdaptacionResponse,

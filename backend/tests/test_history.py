@@ -25,6 +25,8 @@ class BucketTransport(BaseAdapter):
         self.calls = []
         self.failure_prefix = None
         self.empty_collections_are_null = False
+        self.delete_failure_key = None
+        self.fail_completion = False
 
     def send(self, request, **_kwargs):
         url = urlsplit(request.url)
@@ -34,7 +36,17 @@ class BucketTransport(BaseAdapter):
         if key and self.failure_prefix and key.startswith(self.failure_prefix):
             status, data = 503, b'{"code":"Unavailable","message":"private-detail"}'
         elif request.method == "PUT":
-            self.objects[key] = request.body.read() if hasattr(request.body, "read") else request.body
+            body = request.body.read() if hasattr(request.body, "read") else request.body
+            if self.fail_completion and b'"estado":"completado"' in body:
+                status, data = 503, b'{"code":"Unavailable","message":"private-detail"}'
+            else:
+                self.objects[key] = body
+        elif request.method == "DELETE":
+            if key == self.delete_failure_key:
+                status, data = 503, b'{"code":"Unavailable","message":"private-detail"}'
+            else:
+                self.objects.pop(key, None)
+                status, data = 204, b""
         elif key is not None:
             if key in self.objects:
                 data = self.objects[key]

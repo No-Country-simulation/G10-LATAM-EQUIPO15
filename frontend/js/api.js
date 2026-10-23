@@ -89,7 +89,7 @@ const Api = {
     try {
       respuesta = await fetch('/api/v1' + ruta, {
         ...opciones, credentials: 'same-origin',
-        signal: AbortSignal.timeout(opciones.method === 'POST' ? 660000 : 30000),
+        signal: AbortSignal.timeout(opciones.method === 'POST' ? 660000 : opciones.method === 'DELETE' ? 120000 : 30000),
       });
     } catch {
       throw new Error('No se pudo conectar con el historial. Revisá la conexión y reintentá.');
@@ -98,7 +98,11 @@ const Api = {
     try { datos = await respuesta.json(); } catch {
       throw new Error('El servidor no devolvió una respuesta válida para el historial.');
     }
-    if (!respuesta.ok) throw new Error(datos?.detail?.mensaje || 'No se pudo consultar el historial.');
+    if (!respuesta.ok) {
+      const error = new Error(datos?.detail?.mensaje || 'No se pudo consultar el historial.');
+      error.codigo = datos?.detail?.codigo;
+      throw error;
+    }
     return datos;
   },
   async adaptarGuardado(documentoId, configuracion, onStage = () => {}) {

@@ -25,7 +25,7 @@ class PersistentBucket(BucketTransport):
 
     def send(self, request, **kwargs):
         response = super().send(request, **kwargs)
-        if request.method == 'PUT' and response.status_code == 200:
+        if (request.method == 'PUT' and response.status_code == 200) or (request.method == 'DELETE' and response.status_code == 204):
             temporary = self.path.with_suffix('.tmp')
             temporary.write_text(json.dumps({k: base64.b64encode(v).decode() for k, v in self.objects.items()}))
             os.replace(temporary, self.path)

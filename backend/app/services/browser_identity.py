@@ -1,6 +1,7 @@
 """Identidad opaca de navegador; el secreto nunca se devuelve en JSON ni en URLs."""
 
 from hashlib import sha256
+from datetime import datetime, timezone
 import re
 import secrets
 from urllib.parse import urlsplit
@@ -30,6 +31,7 @@ async def browser_identity(request, call_next):
         token = secrets.token_urlsafe(32)
     request.state.history_owner = sha256(token.encode()).hexdigest()
     request.state.history_identity_new = is_new
+    request.state.history_started = datetime.now(timezone.utc)
     response = await call_next(request)
     if is_new:
         response.set_cookie(COOKIE, token, max_age=365 * 24 * 60 * 60, httponly=True,
