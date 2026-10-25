@@ -28,7 +28,7 @@ NuevaMente busca reducir ese esfuerzo mediante generación asistida por IA, estr
 
 ## 🖥️ Demo
 
-- **Aplicación desplegada:** [http://191.237.254.59](http://191.237.254.59)
+- **Aplicación desplegada:** [http://44.198.212.151](http://44.198.212.151)
 - **Repositorio:** [G10-LATAM-EQUIPO15](https://github.com/No-Country-simulation/G10-LATAM-EQUIPO15)
 - **Documentación de la demo desplegada:** [Despliegue Azure y validaciones](docs/AZURE_TERRAFORM.md)
 - **Evidencia de la integración local con OCI:** [Demo local con OCI Object Storage](docs/DEMO_LOCAL_OCI.md)
@@ -89,7 +89,6 @@ No es necesario instalar Python localmente para utilizar la integración complet
 ```powershell
 git clone https://github.com/No-Country-simulation/G10-LATAM-EQUIPO15.git
 cd G10-LATAM-EQUIPO15
-git checkout release/consolidacion-mvp
 ```
 
 ### 2. Configurar la clave de IA
