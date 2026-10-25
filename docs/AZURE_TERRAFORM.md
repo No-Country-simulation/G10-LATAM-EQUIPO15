@@ -16,7 +16,7 @@ confirmo cero cambios y completo la instalacion. Se aplico ademas un ajuste
 de la IP publica a 15 minutos de espera, sin reemplazos, para admitir las
 generaciones largas del proxy. Las once pruebas del script pasaron.
 
-**Aplicacion publica:** <http://191.237.254.59>.
+**Aplicacion publica:** <http://44.198.212.151>.
 
 Frontend, Backend e IA iniciaron saludables en la VM. El Backend confirmo
 acceso autenticado al bucket privado `nuevamente-contenidos-educativos`.
