@@ -1,0 +1,103 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Quiz Interactivo",
+    "tiempo_estimado_estudio_minutos": 12,
+    "conceptos_clave": [
+      "Triaje",
+      "Urgencias médicas",
+      "Niveles de prioridad",
+      "Signos vitales",
+      "Evaluación inicial",
+      "Reevaluación",
+      "Infraclasificación",
+      "Sobreclasificación"
+    ],
+    "nicho_contexto": "Salud"
+  },
+  "contenido_adaptado": {
+    "titulo": "Evaluación de Arquitectura de Procesos de Triaje en Urgencias",
+    "introduccion_contextualizada": "Evaluación técnica orientada a ingenieros y líderes técnicos del sector salud sobre la estructuración, priorización, evaluación inicial y manejo de errores en los sistemas de triaje en servicios de urgencias según la documentación oficial.",
+    "items": [
+      {
+        "pregunta": "En un sistema de triaje estructurado que maneja cinco niveles de prioridad, ¿cuál es el tiempo objetivo de espera establecido para un paciente clasificado en el nivel 2 (muy urgente)?",
+        "opciones": [
+          "Atención inmediata",
+          "10 minutos",
+          "60 minutos",
+          "120 minutos"
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El documento establece explícitamente que el nivel 2 es muy urgente, con un tiempo objetivo de 10 minutos.",
+        "pista_didactica": "Busca el nivel de prioridad posterior a la atención inmediata pero anterior al nivel urgente de 60 minutos.",
+        "explicacion_distractores": "La atención inmediata corresponde al nivel 1. Los 60 minutos corresponden al nivel 3 (urgente). Los 120 minutos corresponden al nivel 4 (menos urgente).",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "Durante la evaluación inicial realizada por la enfermera de triaje, ¿qué elementos específicos deben registrarse además del motivo de consulta y los signos vitales?",
+        "opciones": [
+          "Antecedentes quirúrgicos y medicación actual",
+          "Nivel de conciencia y valoración del dolor con una escala de 0 a 10",
+          "Historial socioeconómico y ocupacional del paciente",
+          "Estudios de imagen previos y analíticas de laboratorio"
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El texto fuente especifica que la enfermera de triaje registra el motivo de consulta, signos vitales, valora el nivel de conciencia y el dolor con una escala de 0 a 10.",
+        "pista_didactica": "Enfócate en la métrica cuantitativa de dolor y el estado neurológico básico mencionado en la fuente.",
+        "explicacion_distractores": "Antecedentes quirúrgicos, medicación, historial socioeconómico, estudios de imagen y analíticas no son mencionados en el texto como parte de la evaluación inicial de triaje.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "Bajo qué condiciones operativas se requiere realizar una reevaluación del paciente en el servicio de urgencias?",
+        "opciones": [
+          "Únicamente cuando se desocupa un box de atención",
+          "Cada vez que cambia el turno del personal de enfermería",
+          "Si un paciente espera más que el tiempo objetivo de su nivel, o si sus síntomas cambian",
+          "Solo cuando el paciente solicita voluntariamente el alta voluntaria"
+        ],
+        "indice_correcto": 2,
+        "justificacion_tecnica": "La fuente indica directamente que si un paciente espera más que el tiempo objetivo de su nivel, o si sus síntomas cambian, debe reevaluarse.",
+        "pista_didactica": "Considera tanto el factor temporal del tiempo objetivo como la variabilidad clínica de los síntomas.",
+        "explicacion_distractores": "El cambio de turno, la disponibilidad de boxes o la solicitud de alta no figuran en el documento como detonantes de reevaluación.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "En el contexto de errores frecuentes en el triaje, ¿por qué se define la sobreclasificación como un problema operativo?",
+        "opciones": [
+          "Porque genera costos administrativos excesivos en la facturación",
+          "Porque ocupa recursos de atención inmediata con pacientes que podrían esperar con seguridad",
+          "Porque infringe las normativas legales internacionales de salud",
+          "Porque duplica innecesariamente el registro de los signos vitales"
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El texto señala explícitamente que es un problema la sobreclasificación porque ocupa recursos de atención inmediata con pacientes que podrían esperar con seguridad.",
+        "pista_didactica": "Analiza el impacto del uso de los recursos de atención inmediata según la fuente.",
+        "explicacion_distractores": "Los costos administrativos, normativas legales internacionales y la duplicación de signos vitales no son mencionados en el texto como motivos del problema de la sobreclasificación.",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado mantiene una fidelidad fáctica total con los fragmentos fuente provistos, sin introducir alucinaciones ni datos no verificados.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "salud_triaje_urgencias.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

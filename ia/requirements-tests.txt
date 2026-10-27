@@ -1,0 +1,13 @@
+# Minimos de Data/IA en 5ee736e43cb8e8fb1369cb29201bb46fbf96c968.
+# Se combinan con nuevamente-ai-core/requirements.txt durante el build.
+chromadb>=1.5.9
+langchain>=1.4.2
+langchain-chroma>=1.1.0
+langchain-google-genai>=4.4.0
+langchain-text-splitters>=1.1.1
+pydantic>=2.13.5
+pymupdf>=1.28.2
+python-dotenv>=1.2.3
+pytest-timeout>=2.3.1
+# Extracción de PDF a Markdown (títulos, listas y tablas) para el chunking estructural.
+pymupdf4llm>=0.0.17,<1.0

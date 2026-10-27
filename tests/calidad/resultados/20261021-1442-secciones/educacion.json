@@ -1,0 +1,70 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Junior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 8,
+    "conceptos_clave": [
+      "Repaso espaciado",
+      "Efecto de espaciamiento",
+      "Tarjetas de memoria"
+    ],
+    "nicho_contexto": "General"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de Repaso Espaciado",
+    "introduccion_contextualizada": "¡Hola, futuro profesional! Como tu mentor técnico, hoy vamos a revisar un concepto clave para aprender mejor: el repaso espaciado. Imagina que entrenas una habilidad física paso a paso en lugar de agotarte el primer día; de eso trata esta técnica para retener información a largo plazo basándonos exclusivamente en el documento provisto.",
+    "items": [
+      {
+        "frente": "¿Qué es el repaso espaciado?",
+        "dorso": "Consiste en estudiar un mismo contenido varias veces, dejando intervalos cada vez más largos entre cada repaso.",
+        "pista_didactica": "Piensa en regar una planta de forma periódica en lugar de inundarla una sola vez.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué es el efecto de espaciamiento?",
+        "dorso": "Es el fenómeno por el cual la información repasada en sesiones separadas se recuerda mejor a largo plazo en comparación con la estudiada en una única sesión intensiva.",
+        "pista_didactica": "Es como construir una pared ladrillo a ladrillo dejando que el cemento se seque, en vez de apilar todo de golpe.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué herramienta es habitual para aplicar el repaso espaciado?",
+        "dorso": "Las tarjetas de memoria son una herramienta habitual para aplicarlo.",
+        "pista_didactica": "Imagina fichas físicas donde pones una pregunta en un lado y la respuesta en el otro.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cómo funciona el uso de tarjetas de memoria según el resultado del estudiante?",
+        "dorso": "Cuando el estudiante responde bien una tarjeta, la vuelve a ver más adelante; cuando se equivoca, la repasa pronto.",
+        "pista_didactica": "Es como organizar tus tareas pendientes: lo que ya dominas lo dejas para más tarde, y lo que te cuesta lo atiendes enseguida.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado es altamente fiel a los fragmentos fuente. Las definiciones y explicaciones están respaldadas y las pistas cumplen adecuadamente un rol didáctico sin introducir información técnica no verificada.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "educacion_repaso_espaciado.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

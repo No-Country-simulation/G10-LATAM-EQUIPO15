@@ -1,0 +1,14 @@
+**
+!Dockerfile
+!nginx.conf
+!index.html
+!css/
+!css/**
+!js/
+!js/**
+!assets/
+!assets/**
+**/.env
+**/.env.*
+**/node_modules/
+**/__pycache__/

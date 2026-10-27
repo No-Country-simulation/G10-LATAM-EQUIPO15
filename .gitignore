@@ -21,3 +21,42 @@ coverage/
 
 # Logs
 *.log
+
+# Archivos internos y documentación local de trabajo
+/ia/DIAGNOSTICO_PRUEBAS_IA.md
+/docs/docuemntacion-proyecto.pdf
+
+# Datos locales generados por Data/IA (ChromaDB, registro y cachés)
+.chromadb_data/
+.dataia_documents/
+.dataia_cache/
+# Copia local de la versión anterior de ia/ (commit 12ee492), solo para comparar
+ia_old/
+remote-repo-temp/
+*.txt
+# Las dependencias sí se versionan: sin ellas no se construyen las imágenes
+!requirements*.txt
+mock_salida.py
+test_salida.py
+.specify/
+
+# Credenciales OCI locales
+.oci/
+*.pem
+*.key
+
+# Paquetes privados generados por el configurador OCI
+.nuevamente-object-storage/
+nuevamente-oci-conexion.zip
+.gstack/
+
+# Estado y planes Terraform: guardar fuera del repositorio
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+
+# Cachés de la evaluación de calidad (extracción y metadata por documento)
+tests/calidad/.datos/

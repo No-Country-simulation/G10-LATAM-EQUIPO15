@@ -1,0 +1,100 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Quiz Interactivo",
+    "tiempo_estimado_estudio_minutos": 12,
+    "conceptos_clave": [
+      "Normalización de bases de datos",
+      "Primera forma normal (1FN)",
+      "Segunda forma normal (2FN)",
+      "Tercera forma normal (3FN)",
+      "Desnormalización"
+    ],
+    "nicho_contexto": "General"
+  },
+  "contenido_adaptado": {
+    "titulo": "Quiz Interactivo de Normalización de Bases de Datos Relacionales",
+    "introduccion_contextualizada": "Evaluación técnica para ingenieros orientada a validar conceptos avanzados de arquitectura y diseño relacional basados estrictamente en el documento fuente provisto.",
+    "items": [
+      {
+        "pregunta": "¿Cuál es el requisito fundamental que define la Primera Forma Normal (1FN) según el documento?",
+        "opciones": [
+          "Que no existan dependencias transitivas entre columnas no clave.",
+          "Que cada columna contenga valores atómicos y no existan grupos repetidos.",
+          "Que cada columna no clave dependa de la clave primaria completa.",
+          "Que se dupliquen datos intencionalmente para evitar uniones costosas."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El texto especifica que una tabla está en 1FN cuando cada columna contiene valores atómicos, es decir, un solo valor por celda, y no hay grupos repetidos.",
+        "pista_didactica": "Piensa en la atomicidad de las celdas y la prohibición de almacenar múltiples valores en una sola columna.",
+        "explicacion_distractores": "La opción sobre dependencias transitivas corresponde a la 3FN. La opción sobre la clave primaria completa corresponde a la 2FN. La opción sobre duplicar datos se refiere a la desnormalización.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "En el contexto de la Segunda Forma Normal (2FN), ¿cómo se aborda el problema de las claves compuestas?",
+        "opciones": [
+          "Se eliminan todas las dependencias transitivas entre columnas no clave.",
+          "Se asegura que cada columna que no forma parte de la clave dependa de la clave primaria completa, moviendo las columnas que dependan solo de una parte a otra tabla.",
+          "Se introducen valores separados por comas para optimizar el almacenamiento de la clave.",
+          "Se desnormaliza la estructura para evitar uniones costosas en los sistemas de análisis."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El documento señala que el problema en la 2FN aparece con claves compuestas: si una columna depende solo de una parte de la clave, debe moverse a otra tabla, cumpliendo que cada columna que no forma parte de la clave dependa de la clave primaria completa.",
+        "pista_didactica": "Analiza qué sucede cuando una columna depende únicamente de una fracción de una clave compuesta.",
+        "explicacion_distractores": "Eliminar dependencias transitivas define la 3FN. Los valores separados por comas violan la 1FN. Duplicar datos para evitar uniones pertenece a la desnormalización.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "¿Qué condición estructural caracteriza a una tabla en Tercera Forma Normal (3FN)?",
+        "opciones": [
+          "La ausencia de dependencias transitivas, es decir, que ninguna columna no clave dependa de otra columna no clave.",
+          "La presencia exclusiva de valores atómicos en celdas individuales.",
+          "La dependencia parcial de las columnas no clave respecto a los fragmentos de la clave primaria.",
+          "La duplicación controlada de datos para sistemas de análisis."
+        ],
+        "indice_correcto": 0,
+        "justificacion_tecnica": "El texto indica que una tabla está en 3FN si está en 2FN y ninguna columna no clave depende de otra columna no clave (sin dependencias transitivas).",
+        "pista_didactica": "Busca la relación de dependencia entre columnas que no forman parte de la clave.",
+        "explicacion_distractores": "Los valores atómicos definen la 1FN. La dependencia parcial se aborda en la 2FN. La duplicación controlada pertenece a la desnormalización.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "Desde la perspectiva de rendimiento y diseño descrita en la fuente, ¿qué trade-off implica la práctica de la desnormalización?",
+        "opciones": [
+          "Se eliminan por completo las anomalías al insertar, actualizar o eliminar registros a cambio de mayor consumo de CPU.",
+          "Se duplican datos a propósito para evitar uniones costosas en las consultas, aceptando el riesgo de inconsistencias.",
+          "Se garantiza la atomicidad estricta de cada celda a cambio de perder integridad referencial.",
+          "Se asegura que cada columna no clave dependa estrictamente de la clave primaria completa."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El documento detalla que en sistemas de análisis a veces se desnormaliza a propósito duplicando datos para evitar uniones costosas en las consultas, tratándose de una decisión de rendimiento que acepta el riesgo de inconsistencias.",
+        "pista_didactica": "Evalúa qué beneficio de rendimiento se busca y qué riesgo se asume al duplicar datos.",
+        "explicacion_distractores": "La desnormalización introduce riesgos de inconsistencias en lugar de eliminarlos. La atomicidad pertenece a la 1FN. La dependencia de la clave primaria completa pertenece a la 2FN.",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado mantiene una fidelidad estricta y perfecta con los fragmentos fuente provistos, reflejando correctamente las definiciones, reglas y conceptos de la normalización de bases de datos relacionales.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "datos_normalizacion_sql.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

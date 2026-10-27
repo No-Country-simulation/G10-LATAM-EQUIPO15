@@ -1,0 +1,55 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Ejecutivo",
+    "formato_generado": "Resumen Ejecutivo",
+    "tiempo_estimado_estudio_minutos": 5,
+    "conceptos_clave": [
+      "SEO on-page",
+      "Intención de búsqueda",
+      "Etiqueta de título",
+      "Meta descripción",
+      "Encabezados y estructura",
+      "Enlazado interno",
+      "Velocidad y experiencia de usuario"
+    ],
+    "nicho_contexto": "E-commerce"
+  },
+  "contenido_adaptado": {
+    "titulo": "Resumen Ejecutivo Estratégico: Optimizacion SEO On-Page para E-commerce",
+    "introduccion_contextualizada": "El siguiente informe traduce las directrices técnicas del documento 'marketing_seo_on_page' a un formato directivo enfocado en la gestión de tiendas virtuales (E-commerce), destacando los pilares operativos para la visibilidad y captación de tráfico.",
+    "items": {
+      "tldr": "La optimizacion SEO on-page en el e-commerce requiere alinear la intencion de busqueda del consumidor, estructurar correctamente los metadatos y encabezados, optimizar el enlazado interno y asegurar la velocidad de carga para mejorar la experiencia y el posicionamiento web.",
+      "puntos_clave": [
+        "Identificar si el usuario busca informarse, comparar o comprar antes de redactar contenidos para asegurar el posicionamiento.",
+        "Configurar una etiqueta title única por página con la palabra clave principal al inicio, y utilizar meta descripciones claras para elevar la tasa de clics.",
+        "Implementar un único encabezado H1 por página junto con H2 y H3 para estructurar la jerarquía de contenidos.",
+        "Distribuir autoridad y facilitar el descubrimiento de nuevo contenido mediante enlaces internos con textos descriptivos.",
+        "Mejorar el tiempo de carga comprimiendo imágenes, reduciendo código bloqueante y utilizando caché del navegador para favorecer la experiencia y el posicionamiento."
+      ],
+      "impacto_negocio": "El documento no especifica métricas financieras o de ROI, pero señala que alinear el contenido con la intención de búsqueda evita el fallo en el posicionamiento, las meta descripciones claras aumentan la tasa de clics, y mejorar la velocidad de carga beneficia directamente tanto la experiencia del usuario como el posicionamiento web.",
+      "recomendaciones": [],
+      "fuentes": [
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5"
+      ]
+    }
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado refleja fielmente los fragmentos fuente proporcionados, sin introducir alucinaciones ni datos no verificados.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "marketing_seo_on_page.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

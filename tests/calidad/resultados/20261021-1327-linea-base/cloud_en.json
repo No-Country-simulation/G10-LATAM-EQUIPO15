@@ -1,0 +1,91 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 12,
+    "conceptos_clave": [
+      "Least Privilege",
+      "Cloud Identity and Access Management",
+      "Roles and policies",
+      "Service accounts",
+      "Temporary credentials",
+      "Reviewing permissions"
+    ],
+    "nicho_contexto": "Fintech"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de IAM en Cloud: Principio de Menor Privilegio",
+    "introduccion_contextualizada": "Conjunto de tarjetas de memorizacion activa orientado a ingenieros senior y lideres tecnicos en entornos Fintech, enfocado en los conceptos fundamentales de IAM y menor privilegio segun el documento fuente.",
+    "items": [
+      {
+        "frente": "¿En qué consiste el principio de menor privilegio?",
+        "dorso": "Establece que cada usuario, servicio o aplicación debe recibir únicamente los permisos necesarios para realizar su tarea, y nada más, limitando el daño que un atacante puede causar con credenciales robadas.",
+        "pista_didactica": "Otorga solo la llave de la caja fuerte específica y no la llave maestra de todo el banco.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cuál es la limitación de utilizar roles predefinidos amplios como el de administrador?",
+        "dorso": "Aunque son convenientes, por lo general otorgan mucho más acceso del que una carga de trabajo realmente requiere.",
+        "pista_didactica": "Dar privilegios de administrador por conveniencia es como entregar un pase libre a todas las sucursales cuando solo se requiere operar una caja.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué ventaja aportan los roles personalizados frente a los predefinidos?",
+        "dorso": "Permiten a los equipos otorgar un conjunto más reducido y específico de acciones a las identidades.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cómo deben autenticarse las aplicaciones en lugar de usar cuentas de usuario personales?",
+        "dorso": "Las aplicaciones deben autenticarse mediante cuentas de servicio. Cada carga de trabajo debe poseer su propia cuenta de servicio para delimitar permisos y permitir revocaciones sin afectar a otras.",
+        "pista_didactica": "Cada microservicio financiero debe tener su propia identidad operativa aislada.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cuál es el riesgo principal de las credenciales de larga duración y cómo se mitiga?",
+        "dorso": "El riesgo principal es que las claves de acceso de larga duración son una fuente común de brechas cuando se filtran en repositorios de código. Se mitiga utilizando credenciales temporales que expiran automáticamente tras un corto período, reduciendo la ventana de tiempo en la que una credencial filtrada puede ser utilizada.",
+        "pista_didactica": "Usar credenciales temporales es como usar un código OTP de un solo uso en lugar de una contraseña estática.",
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Por qué son necesarias las revisiones periódicas de permisos y el uso de registros de acceso (access logs)?",
+        "dorso": "Los permisos tienden a acumularse con el tiempo. Las revisiones regulares eliminan los permisos que ya no se usan, y los registros de acceso ayudan a identificar qué permisos ejerce realmente cada identidad.",
+        "pista_didactica": null,
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado mantiene una fidelidad total a los fragmentos fuente proporcionados. Las afirmaciones están respaldadas correctamente y los recursos pedagógicos cumplen con la definición de didácticos sin introducir alucinaciones técnicas.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "cloud_iam_least_privilege.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

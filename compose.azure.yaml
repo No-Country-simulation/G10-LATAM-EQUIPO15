@@ -1,0 +1,12 @@
+# Docker Compose 2.24.4 o posterior. Solo para la VM publica de demostracion.
+services:
+  frontend:
+    restart: unless-stopped
+    ports: !override
+      - "80:8080"
+  backend:
+    restart: unless-stopped
+    # Las credenciales privadas pertenecen al usuario SSH de esta VM.
+    user: "${AZURE_BACKEND_UID:-1000}:${AZURE_BACKEND_GID:-1000}"
+  ia-http:
+    restart: unless-stopped

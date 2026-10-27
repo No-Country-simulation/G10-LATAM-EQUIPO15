@@ -1,0 +1,119 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Senior",
+    "formato_generado": "Quiz Interactivo",
+    "tiempo_estimado_estudio_minutos": 15,
+    "conceptos_clave": [
+      "Normalización de bases de datos",
+      "Primera forma normal (1FN)",
+      "Segunda forma normal (2FN)",
+      "Tercera forma normal (3FN)",
+      "Desnormalización"
+    ],
+    "nicho_contexto": "General"
+  },
+  "contenido_adaptado": {
+    "titulo": "Quiz de Arquitectura de Normalización y Desnormalización SQL",
+    "introduccion_contextualizada": "Evaluación técnica interactiva para ingenieros orientada a validar la correcta aplicación de las formas normales (1FN, 2FN, 3FN), los objetivos de organización de tablas y los trade-offs de la desnormalización en sistemas relacionales, basada exclusivamente en la documentación provista.",
+    "items": [
+      {
+        "pregunta": "¿Cuál es el propósito fundamental de aplicar la normalización en el diseño de bases de datos relacionales según los objetivos establecidos?",
+        "opciones": [
+          "Duplicar datos para evitar uniones costosas en las consultas analíticas.",
+          "Organizar las tablas para evitar datos repetidos y anomalías al insertar, actualizar o eliminar registros.",
+          "Asegurar que todas las columnas contengan múltiples valores separados por comas.",
+          "Permitir dependencias transitivas entre columnas no clave para acelerar la escritura."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "El documento establece explícitamente que la normalización organiza las tablas para evitar datos repetidos y anomalías al insertar, actualizar o eliminar registros, asegurando que cada hecho se guarde en un solo lugar.",
+        "pista_didactica": "Piensa en el principio de evitar redundancias y anomalías operacionales.",
+        "explicacion_distractores": "La opción de duplicar datos describe la desnormalización para análisis. Las opciones con múltiples valores o dependencias transitivas violan los conceptos fundamentales y los requisitos de las formas normales definidos en el texto.",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "pregunta": "Durante la revisión de un esquema relacional, se detecta una columna que almacena varios números de teléfono separados por comas en una misma celda. ¿Qué regla de normalización se está incumpliendo?",
+        "opciones": [
+          "Primera forma normal (1FN)",
+          "Segunda forma normal (2FN)",
+          "Tercera forma normal (3FN)",
+          "Desnormalización intencional"
+        ],
+        "indice_correcto": 0,
+        "justificacion_tecnica": "Una tabla está en 1FN cuando cada columna contiene valores atómicos (un solo valor por celda) y no hay grupos repetidos. Guardar varios teléfonos separados por comas viola la 1FN.",
+        "pista_didactica": "Recuerda el requisito de atomicidad por celda en las formas normales iniciales.",
+        "explicacion_distractores": "La 2FN aborda dependencias parciales de claves compuestas, la 3FN trata dependencias transitivas entre columnas no clave, y la desnormalización es una práctica opuesta para rendimiento analítico.",
+        "fuentes": [
+          "F2",
+          "F5"
+        ]
+      },
+      {
+        "pregunta": "En una tabla con una clave primaria compuesta, se identifica una columna que no forma parte de la clave pero depende exclusivamente de una parte de ella. ¿Qué acción correctiva exige el modelo relacional según la 2FN?",
+        "opciones": [
+          "Convertir la columna en un valor atómico separándola por comas.",
+          "Mover la columna a otra tabla para eliminar la dependencia parcial.",
+          "Duplicar la columna para evitar uniones costosas.",
+          "Establecer una dependencia transitiva con otra columna no clave."
+        ],
+        "indice_correcto": 1,
+        "justificacion_tecnica": "Para cumplir con la segunda forma normal (2FN), cada columna que no forma parte de la clave debe depender de la clave primaria completa. Si una columna depende solo de una parte de la clave, el texto indica explícitamente que debe moverse a otra tabla.",
+        "pista_didactica": "Busca la solución para las dependencias parciales de la clave.",
+        "explicacion_distractores": "Separar por comas corresponde a violaciones de 1FN. Duplicar datos es desnormalización, y la dependencia transitiva es un concepto de 3FN.",
+        "fuentes": [
+          "F3",
+          "F5"
+        ]
+      },
+      {
+        "pregunta": "En una tabla de empleados que ya cumple con la 2FN, se almacena el código de departamento y el nombre del departamento. Se observa que el nombre del departamento depende del código y no del empleado. ¿Qué forma normal se está incumpliendo?",
+        "opciones": [
+          "Primera forma normal (1FN)",
+          "Segunda forma normal (2FN)",
+          "Tercera forma normal (3FN)",
+          "El documento no especifica ninguna violación"
+        ],
+        "indice_correcto": 2,
+        "justificacion_tecnica": "El texto define la tercera forma normal (3FN) requiriendo que ninguna columna no clave dependa de otra columna no clave. El ejemplo citado indica que el nombre del departamento depende del código (otra columna no clave) y no del empleado.",
+        "pista_didactica": "Analiza la relación entre columnas que no forman parte de la clave primaria.",
+        "explicacion_distractores": "La 1FN evalúa valores atómicos, la 2FN evalúa la dependencia de la clave completa, y el escenario sí describe una violación clara de 3FN según el texto.",
+        "fuentes": [
+          "F4",
+          "F5"
+        ]
+      },
+      {
+        "pregunta": "En un sistema de análisis, se decide duplicar datos de manera intencional para evitar uniones costosas en las consultas. ¿Qué trade-off o consecuencia asume explícitamente esta decisión según el documento?",
+        "opciones": [
+          "Se garantiza la atomicidad absoluta de las celdas sin excepciones.",
+          "Se elimina por completo cualquier tipo de dependencia transitiva.",
+          "Se acepta el riesgo de inconsistencias a cambio de mejorar el rendimiento.",
+          "Se asegura que cada hecho se guarde en un solo lugar."
+        ],
+        "indice_correcto": 2,
+        "justificacion_tecnica": "El documento señala textualmente que en sistemas de análisis a veces se desnormaliza a propósito duplicando datos para evitar uniones costosas, siendo una decisión de rendimiento que acepta el riesgo de inconsistencias.",
+        "pista_didactica": "Revisa el balance entre rendimiento y consistencia al duplicar datos.",
+        "explicacion_distractores": "Garantizar atomicidad y un solo lugar por hecho son objetivos de la normalización estricta, mientras que eliminar dependencias transitivas define a la 3FN.",
+        "fuentes": [
+          "F6"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado está completamente fundamentado en los fragmentos provistos, sin alucinaciones ni datos externos.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "datos_normalizacion_sql.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}

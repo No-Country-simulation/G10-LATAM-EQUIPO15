@@ -1,0 +1,88 @@
+{
+    "status": "exito",
+    "metadatos": {
+        "perfil_aplicado": "Senior",
+        "formato_generado": "Quiz Interactivo",
+        "tiempo_estimado_estudio_minutos": 8,
+        "conceptos_clave": [
+            "OCI.pdf",
+            "Fragmento",
+            "También",
+            "Consulte",
+            "Detalles",
+            "JWKS"
+        ],
+        "nicho_contexto": "General"
+    },
+    "contenido_adaptado": {
+        "titulo": "Evaluación de Arquitectura: Autenticación y Validación de JWT en OCI API Gateway",
+        "introduccion_contextualizada": "Como arquitecto cloud o ingeniero senior, diseñar arquitecturas de microservicios robustas en Oracle Cloud Infrastructure (OCI) exige un dominio absoluto de los mecanismos de seguridad perimetral. Este quiz evalúa las decisiones de diseño relacionadas con las políticas de validación de tokens en API Gateway, el balance entre latencia de red y seguridad criptográfica, y la correcta transición hacia los estándares actuales en políticas de autenticación cloud-native.",
+        "items": [
+            {
+                "pregunta": "En una arquitectura multi-tenant altamente distribuida sobre OCI API Gateway, se requiere minimizar la latencia de validación de tokens JWT sin comprometer la capacidad de revocar claves criptográficas desde el Proveedor de Identidad (IdP). ¿Qué política de validación JSON cumple con este requisito de optimización de rendimiento y diseño sin requerir llamadas sincrónicas por cada request?",
+                "opciones": [
+                    "REMOTE_DISCOVERY",
+                    "REMOTE_JWKS",
+                    "STATIC_KEYS",
+                    "OAuth 2.0 Introspection Endpoint"
+                ],
+                "indice_correcto": 2,
+                "justificacion_tecnica": "La opción STATIC_KEYS permite que el API Gateway verifique la firma del JWT de forma local utilizando claves públicas de verificación ya emitidas y cacheadas por el IdP. Esto elimina el overhead de red y la latencia asociada a realizar llamadas salientes hacia el IdP en tiempo de ejecución para cada request, logrando la máxima velocidad de validación.",
+                "pista_didactica": "Busca el mecanismo que procese la criptografía de manera autocontenida en el gateway sin llamadas de red en tiempo de ejecución.",
+                "explicacion_distractores": "REMOTE_DISCOVERY realiza consultas al punto final de introspección (opcionalmente cacheadas, pero implica validación remota o dependencias de estado). REMOTE_JWKS obliga al API Gateway a ponerse en contacto con el IdP en tiempo de ejecución para recuperar las claves de verificación públicas. OAuth 2.0 Introspection Endpoint delega completamente la validación al servidor de autorización mediante llamadas remotas, introduciendo latencia de red en cada request."
+            },
+            {
+                "pregunta": "Un ingeniero senior está diseñando una API en OCI que procesa peticiones concurrentes masivas. Se implementa una política de validación tipo REMOTE_DISCOVERY para soportar tokens opacos y JWT. ¿Qué consideración de trade-off de rendimiento y costos operativos debe tenerse en cuenta al configurar el almacenamiento en caché de la respuesta del punto final de introspección?",
+                "opciones": [
+                    "Configurar la caché al valor mínimo de 1 minuto para garantizar consistencia estricta en la revocación de tokens.",
+                    "Aumentar el tiempo de caché hasta el límite de 24 horas para reducir la carga de llamadas al IdP, asumiendo un riesgo controlado de latencia en la revocación de accesos.",
+                    "Desactivar el almacenamiento en caché para obligar al API Gateway a validar contra el Vault de OCI en cada ciclo de vida del token.",
+                    "Establecer la caché en el API Gateway utilizando llaves estáticas derivadas del secreto del cliente."
+                ],
+                "indice_correcto": 1,
+                "justificacion_tecnica": "El uso del punto final de introspección requiere llamadas de red remotas. Almacenar en caché la respuesta entre 1 hora (por defecto) y hasta 24 horas acelera drásticamente la validación futura y reduce la congestión y costos transaccionales hacia el IdP. El trade-off arquitectónico es que un token revocado en el IdP seguirá siendo considerado válido por el API Gateway hasta que expire la entrada en la caché local.",
+                "pista_didactica": "Evalúa el balance entre la persistencia de llamadas de red al IdP y la ventana temporal de obsolescencia de seguridad.",
+                "explicacion_distractores": "Configurar un minuto contradice el propósito de la caché de OCI para introspección (el rango por defecto es de 1 a 24 horas). Desactivar la caché degrada el rendimiento de la API por cuellos de botella en el IdP. Las llaves estáticas no aplican para la validación basada en REMOTE_DISCOVERY, la cual opera por introspección de tokens."
+            },
+            {
+                "pregunta": "Durante la refactorización de una especificación de despliegue de API en OCI, se detecta el uso de políticas de solicitud de autenticación de tipo JWT_AUTHENTICATION heredadas de versiones anteriores. Siguiendo las directrices arquitectónicas actuales de OCI, ¿cuál es la acción recomendada y por qué?",
+                "opciones": [
+                    "Mantener JWT_AUTHENTICATION ya que ofrece mejor rendimiento nativo para claims personalizados complejos.",
+                    "Migrar obligatoriamente a políticas TOKEN_AUTHENTICATION, ya que soportan tanto tokens JWT como non-JWT, y permiten configurar respuestas personalizadas y generación de tokens.",
+                    "Sustituir la política por un autorizador basado en OCI Functions con un único argumento de cabecera.",
+                    "Combinar JWT_AUTHENTICATION con políticas de fallo de tipo MODIFY_RESPONSE para evitar deprecaciones."
+                ],
+                "indice_correcto": 1,
+                "justificacion_tecnica": "OCI recomienda explícitamente crear nuevas políticas o migrar las existentes hacia TOKEN_AUTHENTICATION. Esta nueva aproximación unificada no solo da soporte retroactivo a JWT, sino que procesa tokens que no son JWT, integra puntos de introspección y permite definir políticas de fallo avanzadas (como la obtención de nuevos tokens o respuestas modificadas).",
+                "pista_didactica": "Piensa en el estándar unificado moderno de OCI para la validación de tokens de identidad genéricos y JWT.",
+                "explicacion_distractores": "JWT_AUTHENTICATION está siendo reemplazada y no maneja de forma nativa la misma flexibilidad de tipos de token ni las políticas avanzadas de fallo. Usar OCI Functions añade complejidad innecesaria cuando API Gateway puede resolverlo de forma declarativa. Las políticas de fallo MODIFY_RESPONSE operan sobre TOKEN_AUTHENTICATION ante errores, no sustituyen la política base."
+            },
+            {
+                "pregunta": "Al diseñar el control de acceso basado en roles y operaciones utilizando la carga útil de un JWT validado por el OCI API Gateway, ¿cómo se exponen las reclamaciones extraídas (como 'scope') para que las rutas individuales del backend HTTP apliquen autorizaciones granulares?",
+                "opciones": [
+                    "Mediante variables de marco almacenadas en la tabla request.auth que pueden inyectarse en los backends HTTP o políticas de autorización de ruta.",
+                    "Codificando nuevamente la cabecera y la carga útil en Base64 dentro de la cabecera X-APIGW-TOKEN.",
+                    "Mediante la consulta síncrona en tiempo de ejecución al servicio Vault para descifrar los pares clave-valor de la claim scope.",
+                    "A través de llamadas directas al punto final de introspección del IdP utilizando cookies de sesión."
+                ],
+                "indice_correcto": 0,
+                "justificacion_tecnica": "Una vez validado el JWT, el API Gateway extrae las claims como pares clave-valor y los deposita en la estructura request.auth. Esto permite utilizar dichos registros como variables de marco (framework variables) tanto en las definiciones del backend HTTP como en las políticas de solicitud de autorización basadas en la reclamación scope.",
+                "pista_didactica": "Identifica el espacio de nombres interno donde el API Gateway persiste temporalmente los claims extraídos del token validado.",
+                "explicacion_distractores": "El token X-APIGW-TOKEN es un formato no legible para manejar sesiones, no un almacén de variables para backends. Vault se utiliza para almacenar credenciales de cliente, no para parsear claims de un JWT ya validado. Las llamadas al IdP ocurren antes de la validación, no para evaluar scopes en las rutas del backend."
+            }
+        ]
+    },
+    "evaluacion_calidad": {
+        "anclaje_fuente_score": 0.8,
+        "claridad_pedagogica": "Alta",
+        "observaciones": "Calidad preliminar sub-umbral (0.8). Cobertura fáctica insuficiente. Términos clave no reflejados adecuadamente: lugar, nuevo, defecto,, instrucciones, contiene. Se solicita reescribir integrando mayor fidelidad al documento fuente.",
+        "reintentos_realizados": 0
+    },
+    "almacenamiento_oci": {
+        "bucket": "nuevamente-contenidos-educativos",
+        "objeto_id": "manual-jwt-oci_senior_quiz interactivo.json",
+        "status_upload": "listo_para_subida",
+        "ruta_publica_o_par": null
+    },
+    "codigo_respuesta": 200
+}

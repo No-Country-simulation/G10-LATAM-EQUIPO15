@@ -1,0 +1,20 @@
+name: nuevamente-offline-tests
+
+services:
+  backend-tests:
+    image: nuevamente-backend-tests:local
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      target: tests
+    network_mode: none
+
+  ia-tests:
+    image: nuevamente-ia-http-tests:local
+    build:
+      context: .
+      dockerfile: ia/docker/Dockerfile.http
+      target: tests
+    network_mode: none
+    healthcheck:
+      disable: true

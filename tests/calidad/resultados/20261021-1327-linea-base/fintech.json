@@ -1,0 +1,84 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Junior",
+    "formato_generado": "Flashcards",
+    "tiempo_estimado_estudio_minutos": 10,
+    "conceptos_clave": [
+      "Tokenización",
+      "PAN",
+      "Bóveda de tokens",
+      "Detokenización",
+      "Tokens de red",
+      "Tokens de comercio",
+      "PCI DSS",
+      "Cifrado"
+    ],
+    "nicho_contexto": "Fintech"
+  },
+  "contenido_adaptado": {
+    "titulo": "Flashcards de Tokenización de Pagos en Fintech",
+    "introduccion_contextualizada": "¡Hola, desarrollador junior! Vamos a dominar los conceptos clave sobre la tokenización de tarjetas en el mundo de la tecnología financiera (fintech) paso a paso, utilizando analogías sencillas para que te sientas muy seguro.",
+    "items": [
+      {
+        "frente": "¿Qué es la tokenización?",
+        "dorso": "Es un proceso que reemplaza el número real de la tarjeta, conocido como PAN (por sus siglas en inglés, Primary Account Number), por un valor sustituto llamado token, el cual carece de valor fuera del sistema que lo emitió. El comercio guarda únicamente este token y nunca almacena el número real.",
+        "pista_didactica": "Piensa en un ficha de casino: la fichita tiene valor dentro del establecimiento para jugar, pero si la sacas a la calle no sirve para comprar el pan.",
+        "categoria_dificultad": "Básico",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué es la bóveda de tokens?",
+        "dorso": "Es una base de datos protegida mantenida por el emisor del token que relaciona cada token con su número de tarjeta real (PAN). Es la única entidad capaz de realizar la detokenización (revertir el token al número original). Su acceso se restringe a servicios autorizados y cada consulta queda registrada para auditoría.",
+        "pista_didactica": "Es como el libro de contabilidad secreto de un banco donde se guarda la combinación de una caja fuerte.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Qué diferencia hay entre un token de red y un token de comercio?",
+        "dorso": "Los tokens de red son emitidos por las marcas de tarjeta, se vinculan a un dispositivo o comercio concreto y se actualizan automáticamente al renovarse la tarjeta física para evitar rechazos en pagos recurrentes. Los tokens de comercio son generados por un proveedor de pagos y solo sirven dentro de su propia plataforma.",
+        "pista_didactica": "El token de red es como una llave universal que actualiza su forma si cambias la cerradura de la marca, mientras que el token de comercio es la llave de una sola habitación específica.",
+        "categoria_dificultad": "Intermedio",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cómo afecta la tokenización al estándar PCI DSS?",
+        "dorso": "El estándar PCI DSS define los requisitos de seguridad para quienes almacenan, procesan o transmiten datos de tarjetas. Al no guardar el PAN, el comercio reduce el alcance de los sistemas sujetos a auditoría PCI DSS, aunque no queda exento de cumplir los controles sobre los sistemas que sí reciben datos de tarjeta.",
+        "pista_didactica": "Es como dejar los objetos de valor en una caja de seguridad del banco: al no tenerlos en casa, reduces el tamaño de la zona que tienes que vigilar y asegurar.",
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F1"
+        ]
+      },
+      {
+        "frente": "¿Cuál es la diferencia entre tokenización y cifrado?",
+        "dorso": "El cifrado transforma el número real de la tarjeta (PAN) utilizando una clave y se puede revertir teniendo esa clave mediante una fórmula matemática. En cambio, la tokenización no deriva el token del número mediante una fórmula, sino que la relación existe únicamente en una bóveda, por lo que robar el token no permite reconstruir el número real aunque conozcas el algoritmo.",
+        "pista_didactica": "El cifrado es como un mensaje escrito en código secreto que puedes leer si tienes el diccionario de claves; la tokenización es como cambiar tu nombre real por un apodo donde la única lista oficial de quién es quién se guarda bajo llave.",
+        "categoria_dificultad": "Avanzado",
+        "fuentes": [
+          "F1"
+        ]
+      }
+    ]
+  },
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "Fidelidad evaluada (Score: 1.00). El contenido generado refleja fielmente los conceptos expuestos en el fragmento fuente, manteniendo un alto rigor técnico y utilizando las pistas didácticas de manera adecuada sin introducir alucinaciones ni datos nuevos.",
+    "reintentos_realizados": 0,
+    "evidencia": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "fintech_tokenizacion_pagos.json",
+    "status_upload": "listo_para_subida",
+    "ruta_publica_o_par": null
+  },
+  "codigo_respuesta": 200
+}
